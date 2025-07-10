@@ -1,0 +1,48 @@
+Hurricane_data
+
+data
+output
+
+
+≈# R environment management
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/staging/
+
+# Keep these renv files
+!renv.lock
+!renv/activate.R
+!renv/settings.dcf
+
+# R specific
+.Rhistory
+.Rdata
+.RData
+.Ruserdata
+#*.Rproj
+.Rproj.user/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Data and output directories
+data/
+output/
+
+# Output and temporary files
+*.log
+*.tmp
+*~
