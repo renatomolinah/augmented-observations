@@ -4,3 +4,173 @@ format: html
 editor: visual
 ---
 
+
+```{r}
+library(tidyverse)
+library(here)
+library(geosphere)
+
+# Set the working directory to the project root
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+Load all data
+
+```{r}
+ATCF_headers <- c("BASIN", "CY", "YYYYMMDDHH", "TECHNUM", "TECH", "TAU", 
+                               "LAT", "LON", "VMAX", "MSLP", "TY", "RAD", 
+                               "WINDCODE", "RAD1", "RAD2", "RAD3", "RAD4", 
+                               "POUTER", "ROUTER", "RMW", "GUSTS", "EYE", 
+                               "SUBREGION", "MAXSEAS", "INITIALS", "DIR", 
+                               "SPEED", "STORMNAME", "DEPTH", "SEAS", 
+                               "SEASCODE", "SEAS1", "SEAS2", "SEAS3", 
+                               "SEAS4")
+
+
+# Function to process each file
+read_track <- function(file, type) {
+  read_csv(file, col_names = ATCF_headers) %>%
+    select(BASIN, CY, YYYYMMDDHH, TAU, LAT, LON, VMAX, STORMNAME) %>%
+    # Enforce types
+    mutate(BASIN = as.character(BASIN),
+           CY = as.integer(CY),
+           YYYYMMDDHH = as.character(YYYYMMDDHH),
+           TAU = as.integer(TAU),
+           LAT = as.character(LAT),
+           LON = as.character(LON),
+           VMAX = as.numeric(VMAX),
+           STORMNAME = as.character(STORMNAME)) %>%
+    distinct() %>%
+    # Convert latitude to decimal format: Format ix XXXH. Divide XXX by 10. Then, if H = S, assign negative sign
+    mutate(LAT = ifelse(str_detect(LAT, "S"), -as.numeric(str_sub(LAT,1,-2))/10, as.numeric(str_sub(LAT,1,-2))/10),
+           LON = ifelse(str_detect(LON, "W"), -as.numeric(str_sub(LON,1,-2))/10, as.numeric(str_sub(LON,1,-2))/10),
+           forecast_type = type,
+           forecast_time = ymd_h(YYYYMMDDHH) + hours(TAU),
+           hurricane_id = paste(BASIN, CY, year(forecast_time), sep = "_")) %>%
+    select(hurricane_id,
+           hurricane_name = STORMNAME,
+           forecast_type,
+           forecast_time,
+           lead_time = TAU,
+           lat = LAT,
+           lon = LON,
+           vmax = VMAX)
+}
+
+# Load the best track data
+dat_files_best <- list.files(path = file.path(here(), "Hurricane_data/NHC_files"), pattern = "\\.dat$", full.names = TRUE)
+tracks_best <- dat_files_best %>% map_dfr(read_track, type = "Best")
+tracks_best <- tracks_best %>%
+  rename(lat_best = lat,
+         lon_best = lon,
+         vmax_best = vmax)
+
+
+# Load the ALL track data
+dat_files_all <- list.files(path = file.path(here(), "Hurricane_data/NHC_files/ALL"), pattern = "\\.atcfunix$", full.names = TRUE)
+tracks_all <- dat_files_all %>% map_dfr(read_track, type = "All")
+tracks_all <- tracks_all %>%
+  select(-hurricane_name) %>%
+  rename(lat_all = lat,
+         lon_all = lon,
+         vmax_all = vmax)
+
+
+# Load the NO track data
+dat_files_no <- list.files(path = file.path(here(), "Hurricane_data/NHC_files/NO"), pattern = "\\.atcfunix$", full.names = TRUE)
+tracks_no <- dat_files_no %>% map_dfr(read_track, type = "No")
+tracks_no <- tracks_no %>%
+  select(-hurricane_name) %>%
+  rename(lat_no = lat,
+         lon_no = lon,
+         vmax_no = vmax)
+
+
+# Merge All and No
+tracks_forecast <- right_join(tracks_all %>% select(-forecast_type),
+                              tracks_no %>% select(-forecast_type), 
+                              by = c("hurricane_id", "forecast_time", "lead_time"))
+
+# Merge with Best track
+tracks_data <- inner_join(tracks_forecast,
+                             tracks_best  %>% select(-forecast_type, -lead_time), 
+                              by = c("hurricane_id", "forecast_time")) %>%
+                arrange(hurricane_id, forecast_time, lead_time)
+              
+```
+
+
+Calculate Euclidian distances to prediction nodes
+
+```{r}
+MILES_TO_M <- 1609.344
+tracks_data <- tracks_data %>%
+  rowwise() %>%
+  mutate(
+    track_error_all = distHaversine(c(lon_best, lat_best), c(lon_all, lat_all))/MILES_TO_M,
+    track_error_no = distHaversine(c(lon_best, lat_best), c(lon_no, lat_no))/MILES_TO_M
+  ) %>%
+  ungroup()
+```
+
+
+There is a little variation of lead time multiples
+
+```{r}
+table(tracks_data$lead_time)
+
+```
+
+Group into groups of 6 hours
+
+```{r}
+tracks_data_grouped <- tracks_data %>%
+  mutate(lead_time_group = (lead_time %/% 6)*6) %>%
+  group_by(lead_time_group) %>%
+  summarise(
+    n = n(),
+    mean_track_error_all = mean(track_error_all, na.rm = TRUE),
+    sd_track_error_all = sd(track_error_all, na.rm = TRUE),
+    p05_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.05),
+    p95_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.95),
+    mean_track_error_no = mean(track_error_no, na.rm = TRUE),
+    sd_track_error_no = sd(track_error_no, na.rm = TRUE),
+    p05_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.05),
+    p95_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.95),
+  )
+
+
+```
+
+Plot a graph comparing mean errors of all vs no with shades for intervals 05--95
+```{r}
+ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
+  geom_line(aes(y = mean_track_error_all, color = "All")) +
+  geom_ribbon(aes(ymin = p05_track_error_all, ymax = p95_track_error_all, fill = "All"), alpha = 0.2) +
+  geom_line(aes(y = mean_track_error_no, color = "No")) +
+  geom_ribbon(aes(ymin = p05_track_error_no, ymax = p95_track_error_no, fill = "No"), alpha = 0.2) +
+  labs(title = "Track Error Comparison",
+       x = "Lead Time (hours)",
+       y = "Track Error (miles)",
+       color = "Forecast Type",
+       fill = "Forecast Type") +
+  theme_minimal()
+
+```
+Same as above but with miles in log scale
+
+```{r}
+ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
+  geom_line(aes(y = mean_track_error_all, color = "All")) +
+  geom_ribbon(aes(ymin = p05_track_error_all, ymax = p95_track_error_all, fill = "All"), alpha = 0.2) +
+  geom_line(aes(y = mean_track_error_no, color = "No")) +
+  geom_ribbon(aes(ymin = p05_track_error_no, ymax = p95_track_error_no, fill = "No"), alpha = 0.2) +
+  scale_y_log10() +
+  labs(title = "Track Error Comparison (Log Scale)",
+       x = "Lead Time (hours)",
+       y = "Track Error (miles, log scale)",
+       color = "Forecast Type",
+       fill = "Forecast Type") +
+  theme_minimal()
+```
+
