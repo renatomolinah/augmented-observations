@@ -12,9 +12,11 @@ library(geosphere)
 
 # Set the working directory to the project root
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+output_dir <- "Hurricanes_output/augmented_obs"
 ```
 
-Load all data
+# 1. Load and process the track data
 
 ```{r}
 ATCF_headers <- c("BASIN", "CY", "YYYYMMDDHH", "TECHNUM", "TECH", "TAU", 
@@ -34,7 +36,7 @@ read_track <- function(file, type) {
     # Enforce types
     mutate(BASIN = as.character(BASIN),
            CY = as.integer(CY),
-           YYYYMMDDHH = as.character(YYYYMMDDHH),
+           file_time = as.character(YYYYMMDDHH),
            TAU = as.integer(TAU),
            LAT = as.character(LAT),
            LON = as.character(LON),
@@ -45,10 +47,11 @@ read_track <- function(file, type) {
     mutate(LAT = ifelse(str_detect(LAT, "S"), -as.numeric(str_sub(LAT,1,-2))/10, as.numeric(str_sub(LAT,1,-2))/10),
            LON = ifelse(str_detect(LON, "W"), -as.numeric(str_sub(LON,1,-2))/10, as.numeric(str_sub(LON,1,-2))/10),
            forecast_type = type,
-           forecast_time = ymd_h(YYYYMMDDHH) + hours(TAU),
+           forecast_time = ymd_h(file_time) + hours(TAU),
            hurricane_id = paste(BASIN, CY, year(forecast_time), sep = "_")) %>%
     select(hurricane_id,
            hurricane_name = STORMNAME,
+           file_time,
            forecast_type,
            forecast_time,
            lead_time = TAU,
@@ -86,19 +89,44 @@ tracks_no <- tracks_no %>%
          vmax_no = vmax)
 
 
-# Merge All and No
-tracks_forecast <- right_join(tracks_all %>% select(-forecast_type),
+# Merge All and No keeping only the matches
+tracks_forecast <- inner_join(tracks_all %>% select(-forecast_type),
                               tracks_no %>% select(-forecast_type), 
-                              by = c("hurricane_id", "forecast_time", "lead_time"))
+                              by = c("hurricane_id", "file_time", "forecast_time", "lead_time"))
 
-# Merge with Best track
+# Merge with Best track (this will lead to cartesian match because of different lead times for a single prediction time)
 tracks_data <- inner_join(tracks_forecast,
-                             tracks_best  %>% select(-forecast_type, -lead_time), 
+                             tracks_best  %>% select(-file_time, -forecast_type, -lead_time), 
                               by = c("hurricane_id", "forecast_time")) %>%
                 arrange(hurricane_id, forecast_time, lead_time)
-              
+             
 ```
 
+# 2. Plot track data
+
+Plot the tracks for each storm using the full data available for best, all, and no forecasts
+
+```{r}
+unique_ids <- unique(tracks_data$hurricane_id)
+
+for (hurr_id in unique_ids) {
+  p <- ggplot() +
+    geom_path(data = tracks_best %>% filter(hurricane_id == hurr_id), aes(x = lon_best, y = lat_best), color = "black", size = 1.5, arrow = arrow(ends = "last")) +
+    geom_path(data = tracks_all %>% filter(hurricane_id == hurr_id), aes(x = lon_all, y = lat_all, group = file_time), color = "blue", size = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
+    geom_path(data = tracks_no %>% filter(hurricane_id == hurr_id), aes(x = lon_no, y = lat_no, group = file_time), color = "red", size = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
+    labs(title = paste("Tracks for", hurr_id),
+         x = "Longitude",
+         y = "Latitude") +
+    theme_minimal() +
+    coord_fixed() +
+    theme(legend.position = "none")
+  
+  ggsave(filename = file.path(output_dir, "track_errors", paste0(hurr_id, ".png")), plot = p, width = 8, height = 6, dpi = 150)
+}
+```
+
+
+# 3. Calculate Euclidean distances and plot errors
 
 Calculate Euclidian distances to prediction nodes
 
@@ -118,10 +146,9 @@ There is a little variation of lead time multiples
 
 ```{r}
 table(tracks_data$lead_time)
-
 ```
 
-Group into groups of 6 hours
+Group into ranges of 6 hours to account for minor changes in hours
 
 ```{r}
 tracks_data_grouped <- tracks_data %>%
@@ -155,7 +182,7 @@ ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
        color = "Forecast Type",
        fill = "Forecast Type") +
   theme_minimal()
-
+ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison.png"), width = 8, height = 6, dpi = 150)
 ```
 Same as above but with miles in log scale
 
@@ -172,6 +199,7 @@ ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
        color = "Forecast Type",
        fill = "Forecast Type") +
   theme_minimal()
+ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison_log.png"), width = 8, height = 6, dpi = 150)
 ```
 
 Now, for each storm
@@ -184,10 +212,10 @@ tracks_data_grouped_hurr <- tracks_data %>%
     n = n(),
     hurricane_name = last(hurricane_name),
     mean_track_error_all = mean(track_error_all, na.rm = TRUE),
-    mean_track_error_no = mean(track_error_no, na.rm = TRUE)
+    mean_track_error_no = mean(track_error_no, na.rm = TRUE),
+    tracks_max_vmax = max(vmax_best, na.rm = TRUE),
   ) %>%
   mutate(error_gain = mean_track_error_no - mean_track_error_all)
-
 ```
 
 ```{r}
@@ -199,6 +227,30 @@ ggplot(tracks_data_grouped_hurr, aes(x = lead_time_group)) +
        y = "Track Error difference (miles)",
        color = "Hurricane") +
   theme_minimal()
-
+ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane.png"), width = 8, height = 6, dpi = 150)
 ```
 
+What storms were the most intense? To do so, calculate the maximum vmax_best for each storm and rank them.
+
+```{r}
+tracks_max_vmax <- tracks_best %>%
+  group_by(hurricane_id) %>%
+  summarise(max_vmax_best = max(vmax_best, na.rm = TRUE),
+            hurricane_name = last(hurricane_name)) %>%
+  arrange(desc(max_vmax_best))
+tracks_max_vmax
+``` 
+
+Color code intensity of the storm in the plot
+```{r}
+ggplot(tracks_data_grouped_hurr, aes(x = lead_time_group)) +
+  geom_line(aes(y = error_gain, group = hurricane_name, color = tracks_max_vmax), alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "gray20", size = 0.5) +
+  labs(title = "Track Error Reduction with Augmented Obs.",
+       x = "Lead Time (hours)",
+       y = "Track Error difference (miles)",
+       color = "Hurricane") +
+  scale_color_gradient(low = "yellow", high = "blue", name = "Max VMAX", transform = "log10") +
+  theme_minimal()
+ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane_intensity.png"), width = 8, height = 6, dpi = 150)
+```
