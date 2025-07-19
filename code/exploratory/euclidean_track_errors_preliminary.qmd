@@ -174,3 +174,31 @@ ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
   theme_minimal()
 ```
 
+Now, for each storm
+
+```{r}
+tracks_data_grouped_hurr <- tracks_data %>%
+  mutate(lead_time_group = (lead_time %/% 6)*6) %>%
+  group_by(hurricane_id, lead_time_group) %>%
+  summarise(
+    n = n(),
+    hurricane_name = last(hurricane_name),
+    mean_track_error_all = mean(track_error_all, na.rm = TRUE),
+    mean_track_error_no = mean(track_error_no, na.rm = TRUE)
+  ) %>%
+  mutate(error_gain = mean_track_error_no - mean_track_error_all)
+
+```
+
+```{r}
+ggplot(tracks_data_grouped_hurr, aes(x = lead_time_group)) +
+  geom_line(aes(y = error_gain, color = hurricane_name), alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "gray20", size = 0.5) +
+  labs(title = "Track Error Reduction with Augmented Obs.",
+       x = "Lead Time (hours)",
+       y = "Track Error difference (miles)",
+       color = "Hurricane") +
+  theme_minimal()
+
+```
+
