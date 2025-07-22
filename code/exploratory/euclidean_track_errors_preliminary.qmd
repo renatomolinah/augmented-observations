@@ -13,6 +13,8 @@ library(geosphere)
 # Set the working directory to the project root
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 
+SAVE_FIG <- FALSE
+
 output_dir <- "Hurricanes_output/augmented_obs"
 ```
 
@@ -111,20 +113,40 @@ unique_ids <- unique(tracks_data$hurricane_id)
 
 for (hurr_id in unique_ids) {
   p <- ggplot() +
-    geom_path(data = tracks_best %>% filter(hurricane_id == hurr_id), aes(x = lon_best, y = lat_best), color = "black", size = 1.5, arrow = arrow(ends = "last")) +
-    geom_path(data = tracks_all %>% filter(hurricane_id == hurr_id), aes(x = lon_all, y = lat_all, group = file_time), color = "blue", size = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
-    geom_path(data = tracks_no %>% filter(hurricane_id == hurr_id), aes(x = lon_no, y = lat_no, group = file_time), color = "red", size = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
+    geom_path(data = tracks_best %>% filter(hurricane_id == hurr_id), aes(x = lon_best, y = lat_best, color = "Best"), linewidth = 1.5, arrow = arrow(ends = "last")) +
+    geom_path(data = tracks_all %>% filter(hurricane_id == hurr_id), aes(x = lon_all, y = lat_all, group = file_time, color = "All"), linewidth = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
+    geom_path(data = tracks_no %>% filter(hurricane_id == hurr_id), aes(x = lon_no, y = lat_no, group = file_time, color = "No"), linewidth = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
     labs(title = paste("Tracks for", hurr_id),
          x = "Longitude",
          y = "Latitude") +
     theme_minimal() +
+    scale_color_manual(values = c("Best" = "black", "All" = "blue", "No" = "red"), name = "Forecast Type") +
     coord_fixed() +
-    theme(legend.position = "none")
-  
-  ggsave(filename = file.path(output_dir, "track_errors", paste0(hurr_id, ".png")), plot = p, width = 8, height = 6, dpi = 150)
+    theme(legend.position = "right")
+
+  if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", paste0(hurr_id, ".png")), plot = p, width = 8, height = 6, dpi = 150)
 }
 ```
 
+Next, plot tracks only with matched data points (with the tracks_data dataframe)
+
+```{r}
+for (hurr_id in unique_ids) {
+  p <- ggplot(tracks_data %>% filter(hurricane_id == hurr_id)) +
+    geom_path(aes(x = lon_best, y = lat_best, color = "Best"), linewidth = 1.5, arrow = arrow(ends = "last")) +
+    geom_path(aes(x = lon_all, y = lat_all, group = file_time, color = "All"), linewidth = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
+    geom_path(aes(x = lon_no, y = lat_no, group = file_time, color = "No"), linewidth = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
+    labs(title = paste("Matched Tracks for", hurr_id),
+         x = "Longitude",
+         y = "Latitude") +
+    theme_minimal() +
+    scale_color_manual(values = c("Best" = "black", "All" = "blue", "No" = "red"), name = "Forecast Type") +
+    coord_fixed() +
+    theme(legend.position = "right")
+  
+  if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", paste0(hurr_id, "_matched.png")), plot = p, width = 8, height = 6, dpi = 150)
+}
+```
 
 # 3. Calculate Euclidean distances and plot errors
 
@@ -182,8 +204,9 @@ ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
        color = "Forecast Type",
        fill = "Forecast Type") +
   theme_minimal()
-ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison.png"), width = 8, height = 6, dpi = 150)
+if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison.png"), width = 8, height = 6, dpi = 150)
 ```
+
 Same as above but with miles in log scale
 
 ```{r}
@@ -199,7 +222,7 @@ ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
        color = "Forecast Type",
        fill = "Forecast Type") +
   theme_minimal()
-ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison_log.png"), width = 8, height = 6, dpi = 150)
+if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison_log.png"), width = 8, height = 6, dpi = 150)
 ```
 
 Now, for each storm
@@ -227,7 +250,7 @@ ggplot(tracks_data_grouped_hurr, aes(x = lead_time_group)) +
        y = "Track Error difference (miles)",
        color = "Hurricane") +
   theme_minimal()
-ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane.png"), width = 8, height = 6, dpi = 150)
+if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane.png"), width = 8, height = 6, dpi = 150)
 ```
 
 What storms were the most intense? To do so, calculate the maximum vmax_best for each storm and rank them.
@@ -252,5 +275,47 @@ ggplot(tracks_data_grouped_hurr, aes(x = lead_time_group)) +
        color = "Hurricane") +
   scale_color_gradient(low = "yellow", high = "blue", name = "Max VMAX", transform = "log10") +
   theme_minimal()
-ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane_intensity.png"), width = 8, height = 6, dpi = 150)
+if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane_intensity.png"), width = 8, height = 6, dpi = 150)
+```
+
+
+# 3.1 Focusing on strong storms
+
+We drop the storms with maximum VMAX below 100 knots (and Michael, which is an outlier of errors) and plot the errors again
+```{r}
+drop_list <- c("AL_14_2018", # Michael
+                tracks_max_vmax %>% filter(max_vmax_best < 100) %>% pull (hurricane_id))
+
+
+tracks_data_grouped_strong <- tracks_data %>%
+  filter(!hurricane_id %in% drop_list) %>%
+  mutate(lead_time_group = (lead_time %/% 6)*6) %>%
+  group_by(lead_time_group) %>%
+  summarise(
+    n = n(),
+    mean_track_error_all = mean(track_error_all, na.rm = TRUE),
+    sd_track_error_all = sd(track_error_all, na.rm = TRUE),
+    p05_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.05),
+    p95_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.95),
+    mean_track_error_no = mean(track_error_no, na.rm = TRUE),
+    sd_track_error_no = sd(track_error_no, na.rm = TRUE),
+    p05_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.05),
+    p95_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.95),
+  )
+```
+
+Plot a graph comparing mean errors of all vs no with shades for intervals 05--95
+```{r}
+ggplot(tracks_data_grouped_strong, aes(x = lead_time_group)) +
+  geom_line(aes(y = mean_track_error_all, color = "All")) +
+  geom_ribbon(aes(ymin = p05_track_error_all, ymax = p95_track_error_all, fill = "All"), alpha = 0.2) +
+  geom_line(aes(y = mean_track_error_no, color = "No")) +
+  geom_ribbon(aes(ymin = p05_track_error_no, ymax = p95_track_error_no, fill = "No"), alpha = 0.2) +
+  labs(title = "Track Error Comparison, Strong Storms Only",
+       x = "Lead Time (hours)",
+       y = "Track Error (miles)",
+       color = "Forecast Type",
+       fill = "Forecast Type") +
+  theme_minimal()
+if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison_strong.png"), width = 8, height = 6, dpi = 150)
 ```
