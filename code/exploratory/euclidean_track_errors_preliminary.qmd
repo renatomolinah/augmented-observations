@@ -14,6 +14,7 @@ library(geosphere)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 
 SAVE_FIG <- FALSE
+SAVE_DATA <- FALSE
 
 output_dir <- "Hurricanes_output/augmented_obs"
 ```
@@ -31,10 +32,38 @@ ATCF_headers <- c("BASIN", "CY", "YYYYMMDDHH", "TECHNUM", "TECH", "TAU",
                                "SEAS4")
 
 
+# The raw DAT files have inconsistent number of columns, with first rows ending without the last columns.
+# The code below fixes that by reading the file and forcing it to complete rows_append()
+# Read the file as plain text
+complete_DAT_rows <- function(file, type) {
+    lines <- readLines(file)
+    
+    # Ensure all rows have the correct number of columns by appending commas
+    lines <- sapply(lines, function(line) {
+      cols <- strsplit(line, ",")[[1]]
+      if (length(cols) < length(ATCF_headers)) {
+        paste(c(cols, rep("", length(ATCF_headers) - length(cols))), collapse = ",")
+      } else {
+        line
+      }
+    })
+  return(lines)
+}
+
+
+
 # Function to process each file
 read_track <- function(file, type) {
-  read_csv(file, col_names = ATCF_headers) %>%
-    select(BASIN, CY, YYYYMMDDHH, TAU, LAT, LON, VMAX, STORMNAME) %>%
+    
+    # Read the file and complete rows
+    lines <- complete_DAT_rows(file, type)
+
+    # Write the corrected lines to a temporary file
+    temp_file <- tempfile()
+    writeLines(lines, temp_file)
+
+    read_csv(temp_file, col_names = ATCF_headers, show_col_types = FALSE) %>%
+    select(BASIN, CY, YYYYMMDDHH, TAU, LAT, LON, VMAX, RAD1, RAD2, RAD3, RAD4, STORMNAME) %>%
     # Enforce types
     mutate(BASIN = as.character(BASIN),
            CY = as.integer(CY),
@@ -43,6 +72,10 @@ read_track <- function(file, type) {
            LAT = as.character(LAT),
            LON = as.character(LON),
            VMAX = as.numeric(VMAX),
+           RAD1 = as.integer(RAD1),
+           RAD2 = as.integer(RAD2),
+           RAD3 = as.integer(RAD3),
+           RAD4 = as.integer(RAD4),
            STORMNAME = as.character(STORMNAME)) %>%
     distinct() %>%
     # Convert latitude to decimal format: Format ix XXXH. Divide XXX by 10. Then, if H = S, assign negative sign
@@ -59,7 +92,11 @@ read_track <- function(file, type) {
            lead_time = TAU,
            lat = LAT,
            lon = LON,
-           vmax = VMAX)
+           vmax = VMAX,
+           rad1 = RAD1,
+           rad2 = RAD2,
+           rad3 = RAD3,
+           rad4 = RAD4)
 }
 
 # Load the best track data
@@ -68,7 +105,11 @@ tracks_best <- dat_files_best %>% map_dfr(read_track, type = "Best")
 tracks_best <- tracks_best %>%
   rename(lat_best = lat,
          lon_best = lon,
-         vmax_best = vmax)
+         vmax_best = vmax,
+         rad1_best = rad1,
+         rad2_best = rad2,
+         rad3_best = rad3,
+         rad4_best = rad4)
 
 
 # Load the ALL track data
@@ -78,7 +119,11 @@ tracks_all <- tracks_all %>%
   select(-hurricane_name) %>%
   rename(lat_all = lat,
          lon_all = lon,
-         vmax_all = vmax)
+         vmax_all = vmax,
+         rad1_all = rad1,
+         rad2_all = rad2,
+         rad3_all = rad3,
+         rad4_all = rad4)
 
 
 # Load the NO track data
@@ -88,7 +133,11 @@ tracks_no <- tracks_no %>%
   select(-hurricane_name) %>%
   rename(lat_no = lat,
          lon_no = lon,
-         vmax_no = vmax)
+         vmax_no = vmax,
+         rad1_no = rad1,
+         rad2_no = rad2,
+         rad3_no = rad3,
+         rad4_no = rad4)
 
 
 # Merge All and No keeping only the matches
@@ -101,7 +150,16 @@ tracks_data <- inner_join(tracks_forecast,
                              tracks_best  %>% select(-file_time, -forecast_type, -lead_time), 
                               by = c("hurricane_id", "forecast_time")) %>%
                 arrange(hurricane_id, forecast_time, lead_time)
-             
+
+# Save all tracks files
+if (SAVE_DATA) {
+  write_csv(tracks_best, file.path(output_dir, "tracks_best.csv"))
+  write_csv(tracks_all, file.path(output_dir, "tracks_all.csv"))
+  write_csv(tracks_no, file.path(output_dir, "tracks_no.csv"))
+  write_csv(tracks_forecast, file.path(output_dir, "tracks_forecast.csv"))
+  write_csv(tracks_data, file.path(output_dir, "tracks_data.csv"))
+}
+
 ```
 
 # 2. Plot track data
