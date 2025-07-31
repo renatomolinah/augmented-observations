@@ -22,144 +22,161 @@ output_dir <- "Hurricanes_output/augmented_obs"
 # 1. Load and process the track data
 
 ```{r}
-ATCF_headers <- c("BASIN", "CY", "YYYYMMDDHH", "TECHNUM", "TECH", "TAU", 
-                               "LAT", "LON", "VMAX", "MSLP", "TY", "RAD", 
-                               "WINDCODE", "RAD1", "RAD2", "RAD3", "RAD4", 
-                               "POUTER", "ROUTER", "RMW", "GUSTS", "EYE", 
-                               "SUBREGION", "MAXSEAS", "INITIALS", "DIR", 
-                               "SPEED", "STORMNAME", "DEPTH", "SEAS", 
-                               "SEASCODE", "SEAS1", "SEAS2", "SEAS3", 
-                               "SEAS4")
+if (!SAVE_DATA) {
+  tracks_best <- read_csv(file.path(output_dir, "tracks_best.csv"), show_col_types = FALSE)
+  tracks_all <- read_csv(file.path(output_dir, "tracks_all.csv"), show_col_types = FALSE)
+  tracks_no <- read_csv(file.path(output_dir, "tracks_no.csv"), show_col_types = FALSE)
+  tracks_forecast <- read_csv(file.path(output_dir, "tracks_forecast.csv"), show_col_types = FALSE)
+  tracks_data <- read_csv(file.path(output_dir, "tracks_data.csv"), show_col_types = FALSE)
+} else {
+  ATCF_headers <- c("BASIN", "CY", "YYYYMMDDHH", "TECHNUM", "TECH", "TAU", 
+                                "LAT", "LON", "VMAX", "MSLP", "TY", "RAD", 
+                                "WINDCODE", "RAD1", "RAD2", "RAD3", "RAD4", 
+                                "POUTER", "ROUTER", "RMW", "GUSTS", "EYE", 
+                                "SUBREGION", "MAXSEAS", "INITIALS", "DIR", 
+                                "SPEED", "STORMNAME", "DEPTH", "SEAS", 
+                                "SEASCODE", "SEAS1", "SEAS2", "SEAS3", 
+                                "SEAS4")
 
 
-# The raw DAT files have inconsistent number of columns, with first rows ending without the last columns.
-# The code below fixes that by reading the file and forcing it to complete rows_append()
-# Read the file as plain text
-complete_DAT_rows <- function(file, type) {
-    lines <- readLines(file)
-    
-    # Ensure all rows have the correct number of columns by appending commas
-    lines <- sapply(lines, function(line) {
-      cols <- strsplit(line, ",")[[1]]
-      if (length(cols) < length(ATCF_headers)) {
-        paste(c(cols, rep("", length(ATCF_headers) - length(cols))), collapse = ",")
-      } else {
-        line
-      }
-    })
-  return(lines)
+  # The raw DAT files have inconsistent number of columns, with first rows ending without the last columns.
+  # The code below fixes that by reading the file and forcing it to complete rows_append()
+  # Read the file as plain text
+  complete_DAT_rows <- function(file, type) {
+      lines <- readLines(file)
+      
+      # Ensure all rows have the correct number of columns by appending commas
+      lines <- sapply(lines, function(line) {
+        cols <- strsplit(line, ",")[[1]]
+        if (length(cols) < length(ATCF_headers)) {
+          paste(c(cols, rep("", length(ATCF_headers) - length(cols))), collapse = ",")
+        } else {
+          line
+        }
+      })
+    return(lines)
+  }
+
+
+
+  # Function to process each file
+  read_track <- function(file, type) {
+      
+      # Read the file and complete rows
+      lines <- complete_DAT_rows(file, type)
+
+      # Write the corrected lines to a temporary file
+      temp_file <- tempfile()
+      writeLines(lines, temp_file)
+
+      read_csv(temp_file, col_names = ATCF_headers, show_col_types = FALSE) %>%
+      select(BASIN, CY, YYYYMMDDHH, TAU, LAT, LON, VMAX, RAD1, RAD2, RAD3, RAD4, STORMNAME) %>%
+      # Enforce types
+      mutate(BASIN = as.character(BASIN),
+            CY = as.integer(CY),
+            file_time = as.character(YYYYMMDDHH),
+            TAU = as.integer(TAU),
+            LAT = as.character(LAT),
+            LON = as.character(LON),
+            VMAX = as.numeric(VMAX),
+            RAD1 = as.integer(RAD1),
+            RAD2 = as.integer(RAD2),
+            RAD3 = as.integer(RAD3),
+            RAD4 = as.integer(RAD4),
+            STORMNAME = as.character(STORMNAME)) %>%
+      distinct() %>%
+      # Convert latitude to decimal format: Format ix XXXH. Divide XXX by 10. Then, if H = S, assign negative sign
+      mutate(LAT = ifelse(str_detect(LAT, "S"), -as.numeric(str_sub(LAT,1,-2))/10, as.numeric(str_sub(LAT,1,-2))/10),
+            LON = ifelse(str_detect(LON, "W"), -as.numeric(str_sub(LON,1,-2))/10, as.numeric(str_sub(LON,1,-2))/10),
+            forecast_type = type,
+            forecast_time = ymd_h(file_time) + hours(TAU),
+            hurricane_id = paste(BASIN, CY, year(forecast_time), sep = "_")) %>%
+      select(hurricane_id,
+            hurricane_name = STORMNAME,
+            file_time,
+            forecast_type,
+            forecast_time,
+            lead_time = TAU,
+            lat = LAT,
+            lon = LON,
+            vmax = VMAX,
+            rad1 = RAD1,
+            rad2 = RAD2,
+            rad3 = RAD3,
+            rad4 = RAD4)
+  }
+
+  # Load the best track data
+  dat_files_best <- list.files(path = file.path(here(), "Hurricane_data/NHC_files"), pattern = "\\.dat$", full.names = TRUE)
+  tracks_best <- dat_files_best %>% map_dfr(read_track, type = "Best")
+  tracks_best <- tracks_best %>%
+    rename(lat_best = lat,
+          lon_best = lon,
+          vmax_best = vmax,
+          rad1_best = rad1,
+          rad2_best = rad2,
+          rad3_best = rad3,
+          rad4_best = rad4)
+
+
+  # Load the ALL track data
+  dat_files_all <- list.files(path = file.path(here(), "Hurricane_data/NHC_files/ALL"), pattern = "\\.atcfunix$", full.names = TRUE)
+  tracks_all <- dat_files_all %>% map_dfr(read_track, type = "All")
+  tracks_all <- tracks_all %>%
+    select(-hurricane_name) %>%
+    rename(lat_all = lat,
+          lon_all = lon,
+          vmax_all = vmax,
+          rad1_all = rad1,
+          rad2_all = rad2,
+          rad3_all = rad3,
+          rad4_all = rad4)
+
+
+  # Load the NO track data
+  dat_files_no <- list.files(path = file.path(here(), "Hurricane_data/NHC_files/NO"), pattern = "\\.atcfunix$", full.names = TRUE)
+  tracks_no <- dat_files_no %>% map_dfr(read_track, type = "No")
+  tracks_no <- tracks_no %>%
+    select(-hurricane_name) %>%
+    rename(lat_no = lat,
+          lon_no = lon,
+          vmax_no = vmax,
+          rad1_no = rad1,
+          rad2_no = rad2,
+          rad3_no = rad3,
+          rad4_no = rad4)
+
+
+  # Merge All and No keeping only the matches
+  tracks_forecast <- inner_join(tracks_all %>% select(-forecast_type),
+                                tracks_no %>% select(-forecast_type), 
+                                by = c("hurricane_id", "file_time", "forecast_time", "lead_time"))
+
+  # Merge with Best track (this will lead to cartesian match because of different lead times for a single prediction time)
+  tracks_data <- inner_join(tracks_forecast,
+                              tracks_best  %>% select(-file_time, -forecast_type, -lead_time), 
+                                by = c("hurricane_id", "forecast_time")) %>%
+                  arrange(hurricane_id, forecast_time, lead_time)
+
+  # Save all tracks files
+    write_csv(tracks_best, file.path(output_dir, "tracks_best.csv"))
+    write_csv(tracks_all, file.path(output_dir, "tracks_all.csv"))
+    write_csv(tracks_no, file.path(output_dir, "tracks_no.csv"))
+    write_csv(tracks_forecast, file.path(output_dir, "tracks_forecast.csv"))
+    write_csv(tracks_data, file.path(output_dir, "tracks_data.csv"))
 }
+```
 
+Merge with landfall data and calculate time relative to landfall
 
-
-# Function to process each file
-read_track <- function(file, type) {
-    
-    # Read the file and complete rows
-    lines <- complete_DAT_rows(file, type)
-
-    # Write the corrected lines to a temporary file
-    temp_file <- tempfile()
-    writeLines(lines, temp_file)
-
-    read_csv(temp_file, col_names = ATCF_headers, show_col_types = FALSE) %>%
-    select(BASIN, CY, YYYYMMDDHH, TAU, LAT, LON, VMAX, RAD1, RAD2, RAD3, RAD4, STORMNAME) %>%
-    # Enforce types
-    mutate(BASIN = as.character(BASIN),
-           CY = as.integer(CY),
-           file_time = as.character(YYYYMMDDHH),
-           TAU = as.integer(TAU),
-           LAT = as.character(LAT),
-           LON = as.character(LON),
-           VMAX = as.numeric(VMAX),
-           RAD1 = as.integer(RAD1),
-           RAD2 = as.integer(RAD2),
-           RAD3 = as.integer(RAD3),
-           RAD4 = as.integer(RAD4),
-           STORMNAME = as.character(STORMNAME)) %>%
-    distinct() %>%
-    # Convert latitude to decimal format: Format ix XXXH. Divide XXX by 10. Then, if H = S, assign negative sign
-    mutate(LAT = ifelse(str_detect(LAT, "S"), -as.numeric(str_sub(LAT,1,-2))/10, as.numeric(str_sub(LAT,1,-2))/10),
-           LON = ifelse(str_detect(LON, "W"), -as.numeric(str_sub(LON,1,-2))/10, as.numeric(str_sub(LON,1,-2))/10),
-           forecast_type = type,
-           forecast_time = ymd_h(file_time) + hours(TAU),
-           hurricane_id = paste(BASIN, CY, year(forecast_time), sep = "_")) %>%
-    select(hurricane_id,
-           hurricane_name = STORMNAME,
-           file_time,
-           forecast_type,
-           forecast_time,
-           lead_time = TAU,
-           lat = LAT,
-           lon = LON,
-           vmax = VMAX,
-           rad1 = RAD1,
-           rad2 = RAD2,
-           rad3 = RAD3,
-           rad4 = RAD4)
-}
-
-# Load the best track data
-dat_files_best <- list.files(path = file.path(here(), "Hurricane_data/NHC_files"), pattern = "\\.dat$", full.names = TRUE)
-tracks_best <- dat_files_best %>% map_dfr(read_track, type = "Best")
-tracks_best <- tracks_best %>%
-  rename(lat_best = lat,
-         lon_best = lon,
-         vmax_best = vmax,
-         rad1_best = rad1,
-         rad2_best = rad2,
-         rad3_best = rad3,
-         rad4_best = rad4)
-
-
-# Load the ALL track data
-dat_files_all <- list.files(path = file.path(here(), "Hurricane_data/NHC_files/ALL"), pattern = "\\.atcfunix$", full.names = TRUE)
-tracks_all <- dat_files_all %>% map_dfr(read_track, type = "All")
-tracks_all <- tracks_all %>%
+```{r}
+landfall_data <- read_csv(file.path(here(), "Hurricane_data/NHC_files", "landfall_times.csv")) %>%
   select(-hurricane_name) %>%
-  rename(lat_all = lat,
-         lon_all = lon,
-         vmax_all = vmax,
-         rad1_all = rad1,
-         rad2_all = rad2,
-         rad3_all = rad3,
-         rad4_all = rad4)
+  mutate(landfall_time = ymd_h(landfall_time))
 
-
-# Load the NO track data
-dat_files_no <- list.files(path = file.path(here(), "Hurricane_data/NHC_files/NO"), pattern = "\\.atcfunix$", full.names = TRUE)
-tracks_no <- dat_files_no %>% map_dfr(read_track, type = "No")
-tracks_no <- tracks_no %>%
-  select(-hurricane_name) %>%
-  rename(lat_no = lat,
-         lon_no = lon,
-         vmax_no = vmax,
-         rad1_no = rad1,
-         rad2_no = rad2,
-         rad3_no = rad3,
-         rad4_no = rad4)
-
-
-# Merge All and No keeping only the matches
-tracks_forecast <- inner_join(tracks_all %>% select(-forecast_type),
-                              tracks_no %>% select(-forecast_type), 
-                              by = c("hurricane_id", "file_time", "forecast_time", "lead_time"))
-
-# Merge with Best track (this will lead to cartesian match because of different lead times for a single prediction time)
-tracks_data <- inner_join(tracks_forecast,
-                             tracks_best  %>% select(-file_time, -forecast_type, -lead_time), 
-                              by = c("hurricane_id", "forecast_time")) %>%
-                arrange(hurricane_id, forecast_time, lead_time)
-
-# Save all tracks files
-if (SAVE_DATA) {
-  write_csv(tracks_best, file.path(output_dir, "tracks_best.csv"))
-  write_csv(tracks_all, file.path(output_dir, "tracks_all.csv"))
-  write_csv(tracks_no, file.path(output_dir, "tracks_no.csv"))
-  write_csv(tracks_forecast, file.path(output_dir, "tracks_forecast.csv"))
-  write_csv(tracks_data, file.path(output_dir, "tracks_data.csv"))
-}
-
+tracks_data <- tracks_data %>%
+  left_join(landfall_data, by = "hurricane_id") %>%
+  mutate(time_to_landfall = as.numeric(difftime(landfall_time, ymd_h(file_time), units = "hours")))
 ```
 
 # 2. Plot track data
@@ -172,8 +189,8 @@ unique_ids <- unique(tracks_data$hurricane_id)
 for (hurr_id in unique_ids) {
   p <- ggplot() +
     geom_path(data = tracks_best %>% filter(hurricane_id == hurr_id), aes(x = lon_best, y = lat_best, color = "Best"), linewidth = 1.5, arrow = arrow(ends = "last")) +
-    geom_path(data = tracks_all %>% filter(hurricane_id == hurr_id), aes(x = lon_all, y = lat_all, group = file_time, color = "All"), linewidth = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
-    geom_path(data = tracks_no %>% filter(hurricane_id == hurr_id), aes(x = lon_no, y = lat_no, group = file_time, color = "No"), linewidth = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
+    geom_path(data = tracks_all %>% filter(hurricane_id == hurr_id), aes(x = lon_all, y = lat_all, group = file_time, color = "All"), linewidth = 0.3, alpha = 0.3) +
+    geom_path(data = tracks_no %>% filter(hurricane_id == hurr_id), aes(x = lon_no, y = lat_no, group = file_time, color = "No"), linewidth = 0.3, alpha = 0.3) +
     labs(title = paste("Tracks for", hurr_id),
          x = "Longitude",
          y = "Latitude") +
@@ -192,8 +209,8 @@ Next, plot tracks only with matched data points (with the tracks_data dataframe)
 for (hurr_id in unique_ids) {
   p <- ggplot(tracks_data %>% filter(hurricane_id == hurr_id)) +
     geom_path(aes(x = lon_best, y = lat_best, color = "Best"), linewidth = 1.5, arrow = arrow(ends = "last")) +
-    geom_path(aes(x = lon_all, y = lat_all, group = file_time, color = "All"), linewidth = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
-    geom_path(aes(x = lon_no, y = lat_no, group = file_time, color = "No"), linewidth = 0.7, alpha = 0.5, arrow = arrow(ends = "last")) +
+    geom_path(aes(x = lon_all, y = lat_all, group = file_time, color = "All"), linewidth = 0.3, alpha = 0.3) +
+    geom_path(aes(x = lon_no, y = lat_no, group = file_time, color = "No"), linewidth = 0.7, alpha = 0.3) +
     labs(title = paste("Matched Tracks for", hurr_id),
          x = "Longitude",
          y = "Latitude") +
@@ -232,8 +249,16 @@ Group into ranges of 6 hours to account for minor changes in hours
 
 ```{r}
 tracks_data_grouped <- tracks_data %>%
-  mutate(lead_time_group = (lead_time %/% 6)*6) %>%
-  group_by(lead_time_group) %>%
+  mutate(lead_days_group = (lead_time %/% 24),
+         dtl_group = (time_to_landfall %/% 24),
+        #  dtl_group = cut(
+        #    time_to_landfall/24,
+        #    breaks = seq(-9, 18, by = 3),
+        #    right = FALSE,
+        #    include.lowest = TRUE
+        #  ),
+         error_reduc = track_error_no - track_error_all) %>%
+  group_by(lead_days_group, dtl_group) %>%
   summarise(
     n = n(),
     mean_track_error_all = mean(track_error_all, na.rm = TRUE),
@@ -244,51 +269,79 @@ tracks_data_grouped <- tracks_data %>%
     sd_track_error_no = sd(track_error_no, na.rm = TRUE),
     p05_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.05),
     p95_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.95),
+    mean_error_reduc = mean(error_reduc, na.rm = TRUE),
+    sd_error_reduc = sd(error_reduc, na.rm = TRUE),
+    p05_error_reduc = quantile(error_reduc, na.rm = TRUE, probs = 0.05),
+    p95_error_reduc = quantile(error_reduc, na.rm = TRUE, probs = 0.95)
   )
-
-
 ```
 
 Plot a graph comparing mean errors of all vs no with shades for intervals 05--95
 ```{r}
-ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
+ggplot(tracks_data_grouped %>% filter(dtl_group < 0 & dtl_group >= -6), aes(x = lead_days_group)) +
+  geom_vline(aes(xintercept = -dtl_group), color = "orange", linetype = "dashed") +
   geom_line(aes(y = mean_track_error_all, color = "All")) +
   geom_ribbon(aes(ymin = p05_track_error_all, ymax = p95_track_error_all, fill = "All"), alpha = 0.2) +
   geom_line(aes(y = mean_track_error_no, color = "No")) +
   geom_ribbon(aes(ymin = p05_track_error_no, ymax = p95_track_error_no, fill = "No"), alpha = 0.2) +
+  facet_wrap(~ dtl_group, ncol = 3) +
+  xlim(0, 5) +
   labs(title = "Track Error Comparison",
-       x = "Lead Time (hours)",
+       subtitle = "Grouped by forecast run to landfall gap (orange line)",
+       x = "Lead days",
        y = "Track Error (miles)",
        color = "Forecast Type",
        fill = "Forecast Type") +
   theme_minimal()
-if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison.png"), width = 8, height = 6, dpi = 150)
+if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison_pre_lf.png"), width = 8, height = 6, dpi = 150)
 ```
 
-Same as above but with miles in log scale
+Same as above but with relative reduction in errors (i.e, errors of ALL minus errors of NO diveded by errors of NO)
 
 ```{r}
-ggplot(tracks_data_grouped, aes(x = lead_time_group)) +
-  geom_line(aes(y = mean_track_error_all, color = "All")) +
-  geom_ribbon(aes(ymin = p05_track_error_all, ymax = p95_track_error_all, fill = "All"), alpha = 0.2) +
-  geom_line(aes(y = mean_track_error_no, color = "No")) +
-  geom_ribbon(aes(ymin = p05_track_error_no, ymax = p95_track_error_no, fill = "No"), alpha = 0.2) +
-  scale_y_log10() +
-  labs(title = "Track Error Comparison (Log Scale)",
-       x = "Lead Time (hours)",
-       y = "Track Error (miles, log scale)",
-       color = "Forecast Type",
-       fill = "Forecast Type") +
+ggplot(tracks_data_grouped %>% filter(dtl_group < 0 & dtl_group >= -6), aes(x = lead_days_group)) +
+  geom_vline(aes(xintercept = -dtl_group), color = "orange", linetype = "dashed") +
+  geom_hline(yintercept = 0, color = "red", linewidth = 0.5) +
+  geom_line(aes(y = mean_error_reduc)) +
+  geom_ribbon(aes(ymin = p05_error_reduc, ymax = p95_error_reduc), fill = "blue", alpha = 0.2) +
+  facet_wrap(~ dtl_group, ncol = 3, scale = "free_y") +
+  xlim(0, 5) +
+  labs(title = "Error reduction",
+       subtitle = "Grouped by forecast run to landfall gap (orange line)",
+       x = "Lead days",
+       y = "Error reduction (miles)") +
   theme_minimal()
-if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison_log.png"), width = 8, height = 6, dpi = 150)
+if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_pre_lf.png"), width = 8, height = 6, dpi = 150)
 ```
+
+Stack graphs with horizontal axis in time relative to landfall
+
+```{r}
+ggplot(tracks_data_grouped %>% filter(dtl_group < 0 & dtl_group >= -6), aes(x = lead_days_group+dtl_group)) +
+  geom_vline(aes(xintercept = 0), color = "orange", linetype = "dashed") +
+  geom_hline(yintercept = 0, color = "red", linewidth = 0.5) +
+  geom_line(aes(y = mean_error_reduc, color = factor(dtl_group), group = dtl_group)) +
+  scale_color_viridis_d(name = "Run to Landfall gap (days)",
+                        option = "D",
+                        begin = 0.1,
+                        end = 0.9,
+                        labels = function(x) paste0(x, " days")) +
+  scale_x_continuous(breaks = seq(-5, 5, by = 1)) +
+  labs(title = "Error reduction",
+       x = "Time to landfall (days)",
+       y = "Error reduction (miles)") +
+  theme_minimal()
+if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_pre_lf_ttl.png"), width = 8, height = 6, dpi = 150)
+```
+
 
 Now, for each storm
 
 ```{r}
 tracks_data_grouped_hurr <- tracks_data %>%
-  mutate(lead_time_group = (lead_time %/% 6)*6) %>%
-  group_by(hurricane_id, lead_time_group) %>%
+  filter(time_to_landfall < 0 & time_to_landfall >= -6*24) %>%
+  mutate(lead_days_group = (lead_time %/% 24)) %>%
+  group_by(hurricane_id, lead_days_group) %>%
   summarise(
     n = n(),
     hurricane_name = last(hurricane_name),
@@ -300,7 +353,7 @@ tracks_data_grouped_hurr <- tracks_data %>%
 ```
 
 ```{r}
-ggplot(tracks_data_grouped_hurr, aes(x = lead_time_group)) +
+ggplot(tracks_data_grouped_hurr, aes(x = lead_days_group)) +
   geom_line(aes(y = error_gain, color = hurricane_name), alpha = 0.5) +
   geom_hline(yintercept = 0, color = "gray20", size = 0.5) +
   labs(title = "Track Error Reduction with Augmented Obs.",
@@ -336,44 +389,3 @@ ggplot(tracks_data_grouped_hurr, aes(x = lead_time_group)) +
 if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane_intensity.png"), width = 8, height = 6, dpi = 150)
 ```
 
-
-# 3.1 Focusing on strong storms
-
-We drop the storms with maximum VMAX below 100 knots (and Michael, which is an outlier of errors) and plot the errors again
-```{r}
-drop_list <- c("AL_14_2018", # Michael
-                tracks_max_vmax %>% filter(max_vmax_best < 100) %>% pull (hurricane_id))
-
-
-tracks_data_grouped_strong <- tracks_data %>%
-  filter(!hurricane_id %in% drop_list) %>%
-  mutate(lead_time_group = (lead_time %/% 6)*6) %>%
-  group_by(lead_time_group) %>%
-  summarise(
-    n = n(),
-    mean_track_error_all = mean(track_error_all, na.rm = TRUE),
-    sd_track_error_all = sd(track_error_all, na.rm = TRUE),
-    p05_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.05),
-    p95_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.95),
-    mean_track_error_no = mean(track_error_no, na.rm = TRUE),
-    sd_track_error_no = sd(track_error_no, na.rm = TRUE),
-    p05_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.05),
-    p95_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.95),
-  )
-```
-
-Plot a graph comparing mean errors of all vs no with shades for intervals 05--95
-```{r}
-ggplot(tracks_data_grouped_strong, aes(x = lead_time_group)) +
-  geom_line(aes(y = mean_track_error_all, color = "All")) +
-  geom_ribbon(aes(ymin = p05_track_error_all, ymax = p95_track_error_all, fill = "All"), alpha = 0.2) +
-  geom_line(aes(y = mean_track_error_no, color = "No")) +
-  geom_ribbon(aes(ymin = p05_track_error_no, ymax = p95_track_error_no, fill = "No"), alpha = 0.2) +
-  labs(title = "Track Error Comparison, Strong Storms Only",
-       x = "Lead Time (hours)",
-       y = "Track Error (miles)",
-       color = "Forecast Type",
-       fill = "Forecast Type") +
-  theme_minimal()
-if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison_strong.png"), width = 8, height = 6, dpi = 150)
-```
