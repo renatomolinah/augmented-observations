@@ -9,12 +9,13 @@ editor: visual
 library(tidyverse)
 library(here)
 library(geosphere)
+library(reldist) # For weighted quantiles
 
 # Set the working directory to the project root
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 
 SAVE_FIG <- FALSE
-SAVE_DATA <- FALSE
+SAVE_DATA <- TRUE
 
 output_dir <- "Hurricanes_output/augmented_obs"
 ```
@@ -70,40 +71,40 @@ if (!SAVE_DATA) {
       writeLines(lines, temp_file)
 
       read_csv(temp_file, col_names = ATCF_headers, show_col_types = FALSE) %>%
-      select(BASIN, CY, YYYYMMDDHH, TAU, LAT, LON, VMAX, RAD1, RAD2, RAD3, RAD4, STORMNAME) %>%
-      # Enforce types
-      mutate(BASIN = as.character(BASIN),
-            CY = as.integer(CY),
-            file_time = as.character(YYYYMMDDHH),
-            TAU = as.integer(TAU),
-            LAT = as.character(LAT),
-            LON = as.character(LON),
-            VMAX = as.numeric(VMAX),
-            RAD1 = as.integer(RAD1),
-            RAD2 = as.integer(RAD2),
-            RAD3 = as.integer(RAD3),
-            RAD4 = as.integer(RAD4),
-            STORMNAME = as.character(STORMNAME)) %>%
-      distinct() %>%
-      # Convert latitude to decimal format: Format ix XXXH. Divide XXX by 10. Then, if H = S, assign negative sign
-      mutate(LAT = ifelse(str_detect(LAT, "S"), -as.numeric(str_sub(LAT,1,-2))/10, as.numeric(str_sub(LAT,1,-2))/10),
-            LON = ifelse(str_detect(LON, "W"), -as.numeric(str_sub(LON,1,-2))/10, as.numeric(str_sub(LON,1,-2))/10),
-            forecast_type = type,
-            forecast_time = ymd_h(file_time) + hours(TAU),
-            hurricane_id = paste(BASIN, CY, year(forecast_time), sep = "_")) %>%
-      select(hurricane_id,
-            hurricane_name = STORMNAME,
-            file_time,
-            forecast_type,
-            forecast_time,
-            lead_time = TAU,
-            lat = LAT,
-            lon = LON,
-            vmax = VMAX,
-            rad1 = RAD1,
-            rad2 = RAD2,
-            rad3 = RAD3,
-            rad4 = RAD4)
+        filter(RAD == 34) %>% # Filter for 34 knots radius
+        select(BASIN, CY, YYYYMMDDHH, TAU, LAT, LON, VMAX, RAD1, RAD2, RAD3, RAD4, STORMNAME) %>%
+        # Enforce types
+        mutate(BASIN = as.character(BASIN),
+              CY = as.integer(CY),
+              file_time = as.character(YYYYMMDDHH),
+              TAU = as.integer(TAU),
+              LAT = as.character(LAT),
+              LON = as.character(LON),
+              VMAX = as.numeric(VMAX),
+              RAD1 = as.integer(RAD1),
+              RAD2 = as.integer(RAD2),
+              RAD3 = as.integer(RAD3),
+              RAD4 = as.integer(RAD4),
+              STORMNAME = as.character(STORMNAME)) %>%
+        # Convert latitude to decimal format: Format ix XXXH. Divide XXX by 10. Then, if H = S, assign negative sign
+        mutate(LAT = ifelse(str_detect(LAT, "S"), -as.numeric(str_sub(LAT,1,-2))/10, as.numeric(str_sub(LAT,1,-2))/10),
+              LON = ifelse(str_detect(LON, "W"), -as.numeric(str_sub(LON,1,-2))/10, as.numeric(str_sub(LON,1,-2))/10),
+              forecast_type = type,
+              forecast_time = ymd_h(file_time) + hours(TAU),
+              hurricane_id = paste(BASIN, CY, year(forecast_time), sep = "_")) %>%
+        select(hurricane_id,
+              hurricane_name = STORMNAME,
+              file_time,
+              forecast_type,
+              forecast_time,
+              lead_time = TAU,
+              lat = LAT,
+              lon = LON,
+              vmax = VMAX,
+              rad1 = RAD1,
+              rad2 = RAD2,
+              rad3 = RAD3,
+              rad4 = RAD4)
   }
 
   # Load the best track data
@@ -152,12 +153,6 @@ if (!SAVE_DATA) {
                                 tracks_no %>% select(-forecast_type), 
                                 by = c("hurricane_id", "file_time", "forecast_time", "lead_time"))
 
-  # Merge with Best track (this will lead to cartesian match because of different lead times for a single prediction time)
-  tracks_data <- inner_join(tracks_forecast,
-                              tracks_best  %>% select(-file_time, -forecast_type, -lead_time), 
-                                by = c("hurricane_id", "forecast_time")) %>%
-                  arrange(hurricane_id, forecast_time, lead_time)
-
   # Save all tracks files
     write_csv(tracks_best, file.path(output_dir, "tracks_best.csv"))
     write_csv(tracks_all, file.path(output_dir, "tracks_all.csv"))
@@ -167,19 +162,91 @@ if (!SAVE_DATA) {
 }
 ```
 
-Merge with landfall data and calculate time relative to landfall
+Merge with Best track (this will lead to cartesian match because of different lead times for a single prediction time)
+
+```{r}
+tracks_data <- inner_join(tracks_forecast,
+                           tracks_best  %>% select(-file_time, -forecast_type, -lead_time), 
+                                by = c("hurricane_id", "forecast_time")) %>%
+                  arrange(hurricane_id, forecast_time, lead_time)
+```
+
+
+Merge tracks with landfall data and calculate time relative to landfall
 
 ```{r}
 landfall_data <- read_csv(file.path(here(), "Hurricane_data/NHC_files", "landfall_times.csv")) %>%
-  select(-hurricane_name) %>%
   mutate(landfall_time = ymd_h(landfall_time))
 
 tracks_data <- tracks_data %>%
-  left_join(landfall_data, by = "hurricane_id") %>%
+  left_join(landfall_data %>% select(-hurricane_name), by = "hurricane_id") %>%
   mutate(time_to_landfall = as.numeric(difftime(landfall_time, ymd_h(file_time), units = "hours")))
 ```
 
-# 2. Plot track data
+Calculate Euclidian distances to prediction nodes
+
+```{r}
+NMI_TO_M <- 1852 # Nautical miles to meters conversion factor
+tracks_data <- tracks_data %>%
+  rowwise() %>%
+  mutate(
+    track_error_all = distHaversine(c(lon_best, lat_best), c(lon_all, lat_all))/NMI_TO_M,
+    track_error_no = distHaversine(c(lon_best, lat_best), c(lon_no, lat_no))/NMI_TO_M,
+    track_error_abs_reduc = track_error_no - track_error_all,
+    track_error_rel_reduc = ifelse(track_error_no != 0, (track_error_no - track_error_all) / track_error_no, 0)
+  ) %>%
+  ungroup()
+```
+
+Calculate vmax errors
+```{r}
+tracks_data <- tracks_data %>%
+  mutate(
+    vmax_error_all = vmax_all - vmax_best,
+    vmax_error_no = vmax_no - vmax_best,
+    vmax_error_abs_reduc = vmax_error_no - vmax_error_all,
+    vmax_error_rel_reduc = ifelse(vmax_error_no != 0, (vmax_error_no - vmax_error_all) / vmax_error_no, 0)
+  )
+```
+
+
+Calculate storm size at 34 knots radius and prediction errors
+
+```{r}
+tracks_data <- tracks_data %>%
+  mutate(
+    vmax_error_all = vmax_all - vmax_best,
+    vmax_error_no = vmax_no - vmax_best,
+    vmax_error_reduc = vmax_error_no - vmax_error_all,
+    vmax_error_rel_reduc = ifelse(vmax_error_no != 0, (vmax_error_no - vmax_error_all) / vmax_error_no, 0)
+  )
+```
+
+Calculate storm size at 34 knots radius and prediction errors
+
+```{r}
+tracks_data <- tracks_data %>%
+  mutate(
+    storm_size_best = (rad1_best + rad2_best + rad3_best + rad4_best)/4, # These are already in nautical miles
+    storm_size_all = (rad1_all + rad2_all + rad3_all + rad4_all)/4,
+    storm_size_no = (rad1_no + rad2_no + rad3_no + rad4_no)/4,
+    size_error_all = storm_size_all - storm_size_best,
+    size_error_no = storm_size_no - storm_size_best,
+    size_error_abs_reduc = size_error_no - size_error_all,
+    size_error_rel_reduc = ifelse(size_error_no != 0, (size_error_no - size_error_all) / size_error_no, 0)
+)
+```
+
+Save the processed data
+
+```{r}
+if (SAVE_DATA) {
+  write_csv(tracks_data, file.path(output_dir, "tracks_data.csv"))
+}
+```
+
+
+# 2. Track plots
 
 Plot the tracks for each storm using the full data available for best, all, and no forecasts
 
@@ -199,7 +266,7 @@ for (hurr_id in unique_ids) {
     coord_fixed() +
     theme(legend.position = "right")
 
-  if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", paste0(hurr_id, ".png")), plot = p, width = 8, height = 6, dpi = 150)
+  if (SAVE_FIG) ggsave(filename = file.path(output_dir, "tracks", paste0(hurr_id, ".png")), plot = p, width = 8, height = 6, dpi = 150)
 }
 ```
 
@@ -219,25 +286,11 @@ for (hurr_id in unique_ids) {
     coord_fixed() +
     theme(legend.position = "right")
   
-  if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", paste0(hurr_id, "_matched.png")), plot = p, width = 8, height = 6, dpi = 150)
+  if (SAVE_FIG) ggsave(filename = file.path(output_dir, "tracks", paste0(hurr_id, "_matched.png")), plot = p, width = 8, height = 6, dpi = 150)
 }
 ```
 
-# 3. Calculate Euclidean distances and plot errors
-
-Calculate Euclidian distances to prediction nodes
-
-```{r}
-MILES_TO_M <- 1609.344
-tracks_data <- tracks_data %>%
-  rowwise() %>%
-  mutate(
-    track_error_all = distHaversine(c(lon_best, lat_best), c(lon_all, lat_all))/MILES_TO_M,
-    track_error_no = distHaversine(c(lon_best, lat_best), c(lon_no, lat_no))/MILES_TO_M
-  ) %>%
-  ungroup()
-```
-
+# 3. Error statistics for lead times
 
 There is a little variation of lead time multiples
 
@@ -245,147 +298,435 @@ There is a little variation of lead time multiples
 table(tracks_data$lead_time)
 ```
 
-Group into ranges of 6 hours to account for minor changes in hours
+Group into ranges of days
 
 ```{r}
 tracks_data_grouped <- tracks_data %>%
   mutate(lead_days_group = (lead_time %/% 24),
-         dtl_group = (time_to_landfall %/% 24),
-        #  dtl_group = cut(
-        #    time_to_landfall/24,
-        #    breaks = seq(-9, 18, by = 3),
-        #    right = FALSE,
-        #    include.lowest = TRUE
-        #  ),
-         error_reduc = track_error_no - track_error_all) %>%
+         dtl_group = (time_to_landfall %/% 24)) %>%
   group_by(lead_days_group, dtl_group) %>%
   summarise(
     n = n(),
     mean_track_error_all = mean(track_error_all, na.rm = TRUE),
-    sd_track_error_all = sd(track_error_all, na.rm = TRUE),
+    median_track_error_all = median(track_error_all, na.rm = TRUE),
     p05_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.05),
     p95_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.95),
     mean_track_error_no = mean(track_error_no, na.rm = TRUE),
-    sd_track_error_no = sd(track_error_no, na.rm = TRUE),
+    median_track_error_no = median(track_error_no, na.rm = TRUE),
     p05_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.05),
     p95_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.95),
-    mean_error_reduc = mean(error_reduc, na.rm = TRUE),
-    sd_error_reduc = sd(error_reduc, na.rm = TRUE),
-    p05_error_reduc = quantile(error_reduc, na.rm = TRUE, probs = 0.05),
-    p95_error_reduc = quantile(error_reduc, na.rm = TRUE, probs = 0.95)
+    mean_track_error_abs_reduc = mean(track_error_abs_reduc, na.rm = TRUE),
+    median_track_error_abs_reduc = median(track_error_abs_reduc, na.rm = TRUE),
+    p05_track_error_abs_reduc = quantile(track_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_track_error_abs_reduc = quantile(track_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_track_error_rel_reduc = mean(track_error_rel_reduc, na.rm = TRUE),
+    median_track_error_rel_reduc = median(track_error_rel_reduc, na.rm = TRUE),
+    p05_track_error_rel_reduc = quantile(track_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_track_error_rel_reduc = quantile(track_error_rel_reduc, na.rm = TRUE, probs = 0.95),
+    # Calculate vmax errors
+    mean_vmax_error_all = mean(vmax_error_all, na.rm = TRUE),
+    median_vmax_error_all = median(vmax_error_all, na.rm = TRUE),
+    p05_vmax_error_all = quantile(vmax_error_all, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_all = quantile(vmax_error_all, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_no = mean(vmax_error_no, na.rm = TRUE),
+    median_vmax_error_no = median(vmax_error_no, na.rm = TRUE),
+    p05_vmax_error_no = quantile(vmax_error_no, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_no = quantile(vmax_error_no, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_abs_reduc = mean(vmax_error_abs_reduc, na.rm = TRUE),
+    median_vmax_error_abs_reduc = median(vmax_error_abs_reduc, na.rm = TRUE),
+    p05_vmax_error_abs_reduc = quantile(vmax_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_abs_reduc = quantile(vmax_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_rel_reduc = mean(vmax_error_rel_reduc, na.rm = TRUE),
+    median_vmax_error_rel_reduc = median(vmax_error_rel_reduc, na.rm = TRUE),
+    p05_vmax_error_rel_reduc = quantile(vmax_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_rel_reduc = quantile(vmax_error_rel_reduc, na.rm = TRUE, probs = 0.95),
+    # Calculate storm size errors
+    mean_size_error_all = mean(size_error_all, na.rm = TRUE),
+    median_size_error_all = median(size_error_all, na.rm = TRUE),
+    p05_size_error_all = quantile(size_error_all, na.rm = TRUE, probs = 0.05),
+    p95_size_error_all = quantile(size_error_all, na.rm = TRUE, probs = 0.95),
+    mean_size_error_no = mean(size_error_no, na.rm = TRUE),
+    median_size_error_no = median(size_error_no, na.rm = TRUE),
+    p05_size_error_no = quantile(size_error_no, na.rm = TRUE, probs = 0.05),
+    p95_size_error_no = quantile(size_error_no, na.rm = TRUE, probs = 0.95),
+    mean_size_error_abs_reduc = mean(size_error_abs_reduc, na.rm = TRUE),
+    median_size_error_abs_reduc = median(size_error_abs_reduc, na.rm = TRUE),
+    p05_size_error_abs_reduc = quantile(size_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_size_error_abs_reduc = quantile(size_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_size_error_rel_reduc = mean(size_error_rel_reduc, na.rm = TRUE),
+    median_size_error_rel_reduc = median(size_error_rel_reduc, na.rm = TRUE),
+    p05_size_error_rel_reduc = quantile(size_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_size_error_rel_reduc = quantile(size_error_rel_reduc, na.rm = TRUE, probs = 0.95),
+    ## Metrics weighted by true size for track error
+    wtd_mean_track_error_all = weighted.mean(track_error_all, storm_size_best, na.rm = TRUE),
+    wtd_median_track_error_all = wtd.quantile(track_error_all, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_track_error_all = wtd.quantile(track_error_all, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_track_error_all = wtd.quantile(track_error_all, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_track_error_no = weighted.mean(track_error_no, storm_size_best, na.rm = TRUE),
+    wtd_median_track_error_no = wtd.quantile(track_error_no, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_track_error_no = wtd.quantile(track_error_no, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_track_error_no = wtd.quantile(track_error_no, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_track_error_abs_reduc = weighted.mean(track_error_abs_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_track_error_abs_reduc = wtd.quantile(track_error_abs_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),  
+    wtd_p05_track_error_abs_reduc = wtd.quantile(track_error_abs_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_track_error_abs_reduc = wtd.quantile(track_error_abs_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_track_error_rel_reduc = weighted.mean(track_error_rel_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_track_error_rel_reduc = wtd.quantile(track_error_rel_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_track_error_rel_reduc = wtd.quantile(track_error_rel_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_track_error_rel_reduc = wtd.quantile(track_error_rel_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    ## Metrics weighted by true size for vmax error
+    wtd_mean_vmax_error_all = weighted.mean(vmax_error_all, storm_size_best, na.rm = TRUE),
+    wtd_median_vmax_error_all = wtd.quantile(vmax_error_all, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_vmax_error_all = wtd.quantile(vmax_error_all, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_vmax_error_all = wtd.quantile(vmax_error_all, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_vmax_error_no = weighted.mean(vmax_error_no, storm_size_best, na.rm = TRUE),
+    wtd_median_vmax_error_no = wtd.quantile(vmax_error_no, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_vmax_error_no = wtd.quantile(vmax_error_no, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_vmax_error_no = wtd.quantile(vmax_error_no, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_vmax_error_abs_reduc = weighted.mean(vmax_error_abs_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_vmax_error_abs_reduc = wtd.quantile(vmax_error_abs_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_vmax_error_abs_reduc = wtd.quantile(vmax_error_abs_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_vmax_error_abs_reduc = wtd.quantile(vmax_error_abs_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_vmax_error_rel_reduc = weighted.mean(vmax_error_rel_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_vmax_error_rel_reduc = wtd.quantile(vmax_error_rel_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_vmax_error_rel_reduc = wtd.quantile(vmax_error_rel_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_vmax_error_rel_reduc = wtd.quantile(vmax_error_rel_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    ## Metrics weighted by true size for size error
+    wtd_mean_size_error_all = weighted.mean(size_error_all, storm_size_best, na.rm = TRUE),
+    wtd_median_size_error_all = wtd.quantile(size_error_all, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_size_error_all = wtd.quantile(size_error_all, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_size_error_all = wtd.quantile(size_error_all, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_size_error_no = weighted.mean(size_error_no, storm_size_best, na.rm = TRUE),
+    wtd_median_size_error_no = wtd.quantile(size_error_no, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_size_error_no = wtd.quantile(size_error_no, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_size_error_no = wtd.quantile(size_error_no, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_size_error_abs_reduc = weighted.mean(size_error_abs_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_size_error_abs_reduc = wtd.quantile(size_error_abs_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_size_error_abs_reduc = wtd.quantile(size_error_abs_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_size_error_abs_reduc = wtd.quantile(size_error_abs_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_size_error_rel_reduc = weighted.mean(size_error_rel_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_size_error_rel_reduc = wtd.quantile(size_error_rel_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_size_error_rel_reduc = wtd.quantile(size_error_rel_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_size_error_rel_reduc = wtd.quantile(size_error_rel_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best)
+)
+```
+
+
+
+ General plotting function for error statistics
+```{r}
+plot_error_stats <- function(data, 
+                             error_type = c("track", "vmax", "size"), 
+                             weighted = FALSE, 
+                             output_dir = "Hurricanes_output/augmented_obs/track_errors") {
+  error_type <- match.arg(error_type)
+  stat_prefix <- if (weighted) "wtd_" else ""
+  
+  # Set variable names based on error type and weighting
+  mean_all   <- paste0(stat_prefix, "mean_", error_type, "_error_all")
+  median_all <- paste0(stat_prefix, "median_", error_type, "_error_all")
+  p05_all    <- paste0(stat_prefix, "p05_", error_type, "_error_all")
+  p95_all    <- paste0(stat_prefix, "p95_", error_type, "_error_all")
+  mean_no    <- paste0(stat_prefix, "mean_", error_type, "_error_no")
+  median_no  <- paste0(stat_prefix, "median_", error_type, "_error_no")
+  p05_no     <- paste0(stat_prefix, "p05_", error_type, "_error_no")
+  p95_no     <- paste0(stat_prefix, "p95_", error_type, "_error_no")
+  mean_abs_reduc   <- paste0(stat_prefix, "mean_", error_type, "_error_abs_reduc")
+  median_abs_reduc <- paste0(stat_prefix, "median_", error_type, "_error_abs_reduc")
+  p05_abs_reduc    <- paste0(stat_prefix, "p05_", error_type, "_error_abs_reduc")
+  p95_abs_reduc    <- paste0(stat_prefix, "p95_", error_type, "_error_abs_reduc")
+  mean_rel_reduc   <- paste0(stat_prefix, "mean_", error_type, "_error_rel_reduc")
+  median_rel_reduc <- paste0(stat_prefix, "median_", error_type, "_error_rel_reduc")
+  p05_rel_reduc    <- paste0(stat_prefix, "p05_", error_type, "_error_rel_reduc")
+  p95_rel_reduc    <- paste0(stat_prefix, "p95_", error_type, "_error_rel_reduc")
+  
+  # Y labels
+  ylab <- switch(error_type,
+    track = "Track Error (nmi)",
+    vmax  = "Vmax Error (kt)",
+    size  = "Size Error (nmi)"
   )
+  ylab_abs_reduc <- paste("Error reduction (", sub("Error.*", "", ylab), ")", sep = "")
+  ylab_rel_reduc <- "Error reduction (%)"
+  
+  # File name prefix
+  fname_prefix <- paste0(if (weighted) "wtd_" else "", error_type, "_error")
+  
+  # 1. Absolute errors (All vs No)
+  p1 <- ggplot(data %>% filter(dtl_group >= -6 & dtl_group <= 5), aes(x = lead_days_group)) +
+    geom_vline(aes(xintercept = -dtl_group), color = "orange", linetype = "dotted") +
+    geom_line(aes(y = .data[[mean_all]], color = "All", linetype = "Mean")) +
+    geom_line(aes(y = .data[[median_all]], color = "All", linetype = "Median")) +
+    geom_ribbon(aes(ymin = .data[[p05_all]], ymax = .data[[p95_all]], fill = "All"), alpha = 0.2) +
+    geom_line(aes(y = .data[[mean_no]], color = "No", linetype = "Mean")) +
+    geom_line(aes(y = .data[[median_no]], color = "No", linetype = "Median")) +
+    geom_ribbon(aes(ymin = .data[[p05_no]], ymax = .data[[p95_no]], fill = "No"), alpha = 0.2) +
+    facet_wrap(~ dtl_group, ncol = 6, scale = "free_y") +
+    xlim(0, 5) +
+    labs(title = paste("Absolute", error_type, "errors"),
+         subtitle = "Grouped by days since landfall (orange line)",
+         caption = "Ranges: 5th and 95th percentiles. Vertical scale varies by panel.",
+         x = "Lead days",
+         y = ylab,
+         linetype = "Statistic",
+         color = "Forecast Type",
+         fill = "Forecast Type") +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          panel.grid.minor.x = element_blank())
+  ggsave(filename = file.path(output_dir, paste0(fname_prefix, "_comparison.png")), plot = p1, width = 12, height = 6, dpi = 300)
+  
+  # 2. Absolute error reduction
+  p2 <- ggplot(data %>% filter(dtl_group >= -6 & dtl_group <= 5), aes(x = lead_days_group)) +
+    geom_vline(aes(xintercept = -dtl_group), color = "orange", linetype = "dotted") +
+    geom_hline(yintercept = 0, color = "gray70", linewidth = 0.5) +
+    geom_line(aes(y = .data[[mean_abs_reduc]], color = "All", linetype = "Mean")) +
+    geom_line(aes(y = .data[[median_abs_reduc]], color = "All", linetype = "Median")) +
+    geom_ribbon(aes(ymin = .data[[p05_abs_reduc]], ymax = .data[[p95_abs_reduc]], fill = "All"), alpha = 0.2) +
+    facet_wrap(~ dtl_group, ncol = 6, scale = "free_y") +
+    xlim(0, 5) +
+    labs(title = paste("Absolute", error_type, "errors reduction"),
+         subtitle = "Grouped by days since landfall (orange line)",
+         caption = "Ranges: 5th and 95th percentiles. Vertical scale varies by panel.",
+         x = "Lead days",
+         y = ylab_abs_reduc,
+         linetype = "Statistic",
+         color = "Forecast Type",
+         fill = "Forecast Type") +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          panel.grid.minor.x = element_blank())
+  ggsave(filename = file.path(output_dir, paste0(fname_prefix, "_abs_reduc.png")), plot = p2, width = 12, height = 6, dpi = 150)
+  
+  # 3. Relative error reduction
+  p3 <- ggplot(data %>% filter(dtl_group >= -6 & dtl_group <= 5), aes(x = lead_days_group)) +
+    geom_vline(aes(xintercept = -dtl_group), color = "orange", linetype = "dotted") +
+    geom_hline(yintercept = 0, color = "gray70", linewidth = 0.5) +
+    geom_line(aes(y = .data[[mean_rel_reduc]]*100, color = "All", linetype = "Mean")) +
+    geom_line(aes(y = .data[[median_rel_reduc]]*100, color = "All", linetype = "Median")) +
+    #geom_ribbon(aes(ymin = .data[[p05_rel_reduc]]*100, ymax = .data[[p95_rel_reduc]]*100, fill = "All"), alpha = 0.2) +
+    facet_wrap(~ dtl_group, ncol = 6, scale = "fixed") +
+    xlim(0, 5) +
+    labs(title = paste("Relative", error_type, "errors reduction"),
+         subtitle = "Grouped by days to landfall (orange line)",
+         caption = "Ranges: 5th and 95th percentiles. Vertical scale varies by panel.",
+         x = "Lead days",
+         y = ylab_rel_reduc,
+         linetype = "Statistic",
+         color = "Forecast Type") +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          panel.grid.minor.x = element_blank())
+  ggsave(filename = file.path(output_dir, paste0(fname_prefix, "_rel_reduc.png")), plot = p3, width = 12, height = 6, dpi = 150)
+  
+  # 4. Absolute error reduction vs time to landfall (stacked)
+  p4 <- ggplot(data %>% filter(dtl_group >= -6 & dtl_group <= 5), aes(x = lead_days_group+dtl_group)) +
+    geom_vline(aes(xintercept = 0), color = "orange", linetype = "dashed") +
+    geom_hline(yintercept = 0, color = "red", linewidth = 0.5) +
+    geom_line(aes(y = .data[[mean_abs_reduc]], color = factor(dtl_group), linetype = "Mean", group = dtl_group)) +
+    geom_line(aes(y = .data[[median_abs_reduc]], color = factor(dtl_group), linetype = "Median", group = dtl_group)) +
+    scale_color_viridis_d(name = "Days since landfall",
+                          option = "D",
+                          begin = 0.1,
+                          end = 0.9) +
+    scale_x_continuous(breaks = seq(-5, 5, by = 1)) +
+    labs(title = paste("Absolute", error_type, "errors reduction"),
+         linetype = "Statistic",
+         x = "Time to landfall (days)",
+         y = ylab_abs_reduc) +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          panel.grid.minor.x = element_blank())
+  ggsave(filename = file.path(output_dir, paste0(fname_prefix, "_abs_reduc_ttl.png")), plot = p4, width = 8, height = 6, dpi = 150)
+  
+  # 5. Relative error reduction vs time to landfall (stacked)
+  p5 <- ggplot(data %>% filter(dtl_group >= -6 & dtl_group <= 5), aes(x = lead_days_group+dtl_group)) +
+    geom_vline(aes(xintercept = 0), color = "orange", linetype = "dashed") +
+    geom_hline(yintercept = 0, color = "red", linewidth = 0.5) +
+    geom_line(aes(y = .data[[mean_rel_reduc]]*100, color = factor(dtl_group), linetype = "Mean", group = dtl_group)) +
+    geom_line(aes(y = .data[[median_rel_reduc]]*100, color = factor(dtl_group), linetype = "Median", group = dtl_group)) +
+    scale_color_viridis_d(name = "Days since landfall",
+                          option = "D",
+                          begin = 0.1,
+                          end = 0.9) +
+    scale_x_continuous(breaks = seq(-5, 5, by = 1)) +
+    labs(title = paste("Relative", error_type, "errors reduction"),
+        linetype = "Statistic",
+         x = "Time to landfall (days)",
+         y = ylab_rel_reduc) +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          panel.grid.minor.x = element_blank())
+  ggsave(filename = file.path(output_dir, paste0(fname_prefix, "_rel_reduc_ttl.png")), plot = p5, width = 8, height = 6, dpi = 150)
+  
+  invisible(list(abs_error = p1, abs_reduc = p2, rel_reduc = p3, abs_reduc_ttl = p4, rel_reduc_ttl = p5))
+}
 ```
 
-Plot a graph comparing mean errors of all vs no with shades for intervals 05--95
+Run for track errors
+
 ```{r}
-ggplot(tracks_data_grouped %>% filter(dtl_group < 0 & dtl_group >= -6), aes(x = lead_days_group)) +
-  geom_vline(aes(xintercept = -dtl_group), color = "orange", linetype = "dashed") +
-  geom_line(aes(y = mean_track_error_all, color = "All")) +
-  geom_ribbon(aes(ymin = p05_track_error_all, ymax = p95_track_error_all, fill = "All"), alpha = 0.2) +
-  geom_line(aes(y = mean_track_error_no, color = "No")) +
-  geom_ribbon(aes(ymin = p05_track_error_no, ymax = p95_track_error_no, fill = "No"), alpha = 0.2) +
-  facet_wrap(~ dtl_group, ncol = 3) +
-  xlim(0, 5) +
-  labs(title = "Track Error Comparison",
-       subtitle = "Grouped by forecast run to landfall gap (orange line)",
-       x = "Lead days",
-       y = "Track Error (miles)",
-       color = "Forecast Type",
-       fill = "Forecast Type") +
-  theme_minimal()
-if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_comparison_pre_lf.png"), width = 8, height = 6, dpi = 150)
+ plot_error_stats(tracks_data_grouped, error_type = "track", weighted = FALSE, output_dir = file.path(output_dir, "track_errors"))
+ plot_error_stats(tracks_data_grouped, error_type = "track", weighted = TRUE, output_dir = file.path(output_dir, "track_errors"))
 ```
 
-Same as above but with relative reduction in errors (i.e, errors of ALL minus errors of NO diveded by errors of NO)
+For wind speed errors
 
 ```{r}
-ggplot(tracks_data_grouped %>% filter(dtl_group < 0 & dtl_group >= -6), aes(x = lead_days_group)) +
-  geom_vline(aes(xintercept = -dtl_group), color = "orange", linetype = "dashed") +
-  geom_hline(yintercept = 0, color = "red", linewidth = 0.5) +
-  geom_line(aes(y = mean_error_reduc)) +
-  geom_ribbon(aes(ymin = p05_error_reduc, ymax = p95_error_reduc), fill = "blue", alpha = 0.2) +
-  facet_wrap(~ dtl_group, ncol = 3, scale = "free_y") +
-  xlim(0, 5) +
-  labs(title = "Error reduction",
-       subtitle = "Grouped by forecast run to landfall gap (orange line)",
-       x = "Lead days",
-       y = "Error reduction (miles)") +
-  theme_minimal()
-if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_pre_lf.png"), width = 8, height = 6, dpi = 150)
-```
-
-Stack graphs with horizontal axis in time relative to landfall
-
-```{r}
-ggplot(tracks_data_grouped %>% filter(dtl_group < 0 & dtl_group >= -6), aes(x = lead_days_group+dtl_group)) +
-  geom_vline(aes(xintercept = 0), color = "orange", linetype = "dashed") +
-  geom_hline(yintercept = 0, color = "red", linewidth = 0.5) +
-  geom_line(aes(y = mean_error_reduc, color = factor(dtl_group), group = dtl_group)) +
-  scale_color_viridis_d(name = "Run to Landfall gap (days)",
-                        option = "D",
-                        begin = 0.1,
-                        end = 0.9,
-                        labels = function(x) paste0(x, " days")) +
-  scale_x_continuous(breaks = seq(-5, 5, by = 1)) +
-  labs(title = "Error reduction",
-       x = "Time to landfall (days)",
-       y = "Error reduction (miles)") +
-  theme_minimal()
-if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_pre_lf_ttl.png"), width = 8, height = 6, dpi = 150)
+ plot_error_stats(tracks_data_grouped, error_type = "vmax", weighted = FALSE, output_dir = file.path(output_dir, "vmax_errors"))
+ plot_error_stats(tracks_data_grouped, error_type = "vmax", weighted = TRUE, output_dir = file.path(output_dir, "vmax_errors"))
 ```
 
 
-Now, for each storm
+```{r}
+ plot_error_stats(tracks_data_grouped, error_type = "size", weighted = FALSE, output_dir = file.path(output_dir, "size_errors"))
+ plot_error_stats(tracks_data_grouped, error_type = "size", weighted = TRUE, output_dir = file.path(output_dir, "size_errors"))
+```
+
+
+
+4 3. Error statistics per storm
+
+Here, errors are aggregate in pre vs post landfall periods for each storm. 
+
 
 ```{r}
-tracks_data_grouped_hurr <- tracks_data %>%
-  filter(time_to_landfall < 0 & time_to_landfall >= -6*24) %>%
-  mutate(lead_days_group = (lead_time %/% 24)) %>%
-  group_by(hurricane_id, lead_days_group) %>%
+tracks_data_storm <- tracks_data %>%
+  # Limit only to 6 days before and after landfall
+  filter(time_to_landfall >= -6*24 & time_to_landfall <= 5*24) %>%
+  mutate(lead_days_group = (lead_time %/% 24),
+         post_lf = (time_to_landfall >= 0)) %>%
+  group_by(lead_days_group, post_lf, hurricane_id) %>%
   summarise(
     n = n(),
-    hurricane_name = last(hurricane_name),
-    mean_track_error_all = mean(track_error_all, na.rm = TRUE),
-    mean_track_error_no = mean(track_error_no, na.rm = TRUE),
-    tracks_max_vmax = max(vmax_best, na.rm = TRUE),
-  ) %>%
-  mutate(error_gain = mean_track_error_no - mean_track_error_all)
+    max_vmax_best = max(vmax_best, na.rm = TRUE),
+    max_size_best = max(storm_size_best, na.rm = TRUE),
+    # Calculate track errors
+    mean_track_error_abs_reduc = mean(track_error_abs_reduc, na.rm = TRUE),
+    median_track_error_abs_reduc = median(track_error_abs_reduc, na.rm = TRUE),
+    # Calculate vmax errors
+    mean_vmax_error_abs_reduc = mean(vmax_error_abs_reduc, na.rm = TRUE),
+    median_vmax_error_abs_reduc = median(vmax_error_abs_reduc, na.rm = TRUE),
+    # Calculate storm size errors
+    mean_size_error_abs_reduc = mean(size_error_abs_reduc, na.rm = TRUE),
+    median_size_error_abs_reduc = median(size_error_abs_reduc, na.rm = TRUE),
+)
 ```
 
-```{r}
-ggplot(tracks_data_grouped_hurr, aes(x = lead_days_group)) +
-  geom_line(aes(y = error_gain, color = hurricane_name), alpha = 0.5) +
-  geom_hline(yintercept = 0, color = "gray20", size = 0.5) +
-  labs(title = "Track Error Reduction with Augmented Obs.",
-       x = "Lead Time (hours)",
-       y = "Track Error difference (miles)",
-       color = "Hurricane") +
-  theme_minimal()
-if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane.png"), width = 8, height = 6, dpi = 150)
-```
-
-What storms were the most intense? To do so, calculate the maximum vmax_best for each storm and rank them.
+Add storm name
 
 ```{r}
-tracks_max_vmax <- tracks_best %>%
-  group_by(hurricane_id) %>%
-  summarise(max_vmax_best = max(vmax_best, na.rm = TRUE),
-            hurricane_name = last(hurricane_name)) %>%
-  arrange(desc(max_vmax_best))
-tracks_max_vmax
+tracks_data_storm <- tracks_data_storm %>%
+  left_join(landfall_data %>% select(hurricane_id, hurricane_name),
+            by = "hurricane_id") %>%
+  mutate(hurricane_name = ifelse(is.na(hurricane_name), hurricane_id, hurricane_name))
 ``` 
 
-Color code intensity of the storm in the plot
+Plot max vmax and size for each storm
 ```{r}
-ggplot(tracks_data_grouped_hurr, aes(x = lead_time_group)) +
-  geom_line(aes(y = error_gain, group = hurricane_name, color = tracks_max_vmax), alpha = 0.5) +
-  geom_hline(yintercept = 0, color = "gray20", size = 0.5) +
-  labs(title = "Track Error Reduction with Augmented Obs.",
-       x = "Lead Time (hours)",
-       y = "Track Error difference (miles)",
-       color = "Hurricane") +
-  scale_color_gradient(low = "yellow", high = "blue", name = "Max VMAX", transform = "log10") +
+tracks_data_storm %>%
+  filter(post_lf == TRUE) %>%
+  ggplot(aes(x = hurricane_name)) +
+  geom_bar(aes(y = max_size_best), stat = "identity", position = "dodge") +
+  #scale_y_reverse() +
+  labs(title = "Maximum size per storm",
+       x = "",
+       y = "Size (nmi)",
+       fill = "Legend") +
   theme_minimal()
-if (SAVE_FIG) ggsave(filename = file.path(output_dir, "track_errors", "track_error_gain_per_hurricane_intensity.png"), width = 8, height = 6, dpi = 150)
+ggsave(filename = file.path(output_dir, "storm_max_size.png"), width = 10, height = 6, dpi = 150)
+
+tracks_data_storm %>%
+  filter(post_lf == TRUE) %>%
+  ggplot(aes(x = hurricane_name)) +
+  geom_bar(aes(y = max_vmax_best), stat = "identity", position = "dodge") +
+  #scale_y_reverse() +
+  labs(title = "Maximum wind speed per storm",
+       x = "",
+       y = "Vmax (kt)",
+       fill = "Legend") +
+  theme_minimal()
+ggsave(filename = file.path(output_dir, "storm_max_vmax.png"), width = 10, height = 6, dpi = 150)
 ```
 
+
+
+Plot absolute error reduction for each storm
+
+```{r}
+ggplot(tracks_data_storm, aes(x = lead_days_group)) +
+  geom_hline(yintercept = 0, color = "gray70", linewidth = 0.5) +
+  geom_line(aes(y = mean_track_error_abs_reduc, group = hurricane_name, color = max_size_best)) +
+  facet_wrap(~ post_lf, ncol = 2, scale = "fixed", 
+       labeller = as_labeller(c(`FALSE` = "Pre", `TRUE` = "Post"))) +
+  xlim(0, 5) +
+  labs(title = "Mean absolute track errors reduction",
+     subtitle = "Pre vs. post landfall",
+     x = "Lead days",
+     y = "Error reduction (nmi)",
+     linetype = "",
+     color = "Max size (nmi)") +
+  scale_color_viridis_c(option = "D", begin = 0.1, end = 0.9) +
+  theme_minimal() +
+  theme(legend.position = "right",
+      panel.grid.minor.x = element_blank())
+ggsave(filename = file.path(output_dir, "track_errors", "track_error_abs_reduc_storms_mean.png"), width = 12, height = 6, dpi = 150)
+
+ggplot(tracks_data_storm, aes(x = lead_days_group)) +
+  geom_hline(yintercept = 0, color = "gray70", linewidth = 0.5) +
+  geom_line(aes(y = median_track_error_abs_reduc, group = hurricane_name, color = max_size_best)) +
+  facet_wrap(~ post_lf, ncol = 2, scale = "fixed", 
+       labeller = as_labeller(c(`FALSE` = "Pre", `TRUE` = "Post"))) +
+  xlim(0, 5) +
+  labs(title = "Median absolute track errors reduction",
+     subtitle = "Pre vs. post landfall",
+     x = "Lead days",
+     y = "Error reduction (nmi)",
+     linetype = "",
+     color = "Max size (nmi)") +
+  scale_color_viridis_c(option = "D", begin = 0.1, end = 0.9) +
+  theme_minimal() +
+  theme(legend.position = "right",
+      panel.grid.minor.x = element_blank())
+ggsave(filename = file.path(output_dir, "track_errors", "track_error_abs_reduc_storms_median.png"), width = 12, height = 6, dpi = 150)
+```
+
+Now, for size
+
+```{r}
+ggplot(tracks_data_storm, aes(x = lead_days_group)) +
+  geom_hline(yintercept = 0, color = "gray70", linewidth = 0.5) +
+  geom_line(aes(y = mean_size_error_abs_reduc, group = hurricane_name, color = max_size_best)) +
+  facet_wrap(~ post_lf, ncol = 2, scale = "fixed", 
+       labeller = as_labeller(c(`FALSE` = "Pre", `TRUE` = "Post"))) +
+  xlim(0, 5) +
+  labs(title = "Mean absolute size errors reduction",
+     subtitle = "Pre vs. post landfall",
+     x = "Lead days",
+     y = "Error reduction (nmi)",
+     linetype = "",
+     color = "Max size (nmi)") +
+  scale_color_viridis_c(option = "D", begin = 0.1, end = 0.9) +
+  theme_minimal() +
+  theme(legend.position = "right",
+      panel.grid.minor.x = element_blank())
+ggsave(filename = file.path(output_dir, "size_errors", "size_error_abs_reduc_storms_mean.png"), width = 12, height = 6, dpi = 150)
+
+ggplot(tracks_data_storm, aes(x = lead_days_group)) +
+  geom_hline(yintercept = 0, color = "gray70", linewidth = 0.5) +
+  geom_line(aes(y = median_size_error_abs_reduc, group = hurricane_name, color = max_size_best)) +
+  facet_wrap(~ post_lf, ncol = 2, scale = "fixed", 
+       labeller = as_labeller(c(`FALSE` = "Pre", `TRUE` = "Post"))) +
+  xlim(0, 5) +
+  labs(title = "Median absolute size errors reduction",
+     subtitle = "Pre vs. post landfall",
+     x = "Lead days",
+     y = "Error reduction (nmi)",
+     linetype = "",
+     color = "Max size (nmi)") +
+  scale_color_viridis_c(option = "D", begin = 0.1, end = 0.9) +
+  theme_minimal() +
+  theme(legend.position = "right",
+      panel.grid.minor.x = element_blank())
+ggsave(filename = file.path(output_dir, "size_errors", "size_error_abs_reduc_storms_median.png"), width = 12, height = 6, dpi = 150)
+```
