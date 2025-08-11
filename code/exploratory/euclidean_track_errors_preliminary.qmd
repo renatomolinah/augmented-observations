@@ -15,7 +15,7 @@ library(reldist) # For weighted quantiles
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 
 SAVE_FIG <- FALSE
-SAVE_DATA <- TRUE
+SAVE_DATA <- FALSE
 
 output_dir <- "Hurricanes_output/augmented_obs"
 ```
@@ -306,7 +306,7 @@ tracks_data_grouped <- tracks_data %>%
          dtl_group = (time_to_landfall %/% 24)) %>%
   group_by(lead_days_group, dtl_group) %>%
   summarise(
-    n = n(),
+    n_obs = n(),
     mean_track_error_all = mean(track_error_all, na.rm = TRUE),
     median_track_error_all = median(track_error_all, na.rm = TRUE),
     p05_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.05),
@@ -461,13 +461,17 @@ plot_error_stats <- function(data,
     geom_line(aes(y = .data[[mean_no]], color = "No", linetype = "Mean")) +
     geom_line(aes(y = .data[[median_no]], color = "No", linetype = "Median")) +
     geom_ribbon(aes(ymin = .data[[p05_no]], ymax = .data[[p95_no]], fill = "No"), alpha = 0.2) +
-    facet_wrap(~ dtl_group, ncol = 6, scale = "free_y") +
-    xlim(0, 5) +
+    geom_col(aes(y = n_obs), fill = "gray60", alpha = 0.15) +
+    facet_wrap(~ dtl_group, ncol = 6, scale = "fixed") +
+    xlim(-0.6, 5.6) +
+    scale_y_continuous(
+      name = ylab,
+      sec.axis = sec_axis(~ ., name = "Count")
+    ) +    
     labs(title = paste("Absolute", error_type, "errors"),
          subtitle = "Grouped by days since landfall (orange line)",
-         caption = "Ranges: 5th and 95th percentiles. Vertical scale varies by panel.",
+         caption = "Ranges: 5th and 95th percentiles.",
          x = "Lead days",
-         y = ylab,
          linetype = "Statistic",
          color = "Forecast Type",
          fill = "Forecast Type") +
@@ -480,16 +484,20 @@ plot_error_stats <- function(data,
   p2 <- ggplot(data %>% filter(dtl_group >= -6 & dtl_group <= 5), aes(x = lead_days_group)) +
     geom_vline(aes(xintercept = -dtl_group), color = "orange", linetype = "dotted") +
     geom_hline(yintercept = 0, color = "gray70", linewidth = 0.5) +
+    geom_col(aes(y = n_obs), fill = "gray60", alpha = 0.15) +
     geom_line(aes(y = .data[[mean_abs_reduc]], color = "All", linetype = "Mean")) +
     geom_line(aes(y = .data[[median_abs_reduc]], color = "All", linetype = "Median")) +
     geom_ribbon(aes(ymin = .data[[p05_abs_reduc]], ymax = .data[[p95_abs_reduc]], fill = "All"), alpha = 0.2) +
-    facet_wrap(~ dtl_group, ncol = 6, scale = "free_y") +
-    xlim(0, 5) +
+    facet_wrap(~ dtl_group, ncol = 6, scale = "fixed") +
+    xlim(-0.6, 5.6) +
+    scale_y_continuous(
+      name = ylab_abs_reduc,
+      sec.axis = sec_axis(~ ., name = "Count")
+    ) +
     labs(title = paste("Absolute", error_type, "errors reduction"),
          subtitle = "Grouped by days since landfall (orange line)",
-         caption = "Ranges: 5th and 95th percentiles. Vertical scale varies by panel.",
+         caption = "Ranges: 5th and 95th percentiles.",
          x = "Lead days",
-         y = ylab_abs_reduc,
          linetype = "Statistic",
          color = "Forecast Type",
          fill = "Forecast Type") +
@@ -506,12 +514,15 @@ plot_error_stats <- function(data,
     geom_line(aes(y = .data[[median_rel_reduc]]*100, color = "All", linetype = "Median")) +
     #geom_ribbon(aes(ymin = .data[[p05_rel_reduc]]*100, ymax = .data[[p95_rel_reduc]]*100, fill = "All"), alpha = 0.2) +
     facet_wrap(~ dtl_group, ncol = 6, scale = "fixed") +
-    xlim(0, 5) +
+    xlim(-0.6, 5.6) +
+    scale_y_continuous(
+      name = ylab_abs_reduc,
+      sec.axis = sec_axis(~ ., name = "Count")
+    ) +
     labs(title = paste("Relative", error_type, "errors reduction"),
          subtitle = "Grouped by days to landfall (orange line)",
-         caption = "Ranges: 5th and 95th percentiles. Vertical scale varies by panel.",
+         caption = "Ranges: 5th and 95th percentiles.",
          x = "Lead days",
-         y = ylab_rel_reduc,
          linetype = "Statistic",
          color = "Forecast Type") +
     theme_minimal() +
@@ -583,9 +594,142 @@ For wind speed errors
  plot_error_stats(tracks_data_grouped, error_type = "size", weighted = TRUE, output_dir = file.path(output_dir, "size_errors"))
 ```
 
+# 3.1 Errors for 6-hour blocks
+
+```{r}
+tracks_data_grouped_6h <- tracks_data %>%
+  mutate(lead_days_group = (lead_time %/% 6)/4,
+         dtl_group = (time_to_landfall %/% 6)/4) %>%
+  group_by(lead_days_group, dtl_group) %>%
+  summarise(
+    n_obs = n(),
+    mean_track_error_all = mean(track_error_all, na.rm = TRUE),
+    median_track_error_all = median(track_error_all, na.rm = TRUE),
+    p05_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.05),
+    p95_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.95),
+    mean_track_error_no = mean(track_error_no, na.rm = TRUE),
+    median_track_error_no = median(track_error_no, na.rm = TRUE),
+    p05_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.05),
+    p95_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.95),
+    mean_track_error_abs_reduc = mean(track_error_abs_reduc, na.rm = TRUE),
+    median_track_error_abs_reduc = median(track_error_abs_reduc, na.rm = TRUE),
+    p05_track_error_abs_reduc = quantile(track_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_track_error_abs_reduc = quantile(track_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_track_error_rel_reduc = mean(track_error_rel_reduc, na.rm = TRUE),
+    median_track_error_rel_reduc = median(track_error_rel_reduc, na.rm = TRUE),
+    p05_track_error_rel_reduc = quantile(track_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_track_error_rel_reduc = quantile(track_error_rel_reduc, na.rm = TRUE, probs = 0.95),
+    # Calculate vmax errors
+    mean_vmax_error_all = mean(vmax_error_all, na.rm = TRUE),
+    median_vmax_error_all = median(vmax_error_all, na.rm = TRUE),
+    p05_vmax_error_all = quantile(vmax_error_all, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_all = quantile(vmax_error_all, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_no = mean(vmax_error_no, na.rm = TRUE),
+    median_vmax_error_no = median(vmax_error_no, na.rm = TRUE),
+    p05_vmax_error_no = quantile(vmax_error_no, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_no = quantile(vmax_error_no, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_abs_reduc = mean(vmax_error_abs_reduc, na.rm = TRUE),
+    median_vmax_error_abs_reduc = median(vmax_error_abs_reduc, na.rm = TRUE),
+    p05_vmax_error_abs_reduc = quantile(vmax_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_abs_reduc = quantile(vmax_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_rel_reduc = mean(vmax_error_rel_reduc, na.rm = TRUE),
+    median_vmax_error_rel_reduc = median(vmax_error_rel_reduc, na.rm = TRUE),
+    p05_vmax_error_rel_reduc = quantile(vmax_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_rel_reduc = quantile(vmax_error_rel_reduc, na.rm = TRUE, probs = 0.95),
+    # Calculate storm size errors
+    mean_size_error_all = mean(size_error_all, na.rm = TRUE),
+    median_size_error_all = median(size_error_all, na.rm = TRUE),
+    p05_size_error_all = quantile(size_error_all, na.rm = TRUE, probs = 0.05),
+    p95_size_error_all = quantile(size_error_all, na.rm = TRUE, probs = 0.95),
+    mean_size_error_no = mean(size_error_no, na.rm = TRUE),
+    median_size_error_no = median(size_error_no, na.rm = TRUE),
+    p05_size_error_no = quantile(size_error_no, na.rm = TRUE, probs = 0.05),
+    p95_size_error_no = quantile(size_error_no, na.rm = TRUE, probs = 0.95),
+    mean_size_error_abs_reduc = mean(size_error_abs_reduc, na.rm = TRUE),
+    median_size_error_abs_reduc = median(size_error_abs_reduc, na.rm = TRUE),
+    p05_size_error_abs_reduc = quantile(size_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_size_error_abs_reduc = quantile(size_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_size_error_rel_reduc = mean(size_error_rel_reduc, na.rm = TRUE),
+    median_size_error_rel_reduc = median(size_error_rel_reduc, na.rm = TRUE),
+    p05_size_error_rel_reduc = quantile(size_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_size_error_rel_reduc = quantile(size_error_rel_reduc, na.rm = TRUE, probs = 0.95),
+    ## Metrics weighted by true size for track error
+    wtd_mean_track_error_all = weighted.mean(track_error_all, storm_size_best, na.rm = TRUE),
+    wtd_median_track_error_all = wtd.quantile(track_error_all, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_track_error_all = wtd.quantile(track_error_all, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_track_error_all = wtd.quantile(track_error_all, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_track_error_no = weighted.mean(track_error_no, storm_size_best, na.rm = TRUE),
+    wtd_median_track_error_no = wtd.quantile(track_error_no, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_track_error_no = wtd.quantile(track_error_no, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_track_error_no = wtd.quantile(track_error_no, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_track_error_abs_reduc = weighted.mean(track_error_abs_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_track_error_abs_reduc = wtd.quantile(track_error_abs_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),  
+    wtd_p05_track_error_abs_reduc = wtd.quantile(track_error_abs_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_track_error_abs_reduc = wtd.quantile(track_error_abs_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_track_error_rel_reduc = weighted.mean(track_error_rel_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_track_error_rel_reduc = wtd.quantile(track_error_rel_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_track_error_rel_reduc = wtd.quantile(track_error_rel_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_track_error_rel_reduc = wtd.quantile(track_error_rel_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    ## Metrics weighted by true size for vmax error
+    wtd_mean_vmax_error_all = weighted.mean(vmax_error_all, storm_size_best, na.rm = TRUE),
+    wtd_median_vmax_error_all = wtd.quantile(vmax_error_all, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_vmax_error_all = wtd.quantile(vmax_error_all, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_vmax_error_all = wtd.quantile(vmax_error_all, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_vmax_error_no = weighted.mean(vmax_error_no, storm_size_best, na.rm = TRUE),
+    wtd_median_vmax_error_no = wtd.quantile(vmax_error_no, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_vmax_error_no = wtd.quantile(vmax_error_no, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_vmax_error_no = wtd.quantile(vmax_error_no, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_vmax_error_abs_reduc = weighted.mean(vmax_error_abs_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_vmax_error_abs_reduc = wtd.quantile(vmax_error_abs_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_vmax_error_abs_reduc = wtd.quantile(vmax_error_abs_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_vmax_error_abs_reduc = wtd.quantile(vmax_error_abs_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_vmax_error_rel_reduc = weighted.mean(vmax_error_rel_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_vmax_error_rel_reduc = wtd.quantile(vmax_error_rel_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_vmax_error_rel_reduc = wtd.quantile(vmax_error_rel_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_vmax_error_rel_reduc = wtd.quantile(vmax_error_rel_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    ## Metrics weighted by true size for size error
+    wtd_mean_size_error_all = weighted.mean(size_error_all, storm_size_best, na.rm = TRUE),
+    wtd_median_size_error_all = wtd.quantile(size_error_all, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_size_error_all = wtd.quantile(size_error_all, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_size_error_all = wtd.quantile(size_error_all, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_size_error_no = weighted.mean(size_error_no, storm_size_best, na.rm = TRUE),
+    wtd_median_size_error_no = wtd.quantile(size_error_no, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_size_error_no = wtd.quantile(size_error_no, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_size_error_no = wtd.quantile(size_error_no, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_size_error_abs_reduc = weighted.mean(size_error_abs_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_size_error_abs_reduc = wtd.quantile(size_error_abs_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_size_error_abs_reduc = wtd.quantile(size_error_abs_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_size_error_abs_reduc = wtd.quantile(size_error_abs_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best),
+    wtd_mean_size_error_rel_reduc = weighted.mean(size_error_rel_reduc, storm_size_best, na.rm = TRUE),
+    wtd_median_size_error_rel_reduc = wtd.quantile(size_error_rel_reduc, q = 0.5, na.rm = TRUE, weight = storm_size_best),
+    wtd_p05_size_error_rel_reduc = wtd.quantile(size_error_rel_reduc, q = 0.05, na.rm = TRUE, weight = storm_size_best),
+    wtd_p95_size_error_rel_reduc = wtd.quantile(size_error_rel_reduc, q = 0.95, na.rm = TRUE, weight = storm_size_best)
+)
+```
+
+Run for track errors
+
+```{r}
+ plot_error_stats(tracks_data_grouped_6h, error_type = "track", weighted = FALSE, output_dir = file.path(output_dir, "track_errors", "6h"))
+ plot_error_stats(tracks_data_grouped_6h, error_type = "track", weighted = TRUE, output_dir = file.path(output_dir, "track_errors", "6h"))
+```
+
+For wind speed errors
+
+```{r}
+ plot_error_stats(tracks_data_grouped_6h, error_type = "vmax", weighted = FALSE, output_dir = file.path(output_dir, "vmax_errors", "6h"))
+ plot_error_stats(tracks_data_grouped_6h, error_type = "vmax", weighted = TRUE, output_dir = file.path(output_dir, "vmax_errors", "6h"))
+```
 
 
-4 3. Error statistics per storm
+```{r}
+ plot_error_stats(tracks_data_grouped_6h, error_type = "size", weighted = FALSE, output_dir = file.path(output_dir, "size_errors", "6h"))
+ plot_error_stats(tracks_data_grouped_6h, error_type = "size", weighted = TRUE, output_dir = file.path(output_dir, "size_errors", "6h"))
+```
+
+
+
+4. Error statistics per storm
 
 Here, errors are aggregate in pre vs post landfall periods for each storm. 
 
