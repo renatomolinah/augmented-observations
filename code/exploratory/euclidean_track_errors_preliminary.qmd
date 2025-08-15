@@ -23,13 +23,7 @@ output_dir <- "Hurricanes_output/augmented_obs"
 # 1. Load and process the track data
 
 ```{r}
-if (!SAVE_DATA) {
-  tracks_best <- read_csv(file.path(output_dir, "tracks_best.csv"), show_col_types = FALSE)
-  tracks_all <- read_csv(file.path(output_dir, "tracks_all.csv"), show_col_types = FALSE)
-  tracks_no <- read_csv(file.path(output_dir, "tracks_no.csv"), show_col_types = FALSE)
-  tracks_forecast <- read_csv(file.path(output_dir, "tracks_forecast.csv"), show_col_types = FALSE)
-  tracks_data <- read_csv(file.path(output_dir, "tracks_data.csv"), show_col_types = FALSE)
-} else {
+if (SAVE_DATA) {
   ATCF_headers <- c("BASIN", "CY", "YYYYMMDDHH", "TECHNUM", "TECH", "TAU", 
                                 "LAT", "LON", "VMAX", "MSLP", "TY", "RAD", 
                                 "WINDCODE", "RAD1", "RAD2", "RAD3", "RAD4", 
@@ -158,34 +152,38 @@ if (!SAVE_DATA) {
     write_csv(tracks_all, file.path(output_dir, "tracks_all.csv"))
     write_csv(tracks_no, file.path(output_dir, "tracks_no.csv"))
     write_csv(tracks_forecast, file.path(output_dir, "tracks_forecast.csv"))
-    write_csv(tracks_data, file.path(output_dir, "tracks_data.csv"))
 }
 ```
 
 Merge with Best track (this will lead to cartesian match because of different lead times for a single prediction time)
 
 ```{r}
-tracks_data <- inner_join(tracks_forecast,
-                           tracks_best  %>% select(-file_time, -forecast_type, -lead_time), 
-                                by = c("hurricane_id", "forecast_time")) %>%
-                  arrange(hurricane_id, forecast_time, lead_time)
+if (SAVE_DATA) {
+  tracks_data <- inner_join(tracks_forecast,
+                            tracks_best  %>% select(-file_time, -forecast_type, -lead_time), 
+                                  by = c("hurricane_id", "forecast_time")) %>%
+                    arrange(hurricane_id, forecast_time, lead_time)
+}
 ```
 
 
 Merge tracks with landfall data and calculate time relative to landfall
 
 ```{r}
-landfall_data <- read_csv(file.path(here(), "Hurricane_data/NHC_files", "landfall_times.csv")) %>%
-  mutate(landfall_time = ymd_h(landfall_time))
+if (SAVE_DATA) {
+  landfall_data <- read_csv(file.path(here(), "Hurricane_data/NHC_files", "landfall_times.csv")) %>%
+    mutate(landfall_time = ymd_h(landfall_time))
 
-tracks_data <- tracks_data %>%
-  left_join(landfall_data %>% select(-hurricane_name), by = "hurricane_id") %>%
-  mutate(time_to_landfall = as.numeric(difftime(landfall_time, ymd_h(file_time), units = "hours")))
+  tracks_data <- tracks_data %>%
+    left_join(landfall_data %>% select(-hurricane_name), by = "hurricane_id") %>%
+    mutate(time_to_landfall = as.numeric(difftime(landfall_time, ymd_h(file_time), units = "hours")))
+}
 ```
 
 Calculate Euclidian distances to prediction nodes
 
 ```{r}
+if (SAVE_DATA) {
 NMI_TO_M <- 1852 # Nautical miles to meters conversion factor
 tracks_data <- tracks_data %>%
   rowwise() %>%
@@ -196,10 +194,12 @@ tracks_data <- tracks_data %>%
     track_error_rel_reduc = ifelse(track_error_no != 0, (track_error_no - track_error_all) / track_error_no, 0)
   ) %>%
   ungroup()
+}
 ```
 
 Calculate vmax errors
 ```{r}
+if (SAVE_DATA) {
 tracks_data <- tracks_data %>%
   mutate(
     vmax_error_all = vmax_all - vmax_best,
@@ -207,12 +207,14 @@ tracks_data <- tracks_data %>%
     vmax_error_abs_reduc = vmax_error_no - vmax_error_all,
     vmax_error_rel_reduc = ifelse(vmax_error_no != 0, (vmax_error_no - vmax_error_all) / vmax_error_no, 0)
   )
+}
 ```
 
 
 Calculate storm size at 34 knots radius and prediction errors
 
 ```{r}
+if (SAVE_DATA) {
 tracks_data <- tracks_data %>%
   mutate(
     vmax_error_all = vmax_all - vmax_best,
@@ -220,11 +222,13 @@ tracks_data <- tracks_data %>%
     vmax_error_reduc = vmax_error_no - vmax_error_all,
     vmax_error_rel_reduc = ifelse(vmax_error_no != 0, (vmax_error_no - vmax_error_all) / vmax_error_no, 0)
   )
+}
 ```
 
 Calculate storm size at 34 knots radius and prediction errors
 
 ```{r}
+if (SAVE_DATA) {
 tracks_data <- tracks_data %>%
   mutate(
     storm_size_best = (rad1_best + rad2_best + rad3_best + rad4_best)/4, # These are already in nautical miles
@@ -235,6 +239,7 @@ tracks_data <- tracks_data %>%
     size_error_abs_reduc = size_error_no - size_error_all,
     size_error_rel_reduc = ifelse(size_error_no != 0, (size_error_no - size_error_all) / size_error_no, 0)
 )
+}
 ```
 
 Save the processed data
@@ -242,6 +247,18 @@ Save the processed data
 ```{r}
 if (SAVE_DATA) {
   write_csv(tracks_data, file.path(output_dir, "tracks_data.csv"))
+}
+```
+
+Load data if it was not processed/saved
+
+```{r}
+if (!SAVE_DATA) {
+  tracks_best <- read_csv(file.path(output_dir, "tracks_best.csv"), show_col_types = FALSE)
+  tracks_all <- read_csv(file.path(output_dir, "tracks_all.csv"), show_col_types = FALSE)
+  tracks_no <- read_csv(file.path(output_dir, "tracks_no.csv"), show_col_types = FALSE)
+  tracks_forecast <- read_csv(file.path(output_dir, "tracks_forecast.csv"), show_col_types = FALSE)
+  tracks_data <- read_csv(file.path(output_dir, "tracks_data.csv"), show_col_types = FALSE)
 }
 ```
 
@@ -302,6 +319,7 @@ Group into ranges of days
 
 ```{r}
 tracks_data_grouped <- tracks_data %>%
+  #filter(hurricane_id != "AL_15_2017", hurricane_id != "AL_5_2019") %>% # Exclude Dorian and Maria to compare with Jason's data
   mutate(lead_days_group = (lead_time %/% 24),
          dtl_group = (time_to_landfall %/% 24)) %>%
   group_by(lead_days_group, dtl_group) %>%
@@ -577,8 +595,8 @@ plot_error_stats <- function(data,
 Run for track errors
 
 ```{r}
- plot_error_stats(tracks_data_grouped, error_type = "track", weighted = FALSE, output_dir = file.path(output_dir, "track_errors"))
- plot_error_stats(tracks_data_grouped, error_type = "track", weighted = TRUE, output_dir = file.path(output_dir, "track_errors"))
+plot_error_stats(tracks_data_grouped, error_type = "track", weighted = FALSE, output_dir = file.path(output_dir, "track_errors"))
+plot_error_stats(tracks_data_grouped, error_type = "track", weighted = TRUE, output_dir = file.path(output_dir, "track_errors"))
 ```
 
 For wind speed errors
@@ -598,6 +616,7 @@ For wind speed errors
 
 ```{r}
 tracks_data_grouped_6h <- tracks_data %>%
+  filter(!(hurricane_id %in% c("AL_15_2017", "AL_5_2019"))) %>% # Exclude Dorian and Maria to compare with Jason's data
   mutate(lead_days_group = (lead_time %/% 6)/4,
          dtl_group = (time_to_landfall %/% 6)/4) %>%
   group_by(lead_days_group, dtl_group) %>%
