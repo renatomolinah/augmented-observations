@@ -1,0 +1,252 @@
+---
+title: "Can we replicate Ditchek results?"
+format: html
+editor: visual
+---
+
+
+```{r}
+library(tidyverse)
+library(here)
+library(geosphere)
+library(reldist) # For weighted quantiles
+
+# Set the working directory to the project root
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+SAVE_FIG <- FALSE
+SAVE_DATA <- FALSE
+
+output_dir <- "Hurricanes_output/augmented_obs/replication"
+```
+
+# 1. Load and process the track data
+
+```{r}
+tracks_best <- read_csv(file.path(output_dir, "tracks_best.csv"), show_col_types = FALSE)
+tracks_all <- read_csv(file.path(output_dir, "tracks_all.csv"), show_col_types = FALSE)
+tracks_no <- read_csv(file.path(output_dir, "tracks_no.csv"), show_col_types = FALSE)
+tracks_forecast <- read_csv(file.path(output_dir, "tracks_forecast.csv"), show_col_types = FALSE)
+tracks_data <- read_csv(file.path(output_dir, "tracks_data.csv"), show_col_types = FALSE)
+```
+
+To match Ditcheck, we want to include only the same cycles (file_time) as in the original dataset.
+
+Harvey AL_9_2017: 2017082300 - 2017082600 (13)
+Irma AL_11_2017: 2017090718 - 2017091018 (13)
+Gordon AL_7_2018: 2018090218 - 2018090500 (10)
+Florence AL_6_2018: 2018091112 - 2018091406 (12)
+Michael AL_14_2018: 2018100718 - 2018101012 (12)
+Hanna AL_8_2020: 2020072418 - 2020072518 (5)
+Isaias AL_9_2020: 2020080100 - 2020080400 (13)
+Laura AL_13_2020: 2020082406 - 2020082700 (12)
+Sally AL_19_2020: 2020091306 - 2020091606 (13)
+Beta AL_22_2020: 2020091900 - 2020092200 (13)
+
+```{r}
+tracks_data_ditchek <- tracks_data %>%
+  filter(
+      (hurricane_id == "AL_9_2017"  & file_time >= 2017082300 & file_time <= 2017082600) |
+      (hurricane_id == "AL_11_2017" & file_time >= 2017090718 & file_time <= 2017091018) |
+      (hurricane_id == "AL_7_2018"  & file_time >= 2018090218 & file_time <= 2018090500) |
+      (hurricane_id == "AL_6_2018"  & file_time >= 2018091112 & file_time <= 2018091406) |
+      (hurricane_id == "AL_14_2018" & file_time >= 2018100718 & file_time <= 2018101012) |
+      (hurricane_id == "AL_8_2020"  & file_time >= 2020072418 & file_time <= 2020072518) |
+      (hurricane_id == "AL_9_2020"  & file_time >= 2020080100 & file_time <= 2020080400) |
+      (hurricane_id == "AL_13_2020" & file_time >= 2020082406 & file_time <= 2020082700) |
+      (hurricane_id == "AL_19_2020" & file_time >= 2020091306 & file_time <= 2020091606) |
+      (hurricane_id == "AL_22_2020" & file_time >= 2020091900 & file_time <= 2020092200)
+  )
+```
+
+Count the number of unique file_times per storm and sort by increasing order of the lowest file_time
+```{r}
+tracks_data_ditchek %>% 
+  group_by(hurricane_id) %>%
+  summarise(n_file_times = n_distinct(file_time),
+            earliest_cycle = min(file_time)) %>%
+  arrange(earliest_cycle)
+```
+
+Exactly matches the cycle count Brian reported.
+
+
+# 3. Compare error statistics
+
+```{r}
+tracks_data_grouped <- tracks_data_ditchek %>%
+  mutate(lead_time_group = (lead_time %/% 6)*6) %>%
+  group_by(lead_time_group) %>%
+  summarise(
+    n_obs = n(),
+    mean_track_error_all = mean(track_error_all, na.rm = TRUE),
+    median_track_error_all = median(track_error_all, na.rm = TRUE),
+    p05_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.05),
+    p95_track_error_all = quantile(track_error_all, na.rm = TRUE, probs = 0.95),
+    mean_track_error_no = mean(track_error_no, na.rm = TRUE),
+    median_track_error_no = median(track_error_no, na.rm = TRUE),
+    p05_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.05),
+    p95_track_error_no = quantile(track_error_no, na.rm = TRUE, probs = 0.95),
+    mean_track_error_abs_reduc = mean(track_error_abs_reduc, na.rm = TRUE),
+    median_track_error_abs_reduc = median(track_error_abs_reduc, na.rm = TRUE),
+    fsp_track = mean(track_error_abs_reduc > 0, na.rm = TRUE), # percent of observations where track error was reduced
+    p05_track_error_abs_reduc = quantile(track_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_track_error_abs_reduc = quantile(track_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_track_error_rel_reduc = mean(track_error_rel_reduc, na.rm = TRUE),
+    median_track_error_rel_reduc = median(track_error_rel_reduc, na.rm = TRUE),
+    p05_track_error_rel_reduc = quantile(track_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_track_error_rel_reduc = quantile(track_error_rel_reduc, na.rm = TRUE, probs = 0.95),
+    # Calculate vmax errors
+    mean_vmax_error_all = mean(vmax_error_all, na.rm = TRUE),
+    median_vmax_error_all = median(vmax_error_all, na.rm = TRUE),
+    p05_vmax_error_all = quantile(vmax_error_all, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_all = quantile(vmax_error_all, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_no = mean(vmax_error_no, na.rm = TRUE),
+    median_vmax_error_no = median(vmax_error_no, na.rm = TRUE),
+    p05_vmax_error_no = quantile(vmax_error_no, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_no = quantile(vmax_error_no, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_abs_reduc = mean(vmax_error_abs_reduc, na.rm = TRUE),
+    median_vmax_error_abs_reduc = median(vmax_error_abs_reduc, na.rm = TRUE),
+    fsp_vmax = mean(vmax_error_abs_reduc > 0, na.rm = TRUE), # percent of observations where vmax error was reduced
+    p05_vmax_error_abs_reduc = quantile(vmax_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_abs_reduc = quantile(vmax_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_vmax_error_rel_reduc = mean(vmax_error_rel_reduc, na.rm = TRUE),
+    median_vmax_error_rel_reduc = median(vmax_error_rel_reduc, na.rm = TRUE),
+    p05_vmax_error_rel_reduc = quantile(vmax_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_vmax_error_rel_reduc = quantile(vmax_error_rel_reduc, na.rm = TRUE, probs = 0.95),
+    # Calculate storm size errors
+    mean_size_error_all = mean(size_error_all, na.rm = TRUE),
+    median_size_error_all = median(size_error_all, na.rm = TRUE),
+    p05_size_error_all = quantile(size_error_all, na.rm = TRUE, probs = 0.05),
+    p95_size_error_all = quantile(size_error_all, na.rm = TRUE, probs = 0.95),
+    mean_size_error_no = mean(size_error_no, na.rm = TRUE),
+    median_size_error_no = median(size_error_no, na.rm = TRUE),
+    p05_size_error_no = quantile(size_error_no, na.rm = TRUE, probs = 0.05),
+    p95_size_error_no = quantile(size_error_no, na.rm = TRUE, probs = 0.95),
+    mean_size_error_abs_reduc = mean(size_error_abs_reduc, na.rm = TRUE),
+    median_size_error_abs_reduc = median(size_error_abs_reduc, na.rm = TRUE),
+    fsp_size = mean(size_error_abs_reduc > 0, na.rm = TRUE), # percent of observations where size error was reduced
+    p05_size_error_abs_reduc = quantile(size_error_abs_reduc, na.rm = TRUE, probs = 0.05),
+    p95_size_error_abs_reduc = quantile(size_error_abs_reduc, na.rm = TRUE, probs = 0.95),
+    mean_size_error_rel_reduc = mean(size_error_rel_reduc, na.rm = TRUE),
+    median_size_error_rel_reduc = median(size_error_rel_reduc, na.rm = TRUE),
+    p05_size_error_rel_reduc = quantile(size_error_rel_reduc, na.rm = TRUE, probs = 0.05),
+    p95_size_error_rel_reduc = quantile(size_error_rel_reduc, na.rm = TRUE, probs = 0.95)
+)
+
+# Calculate relative mean error reduction
+tracks_data_grouped <- tracks_data_grouped %>%
+  mutate(
+    rel_track_error_mean_reduc = ifelse(mean_track_error_no == 0, NA, mean_track_error_abs_reduc / mean_track_error_no),
+    rel_vmax_error_mean_reduc  = ifelse(mean_vmax_error_no == 0, NA, mean_vmax_error_abs_reduc / mean_vmax_error_no),
+    rel_size_error_mean_reduc  = ifelse(mean_size_error_no == 0, NA, mean_size_error_abs_reduc / mean_size_error_no)
+  )
+```
+
+
+
+ General plotting function for error statistics
+```{r}
+plot_error_stats <- function(data, 
+                             error_type = c("track", "vmax", "size"),
+                             output_dir) {
+  error_type <- match.arg(error_type)
+
+  
+  # Set variable names based on error type
+  mean_all         <- paste0("mean_", error_type, "_error_all")
+  median_all       <- paste0("median_", error_type, "_error_all")
+  p05_all          <- paste0("p05_", error_type, "_error_all")
+  p95_all          <- paste0("p95_", error_type, "_error_all")
+  mean_no          <- paste0("mean_", error_type, "_error_no")
+  median_no        <- paste0("median_", error_type, "_error_no")
+  p05_no           <- paste0("p05_", error_type, "_error_no")
+  p95_no           <- paste0("p95_", error_type, "_error_no")
+  mean_abs_reduc   <- paste0("mean_", error_type, "_error_abs_reduc")
+  median_abs_reduc <- paste0("median_", error_type, "_error_abs_reduc")
+  fsp              <- paste0("fsp_", error_type)
+  p05_abs_reduc    <- paste0("p05_", error_type, "_error_abs_reduc")
+  p95_abs_reduc    <- paste0("p95_", error_type, "_error_abs_reduc")
+  mean_rel_reduc   <- paste0("mean_", error_type, "_error_rel_reduc")
+  median_rel_reduc <- paste0("median_", error_type, "_error_rel_reduc")
+  rel_mean_reduc   <- paste0("rel_", error_type, "_error_mean_reduc")
+  p05_rel_reduc    <- paste0("p05_", error_type, "_error_rel_reduc")
+  p95_rel_reduc    <- paste0("p95_", error_type, "_error_rel_reduc")
+  
+  # Y labels
+  ylab <- switch(error_type,
+    track = "Track Error (nmi)",
+    vmax  = "Vmax Error (kt)",
+    size  = "Size Error (nmi)"
+  )
+  ylab_abs_reduc <- paste("Error reduction (", sub("Error.*", "", ylab), ")", sep = "")
+  ylab_rel_reduc <- "Skill (%)"
+  
+  # File name prefix
+  fname_prefix <- paste0(error_type, "_error")
+  
+  # 1. Absolute errors (All vs No)
+  p1 <- ggplot(data, aes(x = lead_time_group)) +
+    geom_line(aes(y = .data[[mean_all]], color = "All", linetype = "Mean")) +
+    geom_point(aes(y = .data[[mean_all]], color = "All")) +
+    #geom_ribbon(aes(ymin = .data[[p05_all]], ymax = .data[[p95_all]], fill = "All"), alpha = 0.2) +
+    geom_line(aes(y = .data[[mean_no]], color = "No", linetype = "Mean")) +
+    geom_point(aes(y = .data[[mean_no]], color = "No")) +
+    #geom_ribbon(aes(ymin = .data[[p05_no]], ymax = .data[[p95_no]], fill = "No"), alpha = 0.2) +
+    geom_col(aes(y = .data[[fsp]]*100), fill = "gray60", alpha = 0.15) +
+    scale_y_continuous(
+      name = ylab,
+      sec.axis = sec_axis(~ ., name = "FSP (%)")
+    ) +
+    scale_x_continuous(breaks = seq(0, 132, by = 12)) +
+    scale_color_manual(values = c("All" = "darkgreen", "No" = "red")) +
+    #scale_fill_manual(values = c("All" = "darkgreen", "No" = "red")) +
+    labs(title = paste("Absolute", error_type, "errors"),
+         x = "Lead hours",
+         linetype = "Statistic",
+         color = "Forecast Type",
+         fill = "Forecast Type") +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          panel.grid.minor.x = element_blank())
+  ggsave(filename = file.path(output_dir, paste0(fname_prefix, "_comparison.png")), plot = p1, width = 12, height = 6, dpi = 300)
+  
+ 
+  # 2. Relative error reduction
+  p2 <- ggplot(data, aes(x = lead_time_group)) +
+    geom_hline(yintercept = 0, color = "red") +
+    geom_point(aes(y = .data[[rel_mean_reduc]]*100, color = "All")) +
+    geom_line(aes(y = .data[[rel_mean_reduc]]*100, color = "All", linetype = "Relative mean error")) +
+    geom_line(aes(y = .data[[mean_rel_reduc]]*100, color = "All", linetype = "Mean relative error")) +
+    scale_color_manual(values = c("All" = "darkgreen", "No" = "red")) +
+    scale_linetype_manual(values = c("Mean relative error" = "dashed", "Relative mean error" = "solid")) +
+    scale_y_continuous(
+      name = ylab_rel_reduc
+    ) +
+    labs(title = paste("Relative", error_type, "errors reduction"),
+         x = "Lead hours",
+         linetype = "Statistic",
+         color = "Forecast Type") +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          panel.grid.minor.x = element_blank())
+  ggsave(filename = file.path(output_dir, paste0(fname_prefix, "_rel_reduc.png")), plot = p2, width = 12, height = 6, dpi = 150)
+}
+```
+
+Run for track errors
+
+```{r}
+plot_error_stats(tracks_data_grouped, error_type = "track", output_dir)
+```
+
+For wind speed errors
+
+```{r}
+plot_error_stats(tracks_data_grouped, error_type = "vmax", output_dir)
+```
+
+
+```{r}
+plot_error_stats(tracks_data_grouped, error_type = "size", output_dir)
+```
