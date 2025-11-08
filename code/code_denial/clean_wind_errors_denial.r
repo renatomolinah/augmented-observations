@@ -111,7 +111,15 @@ get_errors <- function(name, file_type = c("NO", "ALL"), progress = T) {
     gust_dur_dif_mean = mean(gust_dur_dif, na.rm = TRUE),
     gust_dur_dif_sd = sd(gust_dur_dif, na.rm = TRUE),
     sust_dur_dif_mean = mean(sust_dur_dif, na.rm = TRUE),
-    sust_dur_dif_sd = sd(sust_dur_dif, na.rm = TRUE)
+    sust_dur_dif_sd = sd(sust_dur_dif, na.rm = TRUE),
+    vmax_gust_pred_mean = mean(vmax_gust_pred, na.rm = TRUE),
+    vmax_gust_pred_sd = sd(vmax_gust_pred, na.rm = TRUE),
+    vmax_sust_pred_mean = mean(vmax_sust_pred, na.rm = TRUE),
+    vmax_sust_pred_sd = sd(vmax_sust_pred, na.rm = TRUE),
+    gust_dur_pred_mean = mean(gust_dur_pred, na.rm = TRUE),
+    gust_dur_pred_sd = sd(gust_dur_pred, na.rm = TRUE),
+    sust_dur_pred_mean = mean(sust_dur_pred, na.rm = TRUE),
+    sust_dur_pred_sd = sd(sust_dur_pred, na.rm = TRUE)
   ), by = c("pred_date", "gridid", "glon", "glat")]
   
   if (progress) message("Done")
