@@ -75,14 +75,14 @@ wind_no = lapply(seq_along(wind_list_no), function(j) {
 
 wind = rbind(wind_all, wind_no)
 
-# Calculate predicted means and sds are missing from wind data. Can recover predicted
-# means based on obs and dif_mean, but not sds.
+# Calculate predicted means. Note: pred_sd columns already exist in raw data and are preserved.
+# If pred_mean columns don't exist, calculate from obs + dif_mean
 wind = wind |>
   mutate(
-    vmax_sust_pred_mean = vmax_sust_obs + vmax_sust_dif_mean,
-    vmax_gust_pred_mean = vmax_gust_obs + vmax_gust_dif_mean,
-    sust_dur_pred_mean  = sust_dur_obs  + sust_dur_dif_mean,
-    gust_dur_pred_mean  = gust_dur_obs  + gust_dur_dif_mean
+    vmax_sust_pred_mean = ifelse(is.na(vmax_sust_pred_mean), vmax_sust_obs + vmax_sust_dif_mean, vmax_sust_pred_mean),
+    vmax_gust_pred_mean = ifelse(is.na(vmax_gust_pred_mean), vmax_gust_obs + vmax_gust_dif_mean, vmax_gust_pred_mean),
+    sust_dur_pred_mean  = ifelse(is.na(sust_dur_pred_mean), sust_dur_obs  + sust_dur_dif_mean, sust_dur_pred_mean),
+    gust_dur_pred_mean  = ifelse(is.na(gust_dur_pred_mean), gust_dur_obs  + gust_dur_dif_mean, gust_dur_pred_mean)
   )
 
 # Ensure no errors matching names and hurricanes
@@ -142,7 +142,7 @@ weather = left_join(
 # saveRDS(counties_map, "data/raw/census/counties_tigris.rds")
 
 counties_map = readRDS("data/raw/census/counties_tigris.rds")
-st_crs(counties_map) = st_crs(counties_map)
+counties_map = st_set_crs(counties_map, 4326)
 
 #=============================
 # 4. merge

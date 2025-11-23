@@ -6,7 +6,6 @@ print("Merging data.")
 
 counties_map = get_urbn_map("counties", sf = TRUE) |>
   st_set_crs(4326)
-st_crs(counties_map) = st_crs(counties_map)
 
 counties_sf <- get_urbn_map("counties", sf = FALSE) |> 
   distinct(county_name, state_name, state_fips, fips_class, county_fips)
@@ -41,14 +40,15 @@ data_sheldus = fread("data/clean/data_sheldus.csv") |>
     across(
       crop_damage:deaths_pc, 
       ~ sum(.x, na.rm = TRUE)
-    )
+    ),
+    .groups = "drop"
   ) |> 
   ungroup()
 
 income_gdp = fread("data/clean/income_gdp.csv") |>
   mutate(
     county_fips = str_pad(county_fips, 5, 'left', '0'),
-    across(year:gdp, ~ as.numeric(.x)))
+    across(year:gdp, ~ suppressWarnings(as.numeric(.x))))
 
 #=============================
 # 4. prep forecast data
@@ -88,11 +88,11 @@ data_unaffected_counties = anti_join(
   ) |>
   as_tibble() |>
   mutate( 
-    gust_dur_dif_mean = 0, gust_dur_dif_sd = 0, gust_dur_obs = 0, gust_dur_pred_mean = 0, 
-    sust_dur_dif_mean = 0, sust_dur_dif_sd = 0, sust_dur_obs = 0, sust_dur_pred_mean = 0,
+    gust_dur_dif_mean = 0, gust_dur_dif_sd = 0, gust_dur_obs = 0, gust_dur_pred_mean = 0, gust_dur_pred_sd = 0,
+    sust_dur_dif_mean = 0, sust_dur_dif_sd = 0, sust_dur_obs = 0, sust_dur_pred_mean = 0, sust_dur_pred_sd = 0,
     prec_dif_mean = 0, prec_dif_sd = 0, prec_obs = 0, prec_pred_mean = 0, prec_pred_sd = 0, 
-    vmax_gust_dif_mean = 0, vmax_gust_dif_sd = 0, vmax_gust_obs = 0, vmax_gust_pred_mean = 0,
-    vmax_sust_dif_mean = 0, vmax_sust_dif_sd = 0, vmax_sust_obs = 0, vmax_sust_pred_mean = 0,
+    vmax_gust_dif_mean = 0, vmax_gust_dif_sd = 0, vmax_gust_obs = 0, vmax_gust_pred_mean = 0, vmax_gust_pred_sd = 0,
+    vmax_sust_dif_mean = 0, vmax_sust_dif_sd = 0, vmax_sust_obs = 0, vmax_sust_pred_mean = 0, vmax_sust_pred_sd = 0,
     augmented_obs = NA # Indicate with NA that these are imputations
   ) |>
   select(
@@ -154,17 +154,13 @@ data_weather_dmg_en = full_join(
   select(
     hurricane, date, year, month, augmented_obs,
     state = state_fips, county = county_fips,
-    wind_obs, wind_fc, wind_error,
+    wind_obs, wind_fc, wind_error, wind_fc_sd = vmax_sust_pred_sd,
     precip_obs, precip_fc, precip_fc_sd = prec_pred_sd, precip_error,
-    gust_obs, gust_fc, gust_error,
-    dur_obs, dur_fc, dur_error,
+    gust_obs, gust_fc, gust_error, gust_fc_sd = vmax_gust_pred_sd,
+    dur_obs, dur_fc, dur_error, dur_fc_sd = sust_dur_pred_sd,
     damages = dmg_prop_death, damage_pc = dmg_prop_death_pc, deaths, 
     property_damage = property_damage_2019, 
     crop_damage = crop_damage_2019, mortality_damage = value_deaths
-    # These are not available in the raw data. Ask Renato to generate if they turn out to be necessary later
-    # wind_fc_sd = vmax_sust_pred_sd
-    # gust_fc_sd = vmax_gust_pred_sd
-    # dur_fc_sd = sust_dur_pred_sd
   )
 
 saveRDS(data_weather_dmg_en, "data/clean_denial/ncei_compare_denial.rds")
@@ -198,9 +194,9 @@ final_dataset = final_dataset |>
   as_tibble() |> 
   mutate(log_damage = log(damages + 1),
         log_wind = log(wind_obs + 1),
-        log_precip = log(precip_obs + 1),
+        log_precip = ifelse(precip_obs < 0, NA, log(precip_obs + 1)),
         log_wind_fc = log(wind_fc + 1),
-        log_precip_fc = log(precip_fc + 1),
+        log_precip_fc = ifelse(precip_fc < 0, NA, log(precip_fc + 1)),
         log_gdp = log(gdp),
         log_mortality = log(mortality_damage + 1),
         log_property = log(property_damage + 1),
