@@ -6,21 +6,19 @@ pacman::p_load(data.table, tidyverse, here, fixest)
 
 forecast_data_lead_times <- fread(here("data/clean_denial/forecast_denial_data_with_lead_times.csv"))
 
+forecast_data_lead_times %>%
+  filter(!is.na(augmented_obs), lead_days == 3, wind_obs > 33) %>%
+  feols(
+    wind_fc_sd ~ augmented_obs |  county + name,
+    data = .
+  ) 
 
 forecast_data_lead_times %>%
-  filter(!is.na(augmented_obs), lead_days == 3, vmax_sust_obs > 33) %>%
+  filter(!is.na(augmented_obs), lead_days == 3, wind_obs > 33) %>%
   feols(
-    vmax_sust_pred_sd ~ augmented_obs | county,
+    wind_error ~ augmented_obs |  county + name,
     data = .
-  )
-
-
-forecast_data_lead_times %>%
-  filter(!is.na(augmented_obs), lead_days == 3, vmax_sust_obs > 33) %>%
-  feols(
-    sust_dur_dif_mean ~ augmented_obs | county,
-    data = .
-  )
+  ) 
 
 
 
@@ -28,13 +26,13 @@ forecast_data_lead_times %>%
   mutate(
     intensity_panel =
       case_when(
-        vmax_sust_obs > 33 ~ "> 33 m/s",
-        vmax_sust_obs > 17.5 ~ "> 17.5 m/s",
-        vmax_sust_obs > 0 ~ "> 0 m/s"
+        wind_obs > 33 ~ "> 33 m/s",
+        wind_obs > 17.5 ~ "> 17.5 m/s",
+        wind_obs > 0 ~ "> 0 m/s"
       )
   ) %>%
   filter(!is.na(augmented_obs)) %>%
-  ggplot(aes(x = vmax_sust_pred_sd, color = factor(lead_days))) +
+  ggplot(aes(x = wind_fc_sd, color = factor(lead_days))) +
   geom_density(linewidth = 1.1, alpha = 0.6) +
   scale_color_brewer(palette = "Dark2", name = "Lead days") +
   labs(
