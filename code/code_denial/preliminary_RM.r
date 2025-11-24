@@ -51,3 +51,10 @@ forecast_data_lead_times %>%
     axis.title = element_text(size = 13)
   )
 
+ggsave(
+  filename = here("output", "forecast_uncertainty_panels.png"),
+  width = 12,
+  height = 4,
+  dpi = 300
+)
+
