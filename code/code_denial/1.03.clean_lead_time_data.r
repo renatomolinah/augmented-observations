@@ -68,8 +68,16 @@ if (needs_cleaning && !already_cleaned) {
       precip_fc_sd = prec_pred_sd
     )
 } else {
-  # Data already cleaned - just add state and ensure year/month exist
-  forecast_lead_times_clean <- forecast_lead_times
+  # Data already cleaned - recalculate errors and add state/year/month if missing
+  forecast_lead_times_clean <- forecast_lead_times |>
+    mutate(
+      # Recalculate errors from obs - fc (obs - pred convention)
+      # This ensures errors are correct even if they were incorrectly calculated before
+      wind_error = wind_obs - wind_fc,
+      gust_error = gust_obs - gust_fc,
+      dur_error = dur_obs - dur_fc,
+      precip_error = precip_obs - precip_fc
+    )
   
   # Add year/month if missing
   if (!"year" %in% names(forecast_lead_times_clean)) {
