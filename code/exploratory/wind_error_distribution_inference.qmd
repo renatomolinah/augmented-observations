@@ -1,0 +1,665 @@
+---
+title: "Wind Error: inference on distribution"
+format: 
+  html:
+     code-fold: true
+     embed-resources: true
+     toc: true
+     toc-depth: 3
+author: "Diego"
+knitr:
+  opts_chunk:
+    eval: true
+    echo: false
+    warning: false
+    message: false
+---
+
+```{r}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(data.table, tidyverse, here, fixest, sandwich, lmtest, knitr)
+
+
+# Load same data as Renato's preliminary analysis
+forecast_data_lead_times <- fread(here("data/clean_denial/forecast_denial_data_with_lead_times.csv"))  %>% filter(name != "maria", name != "laura")
+```
+
+
+## Renato's graphs
+
+```{r}
+forecast_data_lead_times %>%
+  mutate(
+    intensity_panel =
+      case_when(
+        wind_obs > 33 ~ "> 33 m/s",
+        wind_obs > 17.5 ~ "> 17.5 m/s",
+        wind_obs > 0 ~ "> 0 m/s"
+      )
+  ) %>%
+  filter(!is.na(augmented_obs)) %>%
+  ggplot(aes(x = wind_fc_sd, color = factor(lead_days))) +
+  geom_density(linewidth = 1.1, alpha = 0.6) +
+  scale_color_brewer(palette = "Dark2", name = "Lead days") +
+  labs(
+    x = "Wind speed SD (m/s)",
+    y = "Density",
+    title = "Distribution of forecast uncertainty by lead time"
+  ) +
+  facet_wrap(~ intensity_panel, nrow = 1, scales = "free_y") +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+
+```{r}
+forecast_data_lead_times %>%
+  mutate(
+    intensity_panel =
+      case_when(
+        wind_obs > 33 ~ "> 33 m/s",
+        wind_obs > 17.5 ~ "> 17.5 m/s",
+        wind_obs > 0 ~ "> 0 m/s"
+      )
+  ) %>%
+  filter(!is.na(augmented_obs)) %>%
+  ggplot(aes(x = wind_error, color = factor(lead_days))) +
+  geom_density(linewidth = 1.1, alpha = 0.6) +
+  scale_color_brewer(palette = "Dark2", name = "Lead days") +
+  labs(
+    x = "Wind error (m/s)",
+    y = "Density",
+    title = "Distribution of forecast error by lead time"
+  ) +
+  facet_wrap(~ intensity_panel, nrow = 1, scales = "free_y") +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+```{r}
+forecast_data_lead_times %>%
+  filter(!is.na(augmented_obs),wind_obs > 33) %>%
+  mutate(
+    augmented_obs_label = ifelse(augmented_obs == 1, "With Aug Obs", "Without Aug Obs")
+  ) %>%
+  ggplot(aes(x = wind_fc_sd, color = augmented_obs_label)) +
+  geom_density(linewidth = 1.1, alpha = 0.6) +
+  scale_color_manual(values = c("With Aug Obs" = "#1B9E77", "Without Aug Obs" = "#D95F02"), name = "") +
+  labs(
+    x = "Wind speed SD (m/s)",
+    y = "Density",
+    title = "Distribution of forecast uncertainty by lead time and augmented observations"
+  ) +
+  facet_wrap(~ factor(lead_days), nrow = 1, scales = "free_y", 
+    labeller = labeller(.cols = function(x) paste("Lead time:", x, "days"))) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+
+```
+
+```{r}
+forecast_data_lead_times %>%
+  filter(!is.na(augmented_obs), wind_obs > 33) %>%
+  mutate(
+    wind_error = wind_obs - wind_fc,
+    augmented_obs_label = ifelse(augmented_obs == 1, "With Aug Obs", "Without Aug Obs")
+  ) %>%
+  ggplot(aes(x = wind_error, color = augmented_obs_label)) +
+  geom_density(linewidth = 1.1, alpha = 0.6) +
+  scale_color_manual(values = c("With Aug Obs" = "#1B9E77", "Without Aug Obs" = "#D95F02"), name = "") +
+  labs(
+    x = "Wind error (m/s)",
+    y = "Density",
+    title = "Distribution of forecast error by lead time and augmented observations"
+  ) +
+  facet_wrap(~ factor(lead_days), nrow = 1, scales = "free_y",
+     labeller = labeller(.cols = function(x) paste("Lead time:", x, "days"))) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+
+## Inference on distribution
+
+The graphs above are informative but do not give much information for inference on the shifts in the distribution of forecast errors. This analysis will do this in three ways:
+
+1. Mean effects
+2. Unconditional and conditional (on observed wind speed) quantile shifts 
+
+**Note: This is all preliminary and, techincally, incorrect. We are looking at moments of means, not of the actual forecast points. The correct way of doing this would be to use all the data points, not errors aggregated by county and lead day.**
+
+
+### Mean effects
+
+This is similar in spirit to Renato's regressions. But I am not super convinced that a regression with fixed effect structure makes sense for this analysis. The goal was to control for underlying variation and use augmented observations as an exogenous treatment. But the fundamental problem of causal inference is not an issue for this analysis because we observe both the treated and untreated outcomes! We can literally just take differences in means and possibly segment by lead time and bins of wind speed. But it may also helpful to regress on observed wind speed to assess a mean effect conditional on a continuous variable.
+
+Assemble dataset pairing forecast errors with and without augmented observations
+
+```{r}
+paired_errors <- forecast_data_lead_times %>%
+  group_by(hurricane, date, year, month, lead_days, lead_hours, state, county, county_name) %>%
+  summarise(
+    wind_obs = mean(wind_obs, na.rm = TRUE),
+    wind_error_all = mean(wind_error[augmented_obs == 1], na.rm = TRUE),
+    wind_error_no = mean(wind_error[augmented_obs == 0], na.rm = TRUE),
+    wind_sd_all = mean(wind_fc_sd[augmented_obs == 1], na.rm = TRUE),
+    wind_sd_no = mean(wind_fc_sd[augmented_obs == 0], na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    wind_error_delta = wind_error_all - wind_error_no,
+    wind_error_delta_abs = abs(wind_error_all) - abs(wind_error_no),
+    wind_error_delta_sq = (wind_error_all)^2 - (wind_error_no)^2,
+    wind_sd_delta = wind_sd_all - wind_sd_no
+  )
+```
+
+Let's look at the densities of the reductions.
+
+```{r}
+paired_errors %>%
+  ggplot(aes(x = wind_error_delta, color = factor(lead_days))) +
+    geom_density() +
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+    labs(
+      x = "Change in wind error (m/s)",
+      y = "Density",
+      title = "Distribution of wind error delta by lead time"
+    ) +
+    theme_minimal(base_size = 14) +
+    theme(
+      legend.position = "top",
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(face = "bold", size = 16),
+      axis.title = element_text(size = 13)
+    )
+```
+
+There is a minor location shift, but this doesn't tell us much. Let's see the other metrics.
+
+```{r}
+paired_errors %>%
+  ggplot(aes(x = wind_error_delta_abs, color = factor(lead_days))) +
+    geom_density() +
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+    labs(
+      x = "Change in absolute wind error (m/s)",
+      y = "Density",
+      title = "Distribution of absolute wind error delta by lead time"
+    ) +
+    theme_minimal(base_size = 14) +
+    theme(
+      legend.position = "top",
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(face = "bold", size = 16),
+      axis.title = element_text(size = 13)
+    )
+```
+
+```{r}
+paired_errors %>%
+  ggplot(aes(x = wind_error_delta_sq, color = factor(lead_days))) +
+    geom_density() +
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+    labs(
+      x = "Change in squared wind error",
+      y = "Density",
+      title = "Distribution of squared wind error delta by lead time"
+    ) +
+    scale_x_continuous(limits = c(-5, 5)) +
+    theme_minimal(base_size = 14) +
+    theme(
+      legend.position = "top",
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(face = "bold", size = 16),
+      axis.title = element_text(size = 13)
+    )
+```
+
+```{r}
+paired_errors %>%
+  ggplot(aes(x = wind_sd_delta, color = factor(lead_days))) +
+    geom_density() +
+    geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+    labs(
+      x = "Change in wind error SD (m/s)",
+      y = "Density",
+      title = "Distribution of wind error SD delta by lead time"
+    ) +
+    scale_x_continuous(limits = c(-5, 5)) +
+    theme_minimal(base_size = 14) +
+    theme(
+      legend.position = "top",
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(face = "bold", size = 16),
+      axis.title = element_text(size = 13)
+    )
+```
+
+
+Calculate mean changes by lead day and t-test on difference from zero
+
+```{r}
+mean_reductions_leads <- paired_errors %>%
+    group_by(lead_days) %>%
+    summarise(
+      mean_wind_error_all = mean(wind_error_all, na.rm = TRUE),
+      mean_wind_error_no = mean(wind_error_no, na.rm = TRUE),
+      mean_wind_error_delta = mean(wind_error_delta, na.rm = TRUE),
+      se_wind_error_delta = sd(wind_error_delta, na.rm = TRUE) / sqrt(n()),
+      tstat_wind_error_delta = mean(wind_error_delta, na.rm = TRUE) / se_wind_error_delta,
+      pval_wind_error_delta = 2 * pt(-abs(tstat_wind_error_delta), df = n() - 1),
+      mean_wind_sd_all = mean(wind_sd_all, na.rm = TRUE),
+      mean_wind_sd_no = mean(wind_sd_no, na.rm = TRUE),
+      mean_wind_sd_delta = mean(wind_sd_delta, na.rm = TRUE),
+      se_wind_sd_delta = sd(wind_sd_delta, na.rm = TRUE) / sqrt(n()),
+      tstat_wind_sd_delta = mean(wind_sd_delta, na.rm = TRUE) / se_wind_sd_delta,
+      pval_wind_sd_delta = 2 * pt(-abs(tstat_wind_sd_delta), df = n() - 1),
+      .groups = 'drop'
+    ) %>%
+    select(-se_wind_error_delta, -se_wind_sd_delta, -tstat_wind_error_delta, -tstat_wind_sd_delta) %>%
+    arrange(lead_days)
+knitr::kable(t(mean_reductions_leads), format = "html")
+```
+
+So, augmented observations actually shift mean errors up with lead days 1 and 3, and SDs with 2 and 3 lead days. All differences are statistically significant, but the mean effects are really small, so no practical significance. 
+
+What about absolute and squared error changes?
+
+```{r}
+mean_reductions_leads_abs <- paired_errors %>%
+    group_by(lead_days) %>%
+    summarise(
+      mean_wind_error_abs_all = mean(abs(wind_error_all), na.rm = TRUE),
+      mean_wind_error_abs_no = mean(abs(wind_error_no), na.rm = TRUE),
+      mean_wind_error_delta_abs = mean(wind_error_delta_abs, na.rm = TRUE),
+      se_wind_error_delta_abs = sd(wind_error_delta_abs, na.rm = TRUE) / sqrt(n()),
+      tstat_wind_error_delta_abs = mean(wind_error_delta_abs, na.rm = TRUE) / se_wind_error_delta_abs,
+      pval_wind_error_delta_abs = 2 * pt(-abs(tstat_wind_error_delta_abs), df = n() - 1),
+      
+      mean_wind_error_sq_all = mean(wind_error_all^2, na.rm = TRUE),
+      mean_wind_error_sq_no = mean(wind_error_no^2, na.rm = TRUE),
+      mean_wind_error_delta_sq = mean(wind_error_delta_sq, na.rm = TRUE),
+      se_wind_error_delta_sq = sd(wind_error_delta_sq, na.rm = TRUE) / sqrt(n()),
+      tstat_wind_error_delta_sq = mean(wind_error_delta_sq, na.rm = TRUE) / se_wind_error_delta_sq,
+      pval_wind_error_delta_sq = 2 * pt(-abs(tstat_wind_error_delta_sq), df = n() - 1),
+      .groups = 'drop'
+    ) %>%
+    select(-se_wind_error_delta_abs, -se_wind_error_delta_sq, -tstat_wind_error_delta_abs, -tstat_wind_error_delta_sq) %>%
+    arrange(lead_days)
+knitr::kable(t(mean_reductions_leads_abs), format = "html")
+```
+
+These above show that augmented observations actually increase the mean absolute error and squared error with 2 and 3 lead days.
+
+
+But perhaps the massive number of observations with low wind speed is driving this. Let's segment by Renato's intensity grouping. This time, we focus only on absolute error and SD changes.
+
+```{r}
+mean_reductions_leads_intensity <- paired_errors %>%
+    mutate(
+        wind_obs_intensity = cut(wind_obs, breaks = c(0, 17.5, 33.0, Inf), labels = c("0-17.5", "17.5-33", "> 33"), include.lowest = TRUE)
+    ) %>%
+    group_by(lead_days, wind_obs_intensity) %>%
+    summarise(
+      mean_wind_error_delta_abs = mean(wind_error_delta_abs, na.rm = TRUE),
+      se_wind_error_delta_abs = sd(wind_error_delta_abs, na.rm = TRUE) / sqrt(n()),
+      tstat_wind_error_delta_abs = mean(wind_error_delta_abs, na.rm = TRUE) / se_wind_error_delta_abs,
+      pval_wind_error_delta_abs = 2 * pt(-abs(tstat_wind_error_delta_abs), df = n() - 1),
+      mean_wind_sd_delta = mean(wind_sd_delta, na.rm = TRUE),
+      se_wind_sd_delta = sd(wind_sd_delta, na.rm = TRUE) / sqrt(n()),
+      tstat_wind_sd_delta = mean(wind_sd_delta, na.rm = TRUE) / se_wind_sd_delta,
+      pval_wind_sd_delta = 2 * pt(-abs(tstat_wind_sd_delta), df = n() - 1),
+      .groups = 'drop'
+    ) %>%
+    select(-tstat_wind_error_delta_abs, -tstat_wind_sd_delta, ) %>%
+    arrange(wind_obs_intensity, lead_days)
+```
+
+Since we have many values, let's plot these with point ranges
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+mean_reductions_leads_intensity %>%
+  ggplot(aes(x = wind_obs_intensity, y = mean_wind_error_delta_abs)) +
+  geom_point(size = 3) +
+  geom_linerange(aes(ymin = mean_wind_error_delta_abs - 1.96*se_wind_error_delta_abs, ymax = mean_wind_error_delta_abs + 1.96*se_wind_error_delta_abs), linewidth = 1) +
+  geom_line(aes(group = lead_days)) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Wind speed bin (m/s)",
+    y = "Absolute change in wind error (m/s)",
+    title = "Absolute change in wind error by wind speed bin and lead day"
+  ) +
+  facet_wrap(~ lead_days, nrow = 3, scales = "fixed") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = -45, hjust = 0),
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+A small decrease in absolute errors for moderate and strong winds with 2 lead days. But a slighlty larger and imprecise increase in errors with 3 lead days.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+mean_reductions_leads_intensity %>%
+  ggplot(aes(x = wind_obs_intensity, y = mean_wind_sd_delta)) +
+  geom_point(size = 3) +
+  geom_linerange(aes(ymin = mean_wind_sd_delta - 1.96*se_wind_sd_delta, ymax = mean_wind_sd_delta + 1.96*se_wind_sd_delta), linewidth = 1) +
+  geom_line(aes(group = lead_days)) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Wind speed bin (m/s)",
+    y = "Mean change in wind error SD (m/s)",
+    title = "Mean change in wind error SD by wind speed bin and lead day"
+  ) +
+  facet_wrap(~ lead_days, nrow = 3, scales = "fixed") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = -45, hjust = 0),
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+
+Not much action with SDs, except for strong winds with 3 lead days, which sees a tiny reduction.
+
+
+Perhaps this binning is too coarse. Let's try binning if further.
+```{r}
+paired_errors_binned <- paired_errors %>%
+  mutate(
+    wind_obs_bin = cut(wind_obs, breaks = c(seq(0, 70, by = 10), Inf), include.lowest = TRUE)
+  ) %>%
+  group_by(lead_days, wind_obs_bin) %>%
+  summarise(
+    mean_wind_error_delta_abs = mean(wind_error_delta_abs, na.rm = TRUE),
+    se_wind_error_delta_abs = sd(wind_error_delta_abs, na.rm = TRUE) / sqrt(n()),
+    tstat_wind_error_delta_abs = mean(wind_error_delta_abs, na.rm = TRUE) / se_wind_error_delta_abs,
+    pval_wind_error_delta_abs = 2 * pt(-abs(tstat_wind_error_delta_abs), df = n() - 1),
+    mean_wind_sd_delta = mean(wind_sd_delta, na.rm = TRUE),
+    se_wind_sd_delta = sd(wind_sd_delta, na.rm = TRUE) / sqrt(n()),
+    tstat_wind_sd_delta = mean(wind_sd_delta, na.rm = TRUE) / se_wind_sd_delta,
+    pval_wind_sd_delta = 2 * pt(-abs(tstat_wind_sd_delta), df = n() - 1),
+    .groups = 'drop'
+  ) %>%
+  select(-tstat_wind_error_delta_abs, -tstat_wind_sd_delta) %>%
+  arrange(wind_obs_bin, lead_days)
+```
+
+Plot again
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+paired_errors_binned %>%
+  ggplot(aes(x = wind_obs_bin, y = mean_wind_error_delta_abs)) +
+  geom_point(size = 3) +
+  geom_linerange(aes(ymin = mean_wind_error_delta_abs - 1.96*se_wind_error_delta_abs, ymax = mean_wind_error_delta_abs + 1.96*se_wind_error_delta_abs), linewidth = 1) +
+  geom_line(aes(group = lead_days)) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Wind speed bin (m/s)",
+    y = "Mean change in wind error (m/s)",
+    title = "Mean change in wind error by wind speed bin and lead day"
+  ) +
+  facet_wrap(~ lead_days, nrow = 3, scales = "fixed") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = -45, hjust = 0),
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+paired_errors_binned %>%
+  ggplot(aes(x = wind_obs_bin, y = mean_wind_sd_delta)) +
+  geom_point(size = 3) +
+  geom_linerange(aes(ymin = mean_wind_sd_delta - 1.96*se_wind_sd_delta, ymax = mean_wind_sd_delta + 1.96*se_wind_sd_delta), linewidth = 1) +
+  geom_line(aes(group = lead_days)) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Wind speed bin (m/s)",
+    y = "Mean change in wind error SD (m/s)",
+    title = "Mean change in wind error SD by wind speed bin and lead day"
+  ) +
+  facet_wrap(~ lead_days, nrow = 3, scales = "fixed") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = -45, hjust = 0),
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+Not much more info on these...
+
+
+Perhaps there are different patterns for different hurricanes. Let's fcalculate and plot differences by hurricane.
+
+```{r}
+paired_errors_hurricanes <- paired_errors %>%
+    mutate(
+      wind_obs_intensity = cut(wind_obs, breaks = c(0, 17.5, 33.0, Inf), labels = c("0-17.5", "17.5-33", "> 33"), include.lowest = TRUE)
+    ) %>% 
+    group_by(lead_days, hurricane, wind_obs_intensity) %>%
+    summarise(
+    mean_wind_error_delta_abs = mean(wind_error_delta_abs, na.rm = TRUE),
+    se_wind_error_delta_abs = sd(wind_error_delta_abs, na.rm = TRUE) / sqrt(n()),
+    tstat_wind_error_delta_abs = mean(wind_error_delta_abs, na.rm = TRUE) / se_wind_error_delta_abs,
+    pval_wind_error_delta_abs = 2 * pt(-abs(tstat_wind_error_delta_abs), df = n() - 1),
+    mean_wind_sd_delta = mean(wind_sd_delta, na.rm = TRUE),
+    se_wind_sd_delta = sd(wind_sd_delta, na.rm = TRUE) / sqrt(n()),
+    tstat_wind_sd_delta = mean(wind_sd_delta, na.rm = TRUE) / se_wind_sd_delta,
+    pval_wind_sd_delta = 2 * pt(-abs(tstat_wind_sd_delta), df = n() - 1),
+    .groups = 'drop'
+    ) %>%
+    select(-tstat_wind_error_delta_abs, -tstat_wind_sd_delta) %>%
+    arrange(wind_obs_intensity, hurricane)
+```
+
+Plot (with facet wrap by hurricane)
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+paired_errors_hurricanes %>%
+    ggplot(aes(x = wind_obs_intensity, y = mean_wind_error_delta_abs, color = hurricane)) +
+    geom_point(size = 3) +
+    geom_linerange(aes(ymin = mean_wind_error_delta_abs - 1.96*se_wind_error_delta_abs, ymax = mean_wind_error_delta_abs + 1.96*se_wind_error_delta_abs), linewidth = 1, alpha = 0.5) +
+    geom_line(aes(group = hurricane)) +
+    geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+    labs(
+        x = "Wind speed bin (m/s)",
+        y = "Mean change in absolute wind error (m/s)",
+        title = "Mean change in absolute wind error by wind speed bin and hurricane"
+    ) +
+    facet_wrap(~ lead_days, nrow = 3, scales = "fixed") +
+    theme_minimal(base_size = 14) +
+    theme(
+        axis.text.x = element_text(angle = -45, hjust = 0),
+        legend.position = "bottom",
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(face = "bold", size = 16),
+        axis.title = element_text(size = 13)
+    )
+```
+
+Sally seems to be the only case with consistent improvements.
+
+
+OK, so the mean effects are not that informative. Even if differences exist and are statistically significant, they are very small even at high wind speeds.
+
+### Unconditional quantile shifts
+
+Compare CDFs of errors for each lead day (similar to Renato's densities)
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+ggplot(forecast_data_lead_times) +
+  stat_ecdf(aes(x = wind_error, color = factor(augmented_obs)), linewidth = 0.75) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
+  facet_wrap(~ lead_days, nrow = 3) +
+  scale_color_manual(values = c("#0072B2", "#D55E00"), labels = c("ALL", "NO"), name = "") +
+  scale_x_continuous(limits = c(-10, 20)) +
+  labs(
+    x = "Wind speed mean error (mph)",
+    y = "Cumulative Probability",
+    title = "Cumulative distribution function (CDF) of wind speed mean error by lead time"
+  ) +
+  theme_minimal()
+```
+
+To make comparisons easier, make a Q-Q plot for each lead day
+
+```{r}
+qq_plot_data <- forecast_data_lead_times %>%
+  group_by(lead_days) %>%
+  reframe(
+    q_error_all = quantile(wind_error[augmented_obs == 1], seq(0, 1, by = 0.01)),
+    q_error_no = quantile(wind_error[augmented_obs == 0], seq(0, 1, by = 0.01)),
+    q_sd_all = quantile(wind_fc_sd[augmented_obs == 1], seq(0, 1, by = 0.01)),
+    q_sd_no = quantile(wind_fc_sd[augmented_obs == 0], seq(0, 1, by = 0.01))
+  )
+```
+
+```{r}
+ggplot(qq_plot_data) +
+  geom_line(aes(x = q_error_no, y = q_error_all, color = factor(lead_days)), linewidth = 1, alpha = 0.7) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "purple") +
+  geom_hline(yintercept = 0, linetype = "dotted", color = "purple") +
+  labs(
+    x = "Wind speed error quantiles: NO ",
+    y = "Wind speed error quantiles: ALL",
+    title = "Quantile-quantile (Q-Q) plot of wind speed mean error by lead time"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+Augmented observations generally inflates positive error with 1 and 2 lead days. With 3 lead days, they inflate positive errors below 20 m/s and deflates positive errors above 20 m/s.
+
+
+```{r}
+ggplot(qq_plot_data) +
+  geom_line(aes(x = q_sd_no, y = q_sd_all, color = factor(lead_days)), linewidth = 1, alpha = 0.7) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  labs(
+    x = "Wind speed error SD quantiles: NO ",
+    y = "Wind speed error SD quantiles: ALL",
+    title = "Quantile-quantile (Q-Q) plot of wind speed mean error SD by lead time"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+
+Make Q-Q plots by intensity bins
+
+```{r}
+qq_plot_data_intensity <- forecast_data_lead_times %>%
+  mutate(
+    wind_obs_intensity = cut(wind_obs, breaks = c(0, 17.5, 33.0, Inf), labels = c("0-17.5", "17.5-33", "> 33"), include.lowest = TRUE)
+  ) %>%
+  group_by(lead_days, wind_obs_intensity) %>%
+  reframe(
+    q_error_all = quantile(wind_error[augmented_obs == 1], seq(0, 1, by = 0.01)),
+    q_error_no = quantile(wind_error[augmented_obs == 0], seq(0, 1, by = 0.01)),
+    q_sd_all = quantile(wind_fc_sd[augmented_obs == 1], seq(0, 1, by = 0.01)),
+    q_sd_no = quantile(wind_fc_sd[augmented_obs == 0], seq(0, 1, by = 0.01))
+  )
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+ggplot(qq_plot_data_intensity) +
+  geom_line(aes(x = q_error_no, y = q_error_all, color = factor(lead_days)), linewidth = 1, alpha = 0.7) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "purple") +
+  geom_hline(yintercept = 0, linetype = "dotted", color = "purple") +
+  labs(
+    x = "Wind speed error quantiles: NO ",
+    y = "Wind speed error quantiles: ALL",
+    title = "Quantile-quantile (Q-Q) plot of wind speed mean error by lead time and wind speed bin"
+  ) +
+  facet_wrap(~ wind_obs_intensity, nrow = 3, scales = "free") +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+ggplot(qq_plot_data_intensity) +
+  geom_line(aes(x = q_sd_no, y = q_sd_all, color = factor(lead_days)), linewidth = 1, alpha = 0.7) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black") +
+  labs(
+    x = "Wind speed error SD quantiles: NO ",
+    y = "Wind speed error SD quantiles: ALL",
+    title = "Quantile-quantile (Q-Q) plot of wind speed mean error SD by lead time and wind speed bin"
+  ) +
+  facet_wrap(~ wind_obs_intensity, nrow = 3, scales = "free") +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 16),
+    axis.title = element_text(size = 13)
+  )
+```
+
+Very noisy.
