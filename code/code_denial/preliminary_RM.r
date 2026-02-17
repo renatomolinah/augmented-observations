@@ -44,7 +44,7 @@ forecast_data_lead_times %>%
   facet_wrap(~ intensity_panel, nrow = 1) +
   theme_minimal(base_size = 14) +
   theme(
-    legend.position = "top",
+    legend.position = "bottom",
     panel.grid.minor = element_blank(),
     plot.title = element_text(face = "bold", size = 16),
     axis.title = element_text(size = 13)
@@ -102,13 +102,13 @@ forecast_data_lead_times %>%
   scale_color_manual(values = c("With Aug Obs" = "#1B9E77", "Without Aug Obs" = "#D95F02"), name = "") +
   labs(
     x = "Wind speed SD (m/s)",
-    y = "Density",
-    title = "Distribution of forecast uncertainty by lead time and augmented observations"
+    y = "Density"#,
+    #title = "Distribution of forecast uncertainty by lead time and augmented observations"
   ) +
   facet_wrap(~ factor(lead_days), nrow = 1, labeller = labeller(.cols = function(x) paste("Lead time:", x, "days"))) +
   theme_minimal(base_size = 14) +
   theme(
-    legend.position = "top",
+    legend.position = "bottom",
     panel.grid.minor = element_blank(),
     plot.title = element_text(face = "bold", size = 16),
     axis.title = element_text(size = 13)
@@ -133,13 +133,13 @@ forecast_data_lead_times %>%
   scale_color_manual(values = c("With Aug Obs" = "#1B9E77", "Without Aug Obs" = "#D95F02"), name = "") +
   labs(
     x = "Wind error (m/s)",
-    y = "Density",
-    title = "Distribution of forecast error by lead time and augmented observations"
+    y = "Density"#,
+    #title = "Distribution of forecast error by lead time and augmented observations"
   ) +
   facet_wrap(~ factor(lead_days), nrow = 1, labeller = labeller(.cols = function(x) paste("Lead time:", x, "days"))) +
   theme_minimal(base_size = 14) +
   theme(
-    legend.position = "top",
+    legend.position = "bottom",
     panel.grid.minor = element_blank(),
     plot.title = element_text(face = "bold", size = 16),
     axis.title = element_text(size = 13)

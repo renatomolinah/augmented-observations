@@ -79,13 +79,44 @@ forecast_data_lead_times %>%
   ) 
 
 # Calculate baseline uncertainty for Hurricane Force storms at 3-day lead time
-baseline_sd <- forecast_data_lead_times %>%
-  filter(lead_days == 3, wind_obs > 33, augmented_obs == 1) %>% 
-  summarise(mean_sd = mean(wind_fc_sd, na.rm = TRUE))
 
-print(baseline_sd)
+# 1. Define the cost parameter from Stage 1 (Molina & Rudik, 2024)
+beta_hurr <- 5.49 
 
+# 2. Estimate the physical impact (Stage 2)
+# We filter for 3-day lead time and hurricane-force observations (>33 m/s)
+reg_data <- forecast_data_lead_times %>%
+  filter(!is.na(augmented_obs), lead_days == 3, wind_obs > 33)
 
+mod_precision <- feols(wind_fc_sd ~ augmented_obs | county + name, data = reg_data)
+delta <- abs(coef(mod_precision)["augmented_obs"]) # The reduction in SD
 
+# 3. Calculate baseline uncertainty (sigma_all)
+baseline_sd <- reg_data %>%
+  filter(augmented_obs == 1) %>%
+  summarise(mean_sd = mean(wind_fc_sd, na.rm = TRUE)) %>%
+  pull(mean_sd)
 
+# 4. Calculate the reduction in variance (delta_sigma_sq)
+# Formula: sigma_no^2 - sigma_all^2 = (sigma_all + delta)^2 - sigma_all^2
+delta_sigma_sq <- (baseline_sd + delta)^2 - (baseline_sd)^2
+
+# 5. Calculate value per county ($ Millions)
+value_per_county <- beta_hurr * delta_sigma_sq
+
+# 6. Aggregate benefits by storm
+sample_benefits <- reg_data %>%
+  group_by(name) %>% # Using 'name' as used in the FE regression
+  summarise(
+    affected_counties = n(),
+    total_benefit_M = n() * value_per_county
+  ) %>%
+  arrange(desc(total_benefit_M))
+
+# 7. Print Results
+print(sample_benefits)
+cat("\n--- Summary ---")
+cat("\nValue per County ($M):", round(value_per_county, 2))
+cat("\nTotal Sample Value ($M):", round(sum(sample_benefits$total_benefit_M), 2))
+cat("\nTotal Sample Value ($B):", round(sum(sample_benefits$total_benefit_M)/1000, 2))
 
