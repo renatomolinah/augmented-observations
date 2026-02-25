@@ -1,11 +1,12 @@
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(data.table, tidyverse, here, fixest, patchwork)
+pacman::p_load(data.table, tidyverse, here, fixest, patchwork, modelsummary)
+source(here("code/code_denial/functions_table.r"))
 
 # 1. Load data
 forecast_data_lead_times <- fread(here("data/clean_denial/forecast_denial_data_with_lead_times.csv")) %>% 
   filter(name != "maria")
 
-# 7. Create augmented_panel.png
+# 2. Create augmented_panel.png
 # Top row: Wind speed SD by lead days, faceted by intensity thresholds
 plot_top <- forecast_data_lead_times %>%
   mutate(
@@ -69,20 +70,56 @@ ggsave(
 
 cat("\naugmented_panel.png created successfully!\n")
 
-
-
-
-
-# 2. Define Parameters and Estimation Sample
+# 3. Define Parameters and Estimation Sample
 beta_hurr <- 5.49 
 reg_data <- forecast_data_lead_times %>%
   filter(!is.na(augmented_obs), lead_days == 3, wind_obs > 33)
 
-# 3. Estimate Stage 2: Physical Impact (delta)
+# 4. Estimate Stage 2: Physical Impact (delta)
 mod_precision <- feols(wind_fc_sd ~ augmented_obs | county + name, data = reg_data)
 delta <- abs(coef(mod_precision)["augmented_obs"]) # Approximately 0.26
 
-# 4. Estimate Stage 3: Baseline Uncertainty and Variance Reduction
+# Models without wind_obs
+regs <- list()
+
+# Models without wind_obs
+regs[[1]] <- feols(wind_fc_sd ~ augmented_obs | county, data = reg_data, vcov = ~county)
+regs[[2]] <- feols(wind_fc_sd ~ augmented_obs | county + name, data = reg_data, vcov = ~county)
+
+# Models with wind_obs
+regs[[3]] <- feols(wind_fc_sd ~ augmented_obs + wind_obs | county, data = reg_data, vcov = ~county)
+regs[[4]] <- feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name, data = reg_data, vcov = ~county)
+
+obs <- regs[[1]]$nobs |> format(big.mark = ",")
+
+rows <- tribble(
+  ~term, ~"(1)", ~"(2)", ~"(3)", ~"(4)",
+  "", "", "", "", "",
+  "Observations", obs, obs, obs, obs,
+  "", "", "", "", "",
+  "Wind Controls", "", "", "\\checkmark", "\\checkmark",
+  "County FE", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark",
+  "Hurricane FE", "", "\\checkmark", "", "\\checkmark"
+)
+
+msummary(
+  regs,
+  coef_rename = c("augmented_obs" = "$\\delta$: Augmented Observations"),
+  coef_omit = "wind_obs",
+  gof_omit = "Num.Obs.|R2|AIC|BIC|Log.|RMSE|FE|Std.Errors",
+  fmt = "%.3f",
+  add_rows = rows,
+  title = "Regression Analysis of the Effect of Augmented Observations in Ex-Ante Uncertainty \\label{tab:noaa-controls}",
+  notes = list("Standard errors clustered at county level."),
+  threeparttable = TRUE,
+  escape = FALSE,
+  output = "output/noaa_report_controls_table.tex"
+)
+
+add_adjust_box("output/noaa_report_controls_table.tex")
+
+
+# 5. Estimate Stage 3: Baseline Uncertainty and Variance Reduction
 # We calculate baseline SD (sigma) for the 'With Aug Obs' group
 baseline_sd <- reg_data %>%
   filter(augmented_obs == 1) %>%
@@ -92,7 +129,7 @@ baseline_sd <- reg_data %>%
 # Variance reduction: sigma_no^2 - sigma_all^2 = (sigma_all + delta)^2 - sigma_all^2
 delta_sigma_sq <- (baseline_sd + delta)^2 - (baseline_sd)^2
 
-# 5. Monetary Valuation
+# 6. Monetary Valuation
 value_per_county <- beta_hurr * delta_sigma_sq
 sample_benefits <- reg_data %>%
   group_by(name) %>%
@@ -102,7 +139,7 @@ sample_benefits <- reg_data %>%
   ) %>%
   arrange(desc(total_benefit_M))
 
-# 6. Results Summary
+# 7. Results Summary
 cat("\n--- Valuation Summary  for in sample (2017-2020) ---")
 cat("\nObservations (HF impacts at 3-day lead):", nrow(reg_data))
 cat("\nReduction in SD (delta):", round(delta, 3), "m/s")
@@ -110,4 +147,3 @@ cat("\nBaseline SD (sigma):", round(baseline_sd, 2), "m/s")
 cat("\nReduction in Variance (delta sigma^2):", round(delta_sigma_sq, 2), "(m/s)^2")
 cat("\nValue per Affected County ($M):", round(value_per_county, 2))
 cat("\nTotal Retrospective Value ($B):", round(sum(sample_benefits$total_benefit_M)/1000, 2))
-
