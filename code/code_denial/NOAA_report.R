@@ -71,7 +71,7 @@ ggsave(
 cat("\naugmented_panel.png created successfully!\n")
 
 # 3. Define Parameters and Estimation Sample
-beta_hurr <- 5.49 
+beta_hurr <- 5.16 
 reg_data <- forecast_data_lead_times %>%
   filter(!is.na(augmented_obs), lead_days == 3, wind_obs > 33)
 
