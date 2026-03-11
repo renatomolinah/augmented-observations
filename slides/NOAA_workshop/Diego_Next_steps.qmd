@@ -2,6 +2,7 @@
 title: "From Retrospective Value to Prospective Design"
 subtitle: "Valuing Forecast Improvements Under a Nonstationary Climate"
 author: "Renato Molina, Ivan Rudik, Diego Cardoso, Brian McNoldy"
+institute: "\\scriptsize Research supported by Grant NA23OAR4590366-T1-01"
 date: "2026-03-11"
 execute:
   cache: true
