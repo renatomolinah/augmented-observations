@@ -1,0 +1,294 @@
+---
+title: "From Retrospective Value to Prospective Design"
+subtitle: "Valuing Forecast Improvements Under a Nonstationary Climate"
+author: "Renato Molina, Ivan Rudik, Diego Cardoso, Brian McNoldy"
+date: "2026-03-11"
+execute:
+  cache: true
+format:
+  beamer:
+    theme: metropolis
+    fontsize: 11pt
+    aspectratio: 169
+    header-includes: |
+      \usepackage{amsmath,amssymb}
+      \usepackage{tikz}
+      \setbeamertemplate{navigation symbols}{}
+      \metroset{block=fill}
+      \definecolor{mDarkTeal}{HTML}{23373b}
+      \definecolor{mLightBrown}{HTML}{EB811B}
+      \newcommand{\bsigma}{\bar{\sigma}}
+---
+
+## Roadmap
+
+\tableofcontents
+
+
+# I: What We Know
+
+## The Retrospective Result
+
+We quantified the social value of augmented observations (AO) for eight landfalling hurricanes (2017--2020), combining data-denial experiments (Ditchek et al. 2023) with a structural cost model (Molina et al. 2024).
+
+\vspace{0.3cm}
+
+Three key estimates:
+
+\begin{enumerate}
+  \item \textbf{Loss curvature:} $\hat{\beta}^w_2 = 5.49$ million per unit increase in squared demeaned wind error, for hurricane-force counties.
+  \item \textbf{Precision gain from AO:} $\hat{\delta} = 0.26$ m/s reduction in forecast standard deviation at the 72-hour lead time.
+  \item \textbf{Per-county value:} $\approx$ \$25.77 million per affected county per storm.
+\end{enumerate}
+
+\vspace{0.3cm}
+
+Benefit-to-cost ratio $\approx$ 50:1 against flight operations.
+
+
+## The Valuation Formula
+
+Hurricane costs depend on two features of the forecast environment: the \textit{level} of the storm (mean intensity $\mu$) and the \textit{precision} of the forecast (error variance $\sigma^2$). The expected cost can be written as:
+$$\mathbb{E}[C] = f(\mu) + \hat{\beta}^w_2 \cdot \sigma^2$$
+
+where $f(\mu)$ captures the direct cost of storm intensity and $\hat{\beta}^w_2 \cdot \sigma^2$ captures the cost of forecast uncertainty. The social value of a precision improvement that reduces error variance from $\sigma^2_0$ to $\sigma^2_1$ is:
+$$V = \hat{\beta}^w_2 \left(\sigma^2_0 - \sigma^2_1\right)$$
+\textbf{Key property:} Because hurricane damages are \textit{convex} in wind speed, both the level $\mu$ and the scale $\sigma^2$ matter. A higher $\mu$ increases the baseline cost and can amplify the marginal cost of errors. A higher $\sigma^2$ raises the baseline from which improvements must operate.
+
+
+## The Stationarity Assumption
+
+All retrospective estimates draw from the 2005--2022 climate.
+
+\vspace{0.3cm}
+
+The valuation formula treats four objects as fixed:
+
+\begin{enumerate}
+  \item $\hat{\beta}^w_2$: the loss curvature linking forecast errors to costs.
+  \item $\mu$: the location of the intensity distribution (mean wind speed for affected counties).
+  \item $\sigma^2_0$: the baseline forecast error variance (status quo technology).
+  \item $\Delta\sigma^2$: the variance reduction achievable by a given observational investment.
+\end{enumerate}
+
+\vspace{0.3cm}
+
+Under a changing climate, some (or all) of these are stationary. Climate might shift both the \textit{location} $\mu$ (higher peak intensities, more Cat 4--5 events) and the \textit{scale} $\sigma^2$ (greater forecast uncertainty from expanded atmospheric variability).
+
+\vspace{0.3cm}
+
+\textbf{The question:} How do we shift from retrospective accounting to a forward-looking framework that values \textit{future} forecast improvements under plausible shifts in $(\mu, \sigma^2)$?
+
+
+# II: Why Nonstationarity Matters
+
+## Two Channels of Climate Influence
+
+Climate change might change the value of forecast precision through two channels:
+
+\vspace{0.3cm}
+
+\textbf{1. Location shift ($\mu \uparrow$).} The intensity distribution shifts rightward. Projections might indicate a higher proportion of Category 4--5 events and increased peak wind speeds. More county-storms cross the hurricane-force threshold ($>$33 m/s), enlarging the set over which $\hat{\beta}^w_2$ applies. Because damages are convex in wind speed, a higher $\mu$ also amplifies the marginal cost of forecast errors at any given $\sigma^2$.
+
+\vspace{0.3cm}
+
+\textbf{2. Scale shift ($\sigma^2 \uparrow$).} Greater variability, rapid intensification episodes, and thermodynamic environments increases the irreducible component of forecast error variance. The forecast models must operate on a distributional support that is expanding.
+
+\vspace{0.3cm}
+
+Both channels raise the social value of a given precision improvement $\Delta\sigma^2$.
+
+
+## Convexity: Both Channels Amplify Value
+
+\begin{center}
+\begin{tikzpicture}[scale=0.75]
+  \node[above] at (3.5, 6.2) {\textbf{Scale shift} ($\mu$ fixed, $\sigma^2 \uparrow$)};
+  \draw[->] (0,0) -- (7.5,0) node[right] {\small $\sigma^2$};
+  \draw[->] (0,0) -- (0,5.5) node[above] {\small $C(\mu,\sigma^2)$};
+  \draw[thick, blue, domain=0:7, samples=100] plot (\x, {0.1*\x*\x});
+  \draw[dashed, gray] (3.5,0) -- (3.5, {0.1*12.25}) -- (0, {0.1*12.25});
+  \node[below, blue] at (3.5,0) {\tiny $\sigma^2_{hist}$};
+  \draw[dashed, red] (5.5,0) -- (5.5, {0.1*30.25}) -- (0, {0.1*30.25});
+  \node[below, red] at (5.5,0) {\tiny $\sigma^2_{future}$};
+  \begin{scope}[xshift=9.5cm]
+  \node[above] at (3.5, 6.2) {\textbf{Location shift} ($\sigma^2$ fixed, $\mu \uparrow$)};
+  \draw[->] (0,0) -- (7.5,0) node[right] {\small $\sigma^2$};
+  \draw[->] (0,0) -- (0,5.5) node[above] {\small $C(\mu,\sigma^2)$};
+  \draw[thick, blue, domain=0:7, samples=100] plot (\x, {0.08*\x*\x});
+  \node[right, blue] at (6.8, {0.08*49}) {\tiny $\mu_{hist}$};
+  \draw[thick, red, domain=0:7, samples=100] plot (\x, {0.12*\x*\x});
+  \node[right, red] at (6.2, {0.12*38}) {\tiny $\mu_{future}$};
+  \draw[dashed, gray] (4,0) -- (4, {0.12*16});
+  \node[below] at (4,0) {\tiny $\sigma^2_0$};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.1cm}
+\small \textbf{Left:} Same $\Delta\sigma^2$, but higher baseline $\sigma^2$ means steeper cost curve $\Rightarrow$ larger $V$. \textbf{Right:} Same $\sigma^2$ and $\Delta\sigma^2$, but higher $\mu$ rotates the cost curve upward $\Rightarrow$ larger $V$.
+
+
+# III: A Framework for Prospective Valuation
+
+## The Forecast Error Model
+
+For location $i$, lead time $s$ periods ahead from time $t$:
+$$y_{i,t+s} = \hat{g}(X_t) + \epsilon_{i,t+s}, \quad \epsilon_{i,t+s} \sim F_s\!\left(0,\; \sigma^2_s\right)$$
+
+where $X_t$ is the vector of current and lagged atmospheric states and $\hat{g}(\cdot)$ is the forecast model's best prediction. Under climate change, the distribution of outcomes $y_{i,t+s}$ shifts in both location and scale:
+
+\begin{itemize}
+  \item \textbf{Location:} The mean of the intensity distribution $\mu$ shifts rightward (higher $V_{max}$, more rapid intensification episodes, etc). This increases the probability of extreme realizations and the baseline cost against which errors are evaluated.
+  \item \textbf{Scale:} The conditional forecast error variance $\sigma^2_s$ increases as the atmospheric state space expands beyond the historical support on which $\hat{g}(\cdot)$ was estimated.
+\end{itemize}
+
+Both shifts raise the social value of any given precision improvement $\Delta\sigma^2$.
+
+
+## A Prospective Valuation Approach
+
+Define the value of a forecast improvement under climate scenario $\lambda$, which determines both the location and scale of the intensity distribution:
+$$V(\lambda) = \beta\!\left(\mu(\lambda)\right) \cdot \Delta\sigma^2(\lambda)$$
+where:
+\begin{itemize}
+  \item $\mu(\lambda)$: the location of the intensity distribution under scenario $\lambda$. A higher $\mu$ increases baseline damages and can amplify the loss curvature $\beta$.
+  \item $\sigma^2_0(\lambda)$: the \textit{status quo} forecast error variance under scenario $\lambda$.
+  \item $\Delta\sigma^2(\lambda) = \sigma^2_0(\lambda) - \sigma^2_1(\lambda)$: the variance reduction from the improved technology.
+\end{itemize}
+
+Climate change raises $V$ through both parameters: $\mu$ and $\sigma^2_0$. These effects compound: the same technology is worth more when storms are both stronger \textit{and} harder to predict.
+
+
+## A Semi-Parametric Simulation
+
+\textbf{Step 1: Empirical baseline.} Estimate the joint distribution of $(\mu, \sigma^2_s)$ from the historical sample of data-denial experiments (e.g., Ditchek et al. 2023), stratified by lead time and intensity category. This is the known object.
+
+\textbf{Step 2: Climate perturbation.} Shift $(\mu, \sigma^2)$ (e.g., under CMIP6 scenarios, SSP2-4.5 vs. SSP5-8.5). The location shift draws on projected changes in TC intensity distributions (e.g., Knutson et al., 2020). The scale shift reflects increased forecast error variance from expanded atmospheric variability.
+
+\textbf{Step 3: Propagation.} For each draw from the perturbed distribution, compute $V(\lambda) = \beta(\mu(\lambda)) \cdot \Delta\sigma^2(\lambda)$ and aggregate across county-storms to obtain scenario-specific total values.
+
+
+## Step 2: Two Perturbation Channels
+
+\textbf{Location channel ($\mu \uparrow$).} Use projected rightward shift of the TC intensity distribution to perturb $\mu$. 
+
+  - Literature suggests a modest increase in mean peak wind (about 3\% under 2°C warming) but a substantially heavier right tail, with 10\% more Category 4--5 storms. 
+  - A higher $\mu$ both enlarges the set of hurricane-force county-storms and steepens the loss function $\beta(\mu)$.
+\textbf{Scale channel ($\sigma^2 \uparrow$).} Scale $\sigma^2_s$ by a multiplicative factor $\kappa > 1$ reflecting the increase in irreducible forecast uncertainty. 
+
+    - This channel captures the effect of expanding atmospheric variability on model skill and is the more speculative of the two.
+
+\textit{A key question for this audience:} What is the best empirical basis for calibrating the scale factor $\kappa$?
+
+## Extension: Track Forecasts
+
+An analogous framework applies to track uncertainty. Define location-level exposure as:
+$$p_{i,t+s} = \Pr\!\left(\text{location } i \text{ within strike zone at } t+s \mid X_t\right)$$
+
+This can be implemented as:
+\begin{itemize}
+  \item A binary indicator: whether the TC centroid passes through location $i$.
+  \item A kernel-weighted function: exposure that decays with distance from the forecast center, e.g., $K\!\left(\frac{\|r_i - r_{center}\|}{R}\right)$ for some radius $R$.
+\end{itemize}
+
+# A Simple Illustration
+
+## A Simple Illustration: Setup
+
+We compute $V(\mu, \sigma^2) = \beta(\mu) \times \Delta\sigma^2$ over a grid of plausible $(\mu, \sigma^2_0)$ pairs.
+
+\textbf{Calibration from the retrospective analysis:}
+
+\begin{itemize}
+  \item $\hat{\beta}^w_2 = 5.49$ M per (m/s)$^2$, at a historical mean intensity $\bar{\mu} = 38$ m/s.
+  \item $\Delta\sigma^2 = 1$ (m/s)$^2$, hypothetical variance reduction from augmented observations.
+  \item $\beta(\mu)$ is increasing in $\mu$ above the hurricane-force threshold (33 m/s), reflecting the convexity of damages in wind speed: $\beta(\mu) = \hat{\beta}^w_2 \left(\frac{\mu - 33}{\bar{\mu} - 33}\right)^{3}$.
+\end{itemize}
+
+\textbf{Tentative climate scenarios} shift $(\mu, \sigma^2_0)$ jointly:
+
+\begin{itemize}
+  \item Moderate $\mu$ increases 3\%, $\sigma^2$ scales by $\kappa = 1.10$.
+  \item Extreme $\mu$ increases 7\%, $\sigma^2$ scales by $\kappa = 1.25$.
+\end{itemize}
+
+
+## A Simple Illustration: Value Surface $V(\mu, \sigma^2)$
+
+```{julia}
+#| fig-width: 8
+#| fig-height: 6
+#| fig-align: center
+# using Pkg
+# Pkg.activate()
+# Pkg.add(["CairoMakie", "ColorSchemes"])
+# Pkg.instantiate()
+
+using CairoMakie
+
+# ---- Parameters ----
+β_hat    = 5.49       # loss curvature at historical mean ($ million)
+μ_hist   = 38.0       # historical mean wind speed, hurricane-force counties (m/s)
+σ2_hist  = 80.6       # historical forecast error variance ≈ 8.98² (m/s)²
+Δσ2      = 1.0        # variance reduction from the evaluated technology (m/s)²
+threshold = 33.0      # hurricane-force threshold (m/s)
+
+# β(μ): increasing above hurricane-force threshold, normalized at μ_hist
+β_of_μ(μ) = μ <= threshold ? 0.0 :
+    β_hat * ((μ - threshold) / (μ_hist - threshold))^3.0
+
+# ---- Grid ----
+μ_grid  = range(36.0, 42.0, length=200)
+σ2_grid = range(64.0, 110.0, length=200)
+V = [β_of_μ(μ) * Δσ2 for μ in μ_grid, σ2 in σ2_grid]
+
+# ---- Scenario points ----
+scenarios = [
+    (μ_hist,        σ2_hist,             "Historical",  :white),
+    (μ_hist * 1.03, σ2_hist * 1.10,      "Moderate",   :cyan),
+    (μ_hist * 1.07, σ2_hist * 1.25,      "Extreme",   :magenta),
+]
+
+# ---- Figure ----
+fig = Figure(size=(750, 380), fontsize=11)
+ax = Axis(fig[1, 1],
+    xlabel = "Mean storm intensity μ (m/s)",
+    ylabel = "Forecast error SD σ (m/s)",
+    title  = "Value of 1SD forecast improvement (million \$ per county)")
+
+hm = contourf!(ax, collect(μ_grid), collect(sqrt.(σ2_grid)), V',
+    levels=15, colormap=:YlOrRd)
+Colorbar(fig[1, 2], hm, label="V (million \$)")
+
+for (μ_s, σ2_s, lab, col) in scenarios
+    scatter!(ax, [μ_s], sqrt.([σ2_s]), color=col, markersize=12,
+        strokewidth=1.5, strokecolor=:black)
+    text!(ax, μ_s + 0.25, sqrt(σ2_s), text=lab,
+        fontsize=9, color=col,
+        strokewidth=0.5, strokecolor=:black)
+end
+
+fig
+```
+
+
+# Open Questions
+
+## Open Questions for the Community
+
+\textbf{1. Calibrating the scale channel.}
+What is the best empirical or model-based strategy for projecting how $\sigma^2_s$ scales with changes in the large-scale environment?
+
+\vspace{0.3cm}
+
+\textbf{2. Structural stability of precision gains.}
+Should we expect the physical improvement from a given observational investment (the $\Delta\sigma^2$) to remain constant as $(\mu, \sigma^2)$ shift? Or does data assimilation performance itself degrade (or improve) in a warmer climate?
+
+\vspace{0.3cm}
+
+\textbf{3. Multi-hazard extension.}
+The current framework is wind-only. Precipitation and storm surge channels likely amplify the total value. How should we prioritize these extensions, and what data would be needed?
+
+\textbf{We welcome any and all feedback} on the scale-shift calibration!
+

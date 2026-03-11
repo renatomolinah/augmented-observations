@@ -47,3 +47,7 @@ output/
 *.log
 *.tmp
 *~
+
+# Julia/Quarto files
+
+.jupyter_cache/
