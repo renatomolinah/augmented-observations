@@ -3,7 +3,7 @@ title: "From Retrospective Value to Prospective Design"
 subtitle: "Valuing Forecast Improvements Under a Nonstationary Climate"
 author: "Renato Molina, Ivan Rudik, Diego Cardoso, Brian McNoldy"
 institute: "\\scriptsize Research supported by Grant NA23OAR4590366-T1-01"
-date: "2026-03-11"
+date: "2026-03-13"
 execute:
   cache: true
 format:
@@ -16,9 +16,6 @@ format:
       \usepackage{tikz}
       \setbeamertemplate{navigation symbols}{}
       \metroset{block=fill}
-      \definecolor{mDarkTeal}{HTML}{23373b}
-      \definecolor{mLightBrown}{HTML}{EB811B}
-      \newcommand{\bsigma}{\bar{\sigma}}
 ---
 
 ## Roadmap
@@ -37,7 +34,7 @@ We quantified the social value of augmented observations (AO) for eight landfall
 Three key estimates:
 
 \begin{enumerate}
-  \item \textbf{Loss curvature:} $\hat{\beta}^w_2 = 5.49$ million per unit increase in squared demeaned wind error, for hurricane-force counties.
+  \item \textbf{Loss curvature:} $\hat{\beta}^w_2 = 5.16$ million per unit increase in squared demeaned wind error, for hurricane-force counties.
   \item \textbf{Precision gain from AO:} $\hat{\delta} = 0.26$ m/s reduction in forecast standard deviation at the 72-hour lead time.
   \item \textbf{Per-county value:} $\approx$ \$25.77 million per affected county per storm.
 \end{enumerate}
@@ -89,7 +86,7 @@ Climate change might change the value of forecast precision through two channels
 
 \vspace{0.3cm}
 
-\textbf{1. Location shift ($\mu \uparrow$).} The intensity distribution shifts rightward. Projections might indicate a higher proportion of Category 4--5 events and increased peak wind speeds. More county-storms cross the hurricane-force threshold ($>$33 m/s), enlarging the set over which $\hat{\beta}^w_2$ applies. Because damages are convex in wind speed, a higher $\mu$ also amplifies the marginal cost of forecast errors at any given $\sigma^2$.
+\textbf{1. Location shift ($\mu \uparrow$).} The intensity distribution shifts rightward. Projections might indicate a higher proportion of Category 4--5 events and increased peak wind speeds. More county-storms cross the hurricane-force threshold (> 33 m/s), enlarging the set over which $\hat{\beta}^w_2$ applies. Because damages are convex in wind speed, a higher $\mu$ also amplifies the marginal cost of forecast errors at any given $\sigma^2$.
 
 \vspace{0.3cm}
 
@@ -180,8 +177,6 @@ Climate change raises $V$ through both parameters: $\mu$ and $\sigma^2_0$. These
 
     - This channel captures the effect of expanding atmospheric variability on model skill and is the more speculative of the two.
 
-\textit{A key question for this audience:} What is the best empirical basis for calibrating the scale factor $\kappa$?
-
 ## Extension: Track Forecasts
 
 An analogous framework applies to track uncertainty. Define location-level exposure as:
@@ -202,7 +197,7 @@ We compute $V(\mu, \sigma^2) = \beta(\mu) \times \Delta\sigma^2$ over a grid of 
 \textbf{Calibration from the retrospective analysis:}
 
 \begin{itemize}
-  \item $\hat{\beta}^w_2 = 5.49$ M per (m/s)$^2$, at a historical mean intensity $\bar{\mu} = 38$ m/s.
+  \item $\hat{\beta}^w_2 = 5.16$ M per (m/s)$^2$, at a historical mean intensity $\bar{\mu} = 38$ m/s.
   \item $\Delta\sigma^2 = 1$ (m/s)$^2$, hypothetical variance reduction from augmented observations.
   \item $\beta(\mu)$ is increasing in $\mu$ above the hurricane-force threshold (33 m/s), reflecting the convexity of damages in wind speed: $\beta(\mu) = \hat{\beta}^w_2 \left(\frac{\mu - 33}{\bar{\mu} - 33}\right)^{3}$.
 \end{itemize}
@@ -229,7 +224,7 @@ We compute $V(\mu, \sigma^2) = \beta(\mu) \times \Delta\sigma^2$ over a grid of 
 using CairoMakie
 
 # ---- Parameters ----
-β_hat    = 5.49       # loss curvature at historical mean ($ million)
+β_hat    = 5.16       # loss curvature at historical mean ($ million)
 μ_hist   = 38.0       # historical mean wind speed, hurricane-force counties (m/s)
 σ2_hist  = 80.6       # historical forecast error variance ≈ 8.98² (m/s)²
 Δσ2      = 1.0        # variance reduction from the evaluated technology (m/s)²
@@ -279,7 +274,7 @@ fig
 ## Open Questions for the Community
 
 \textbf{1. Calibrating the scale channel.}
-What is the best empirical or model-based strategy for projecting how $\sigma^2_s$ scales with changes in the large-scale environment?
+What is the best empirical or model-based strategy for projecting how $\sigma^2_s$ scales with changes in the large-scale environment (the scale factor $\kappa$)?
 
 \vspace{0.3cm}
 
@@ -291,5 +286,5 @@ Should we expect the physical improvement from a given observational investment 
 \textbf{3. Multi-hazard extension.}
 The current framework is wind-only. Precipitation and storm surge channels likely amplify the total value. How should we prioritize these extensions, and what data would be needed?
 
-\textbf{We welcome any and all feedback} on the scale-shift calibration!
+\textbf{We welcome any and all feedback!}
 
