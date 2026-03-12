@@ -36,7 +36,7 @@ Three key estimates:
 \begin{enumerate}
   \item \textbf{Loss curvature:} $\hat{\beta}^w_2 = 5.16$ million per unit increase in squared demeaned wind error, for hurricane-force counties.
   \item \textbf{Precision gain from AO:} $\hat{\delta} = 0.26$ m/s reduction in forecast standard deviation at the 72-hour lead time.
-  \item \textbf{Per-county value:} $\approx$ \$25.77 million per affected county per storm.
+  \item \textbf{Per-county value:} $\approx$ \$24 million per affected county per storm.
 \end{enumerate}
 
 \vspace{0.3cm}
