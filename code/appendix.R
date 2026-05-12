@@ -18,11 +18,12 @@
 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
-  data.table, tidyverse, here, fixest, broom,
+  data.table, tidyverse, here, fixest, conleyreg, broom,
   patchwork, modelsummary, kableExtra, ggplot2
 )
 
 source(here("code/functions_table.r"))
+options(conleyreg.verbose = FALSE)
 
 # -- paths ---------------------------------------------------------------------
 voi_path <- here("data/clean/final_dataset.rds")
@@ -41,6 +42,8 @@ voi_load <- function() {
     as_tibble() |>
     drop_na(lat, lon, total_cost_pc, total_cost_per_gdp)
 }
+voi_load_drop  <- function(storm) voi_load() |> filter(hurricane != storm)
+voi_load_until <- function(yr)    voi_load() |> filter(year <= yr)
 
 # Spec used throughout: paper's preferred col (7) specification.
 spec_col7 <- function(lhs = "total_cost") {
@@ -50,23 +53,39 @@ spec_col7 <- function(lhs = "total_cost") {
   ))
 }
 
+# Conley HAC 400 km / unbounded lag — matches main Table 2 col (7) in
+# NOAA_report.R. Each call gets a fresh load to avoid data.table by-reference
+# mutation inside conleyreg.
+run_conley <- function(formula, data) {
+  conleyreg(
+    formula = formula, data = data,
+    dist_cutoff = 400, lag_cutoff = Inf,
+    unit = "county", time = "year",
+    lat = "lat", lon = "lon",
+    batch_ram_opt = "none"
+  )
+}
+
 # A.1 — sample window comparison ----------------------------------------------
-voi_full <- voi_load()
+mA1_2024 <- run_conley(spec_col7("total_cost"), voi_load())
+mA1_2022 <- run_conley(spec_col7("total_cost"), voi_load_until(2022))
 
-mA1_2024 <- feols(spec_col7("total_cost"), data = voi_full,
-                  cluster = c("county", "state^hurricane"))
-mA1_2022 <- feols(spec_col7("total_cost"),
-                  data = voi_full |> filter(year <= 2022),
-                  cluster = c("county", "state^hurricane"))
+voi_full <- voi_load()  # for downstream non-regression summaries
 
+# conleyreg returns a coeftest object, not a fixest; nobs lives in an attribute
+n_obs <- function(m) {
+  if (!is.null(attr(m, "nobs"))) attr(m, "nobs")
+  else if (!is.null(m$nobs))     m$nobs
+  else NA_integer_
+}
 rowsA1 <- tribble(
   ~term, ~"(1) 2005-2022", ~"(2) 2005-2024",
   "Observations",
-    format(mA1_2022$nobs, big.mark = ","),
-    format(mA1_2024$nobs, big.mark = ","),
+    format(nrow(voi_load_until(2022)), big.mark = ","),
+    format(nrow(voi_load()),           big.mark = ","),
   "Storms",
-    as.character(length(unique(voi_full |> filter(year <= 2022) |> pull(hurricane)))),
-    as.character(length(unique(voi_full$hurricane)))
+    as.character(length(unique(voi_load_until(2022)$hurricane))),
+    as.character(length(unique(voi_load()$hurricane)))
 )
 
 msummary(
@@ -82,7 +101,7 @@ msummary(
   stars     = stars_econ,
   add_rows  = rowsA1,
   title     = "Sample-window robustness: $\\hat{\\beta}^w_{Hurr}$ before and after adding 2023--2024 storms. \\label{tab:appA_sample}",
-  notes     = list("Coefficients on level errors and the precipitation squared error are absorbed into the controls and omitted from display. Standard errors clustered at the county and state-by-hurricane level."),
+  notes     = list("Coefficients on level errors and the precipitation squared error are absorbed into the controls and omitted from display. Standard errors are Conley Spatial HAC with a 400~km distance cutoff."),
   threeparttable = TRUE,
   escape    = FALSE,
   output    = here("output/appA_sample_compare.tex")
@@ -90,12 +109,14 @@ msummary(
 add_adjust_box(here("output/appA_sample_compare.tex"))
 
 # A.2 — three outcomes (col-7 spec) -------------------------------------------
-mA2_tot  <- feols(spec_col7("total_cost"),       data = voi_full, cluster = c("county", "state^hurricane"))
-mA2_gdp  <- feols(I(total_cost_per_gdp * 100) ~ squared_error:category + squared_error_precip +
-                    level_error + level_error_precip |
-                    county + state^hurricane + wind_cut + precip_cut,
-                  data = voi_full, cluster = c("county", "state^hurricane"))
-mA2_pc   <- feols(spec_col7("total_cost_pc"),    data = voi_full, cluster = c("county", "state^hurricane"))
+mA2_tot <- run_conley(spec_col7("total_cost"),    voi_load())
+mA2_gdp <- run_conley(
+  total_cost_per_gdp * 100 ~ squared_error:category + squared_error_precip +
+    level_error + level_error_precip |
+    county + state^hurricane + wind_cut + precip_cut,
+  voi_load()
+)
+mA2_pc  <- run_conley(spec_col7("total_cost_pc"), voi_load())
 
 msummary(
   list("Total cost (\\$M)"        = mA2_tot,
@@ -110,7 +131,7 @@ msummary(
   fmt       = "%.3f",
   stars     = stars_econ,
   title     = "Outcome robustness: $\\hat{\\beta}^w_{Hurr}$ across cost outcomes (2005--2024 panel). \\label{tab:appA_outcomes}",
-  notes     = list("All specifications match column (7) of Table~\\ref{tab:voi-table} with county and state-by-hurricane fixed effects plus realized wind and precipitation bins. Standard errors clustered at the county and state-by-hurricane level."),
+  notes     = list("All specifications match column (7) of Table~\\ref{tab:voi-table} with county and state-by-hurricane fixed effects plus realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400~km distance cutoff."),
   threeparttable = TRUE,
   escape    = FALSE,
   output    = here("output/appA_outcomes.tex")
@@ -122,8 +143,8 @@ top_storms <- c("katrina", "harvey", "sandy", "ian", "ida",
                 "michael", "laura", "irma", "wilma", "rita")
 jack_rows <- list()
 for (s in c("none", top_storms)) {
-  d <- if (s == "none") voi_full else voi_full |> filter(hurricane != s)
-  m <- feols(spec_col7("total_cost"), data = d, cluster = c("county", "state^hurricane"))
+  d <- if (s == "none") voi_load() else voi_load_drop(s)
+  m <- run_conley(spec_col7("total_cost"), d)
   cf <- coef(m); se <- sqrt(diag(vcov(m)))
   hurr_ix <- grep("categoryHurricane", names(cf))
   sub_ix  <- grep("categoryTropical Storm", names(cf))
@@ -163,7 +184,7 @@ jack_tex <- kbl(
   align     = c("l", "c", "c", "c", "c")
 ) |>
   footnote(
-    general = "Each row reports column (7) estimates after dropping the indicated storm from the panel. Standard errors clustered at the county and state-by-hurricane level in parentheses. The baseline row drops no storm.",
+    general = "Each row reports column (7) estimates after dropping the indicated storm from the panel. Conley Spatial HAC standard errors (400 km cutoff) in parentheses. The baseline row drops no storm.",
     threeparttable = TRUE,
     fixed_small_size = TRUE,
     escape = FALSE
@@ -315,9 +336,8 @@ add_adjust_box(here("output/appB_maria.tex"))
 # Re-derive Stage 3 valuation per storm using the same beta and delta the main
 # report uses.
 
-# Recompute beta on full panel
-m_beta <- feols(spec_col7("total_cost"), data = voi_full,
-                cluster = c("county", "state^hurricane"))
+# Recompute beta on full panel (Conley HAC)
+m_beta <- run_conley(spec_col7("total_cost"), voi_load())
 beta_hurr <- unname(coef(m_beta)[grep("categoryHurricane", names(coef(m_beta)))])
 
 # Delta and baseline sigma from main report's Stage 2 sample
