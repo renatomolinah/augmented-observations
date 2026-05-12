@@ -8,10 +8,10 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-.PHONY: all clean_voi clean_denial report clean help
+.PHONY: all clean_voi clean_denial report appendix clean help
 
 ## Default
-all: report
+all: report appendix
 	@echo -e "$(GREEN)Pipeline complete.$(NC)"
 
 ## Help
@@ -19,10 +19,11 @@ help:
 	@echo -e "$(GREEN)Augmented Observations replication$(NC)"
 	@echo
 	@echo "Targets:"
-	@echo "  all          full pipeline: VOI cleaning -> denial cleaning -> NOAA_report.R"
+	@echo "  all          full pipeline: VOI cleaning -> denial cleaning -> NOAA_report.R -> appendix"
 	@echo "  clean_voi    run code/cleaning_voi/* -> data/clean/final_dataset.rds"
 	@echo "  clean_denial run code/cleaning_denial/* -> data/clean_denial/*"
 	@echo "  report       run code/NOAA_report.R -> output/{table_voi,summary_dmg,data_denial,noaa_report_controls_table}.tex + output/augmented_panel.png"
+	@echo "  appendix     run code/appendix.R -> output/app{A,B}_*.tex + output/appC_per_storm.{tex,png}"
 	@echo "  clean        remove output/ (preserves data/raw/ and data/clean/*)"
 	@echo
 	@echo "Prereqs: R packages restored via renv (renv::restore()) and"
@@ -61,6 +62,19 @@ output/table_voi.tex: data/clean/final_dataset.rds \
 	@echo -e "$(GREEN)  -> output/augmented_panel.png$(NC)"
 
 report: output/table_voi.tex
+
+## Step 4 - Appendix (robustness + per-storm decomposition)
+output/appA_jackknife.tex: data/clean/final_dataset.rds \
+                          data/clean_denial/forecast_denial_data_with_lead_times.csv \
+                          code/appendix.R \
+                          code/functions_table.r
+	@echo -e "$(YELLOW)[4/4] Appendix (A: β robustness, B: δ robustness, C: per-storm)...$(NC)"
+	@mkdir -p output
+	@$(R) code/appendix.R
+	@echo -e "$(GREEN)  -> output/app{A,B}_*.tex$(NC)"
+	@echo -e "$(GREEN)  -> output/appC_per_storm.{tex,png}$(NC)"
+
+appendix: output/appA_jackknife.tex
 
 ## Cleanup
 clean:
