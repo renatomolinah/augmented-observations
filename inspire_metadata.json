@@ -1,0 +1,77 @@
+{
+  "title": "Data and Code for: The Socio-Economic Benefits of Hurricane Forecasting Augmented Observations",
+  "abstract": "Replication package for the NOAA final report on the socio-economic value of augmented aircraft observations in hurricane forecasting. The package links the data-denial experiments of Ditchek et al. (2023) for eight 2017-2020 continental-US landfalling hurricanes to a county-level structural cost framework spanning 37 hurricanes from 2005-2024. It reconstructs the marginal cost of forecast error, the precision gain from dropsonde assimilation, and the implied retrospective social value of the NOAA reconnaissance fleet. Inputs combine NOAA hurricane forecast and verification data, the Ditchek (2023) HWRF ALL-vs-NO denial archive, FEMA Public Assistance data, BEA county income and GDP data, U.S. Census ACS and TIGER products, SEER tract population data, and SHELDUS hazard-loss data.",
+  "purpose": "To quantify the social value of in-situ dropsonde reconnaissance data assimilated into hurricane forecast models, and to provide a reproducible benefit-side benchmark for NOAA's aircraft recapitalization decisions.",
+  "creator": "Renato Molina, Ivan Rudik, Diego Cardoso, and Brian McNoldy",
+  "unique_identifier": "",
+  "version": "1.0",
+  "contributors": [
+    {"name": "Renato Molina", "role": "Principal Investigator (PI)", "role_description": "University of Miami; economic framework, replication code, and pipeline lead"},
+    {"name": "Ivan Rudik", "role": "Co-Investigator", "role_description": "Cornell University; structural cost model co-developer"},
+    {"name": "Diego Cardoso", "role": "Co-Investigator", "role_description": "University of Illinois Urbana-Champaign; methodology contributor"},
+    {"name": "Brian McNoldy", "role": "Co-Investigator", "role_description": "University of Miami; meteorological inputs and data denial liaison"},
+    {"name": "Sarah Ditchek", "role": "Data Analyst", "role_description": "Provided HWRF data-denial forecast model output (ALL vs NO experiments) for 2017-2020 landfalling hurricanes"},
+    {"name": "Jason Sippel", "role": "Data Analyst", "role_description": "Provided supplementary post-landfall hazard forecast data"},
+    {"name": "Mark DeMaria", "role": "Data Analyst", "role_description": "Provided official NHC forecast model output and verification"}
+  ],
+  "funding_reference": [
+    "NOAA Weather Program Office (WPO) - Observations program (in-kind)",
+    "Prior NOAA grant NA20OAR4320472 (Molina and Rudik, Social Value of Hurricane Forecasts)"
+  ],
+  "license": "Other",
+  "license_custom_terms": "License terms are source-specific. Public components follow the terms of their original providers; restricted components such as SHELDUS are not publicly redistributed in this package. The author-written code is shared for replication and review under terms equivalent to MIT.",
+  "citation_recommendation": "Molina, R., Rudik, I., Cardoso, D., & McNoldy, B. (2026). The Socio-Economic Benefits of Hurricane Forecasting Augmented Observations: Final Report. NOAA Weather Program Office.",
+  "subject_category": "Economic Impacts",
+  "keywords_controlled": [
+    "Hurricane Preparedness"
+  ],
+  "keywords_other": [
+    "augmented observations",
+    "dropsondes",
+    "data denial experiments",
+    "hurricane reconnaissance",
+    "tropical cyclone forecasts",
+    "value of information",
+    "forecast uncertainty",
+    "ex-ante forecast standard deviation",
+    "Ditchek 2023",
+    "Sippel 2026",
+    "NOAA aircraft recapitalization",
+    "county-level panel",
+    "replication package"
+  ],
+  "related_datasets": [
+    "Molina and Rudik (2026), The Social Value of Hurricane Forecasts replication package (DOI 10.3886/E239203V1)",
+    "Ditchek et al. (2023), HWRF data-denial archive (2017-2020 Atlantic and East Pacific TCs)",
+    "FEMA OpenFEMA Public Assistance and Disaster Declarations",
+    "BEA CAINC1 and CAGDP1 county series",
+    "SHELDUS spatial hazard losses"
+  ],
+  "geographic_coverage_controlled": [
+    "United States",
+    "Coastal Regions",
+    "Gulf Coast"
+  ],
+  "geographic_coverage_specific": "Continental United States counties (3,073 county FIPS) exposed to landfalling hurricanes 2005-2024.",
+  "coordinate_system": "WGS84 / EPSG:4326",
+  "spatial_resolution": "County-level analysis (5-digit FIPS).",
+  "temporal_coverage_start": "2005-01-01",
+  "temporal_coverage_end": "2024-12-31",
+  "temporal_resolution": "Event-based hurricane forecasts and county-hurricane observations; supporting annual demographic and economic inputs.",
+  "data_type": "Administrative Data",
+  "data_format": "RDS, CSV, TEX, PNG; raw inputs in CSV and ZIP archives.",
+  "collection_methodology": "The replication package is assembled in two parallel pipelines. The VOI pipeline (code/cleaning_voi/) reconstructs the 37-storm county-hurricane panel from public and restricted sources following the conventions of Molina and Rudik (2026). The denial pipeline (code/cleaning_denial/) processes ALL-vs-NO HWRF model outputs from Ditchek et al. (2023) into a county-level forecast-uncertainty panel for the eight landfalling 2017-2020 hurricanes. Both pipelines are orchestrated via a Makefile that produces analysis-ready datasets and all manuscript figures and tables.",
+  "uncertainty_quantification": "Includes ex-ante forecast standard deviation (wind_fc_sd), squared demeaned forecast error, Conley spatial HAC standard errors (400 km bandwidth) on the primary structural regression, and two-way county and state-by-hurricane cluster-robust standard errors on robustness tables.",
+  "data_processing": "R scripts clean raw source files, harmonize identifiers, construct forecast exposure variables, merge economic and demographic covariates, and generate the analysis-ready file data/clean/final_dataset.rds and the denial-side data/clean_denial/forecast_denial_data_with_lead_times.csv. NOAA_report.R produces all manuscript tables and figures (Stages 0-3 plus a cost-benefit benchmark against the 2016 ANSER AoA). appendix.R produces beta and delta robustness tables and per-storm value decomposition.",
+  "provenance": "Built in 2026 from a canonical reconstruction of the Molina and Rudik (2026) replication package. The 31-storm overlap is byte-identical to the source repository for wind_error, precip_error, and sheldus inputs; FEMA records are a hybrid of the source pull and a March-2026 OpenFEMA refresh covering the six new (2023-2024) storms. Source decisions are documented in the repository README and git history.",
+  "use_cases": "Policy Development",
+  "integration_with_other_data": "County-level forecast, damage, expenditure, demographic, and spatial inputs are linked using FIPS codes, hurricane names, and event dates. The denial panel joins to the VOI panel via hurricane name and county FIPS.",
+  "community_engagement": false,
+  "equity_accessibility": false,
+  "data_access_url": "https://github.com/renatomolinah/augmented-observations",
+  "file_size": "Approximately 7 GB raw inputs, ~100 MB cleaned outputs.",
+  "software_dependencies": "R 4.3+ with renv-managed package dependencies (tidyverse, data.table, fixest, conleyreg, modelsummary, kableExtra, sf, here, patchwork, broom). Pipeline reproducible via `make all` from repository root.",
+  "access_restrictions": "Code is shared via the repository. Most raw inputs are publicly distributed (FEMA, BEA, Census, SEER, NOAA). SHELDUS requires a subscription and is not publicly redistributed. Ditchek (2023) HWRF denial archive is shared by the authors with permission.",
+  "data_sensitivity": false,
+  "retention_policy": "Code and metadata are preserved in the public repository. Restricted-access inputs are preserved privately for at least five years after publication; the authors affirm reasonable support for replication and clarification requests."
+}
