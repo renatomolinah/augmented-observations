@@ -13,8 +13,8 @@ pacman::p_load_gh("geanders/hurricaneexposuredata")
 pacman::p_load_gh("UrbanInstitute/urbnmapr")
 
 options("tidylog.display" = NULL)
-source("code_denial/functions_plot.r")
-source("code_denial/functions_table.r")
+source("code/functions_plot.r")
+source("code/functions_table.r")
 "%ni%" = Negate("%in%")
 
 # conley default cutoff distance

@@ -1,0 +1,71 @@
+\documentclass{article}
+\usepackage{threeparttable}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[backend=biber, style=authoryear]{biblatex}
+\addbibresource{references/references.bib}
+
+\title{Augmented observations: Background}
+%\author{Brian McNoldy}
+%\date{January 2026}
+
+\begin{document}
+
+%\maketitle
+
+\section{Introduction}
+
+Hurricanes form and spend the majority of their lifetimes over the open ocean, where in-situ measurements are difficult and expensive to collect. To collect vital data in and around life-threatening hurricanes in the Atlantic, hurricane reconnaissance flights began in the mid-1940s, flown by the United States Navy and Air Force. By the mid-1950s, routine reconnaissance flights were also conducted by the United States Weather Bureau’s National Hurricane Research Project (NHRP), the precursor to what is now the Hurricane Research Division (HRD), operated by the National Oceanic and Atmospheric Administration (NOAA). HRD has been conducting operational and research flights into and around hurricanes since 1982, and the Air Force's history of flying into hurricanes began nearly four decades prior.
+
+However, not all hurricanes have reconnaissance flights into and around them. The National Hurricane Center (NHC) within NOAA is the primary decision-maker of what and when to fly. Specialists at NHC are tasked with identifying if a tropical cyclone has formed, how intense it is, how large it is, and other vital statistics. They are also tasked with forecasting a storm's future track and intensity, which is aided when aircraft reconnaissance data are provided to the forecast models. Priority for resources is given to proximity to land, potential for significant impacts on land, and challenging environmental conditions that increase forecast uncertainty. Once a reconnaissance flight is requested, coordination between NHC, the U.S. Air Force, and HRD determines what planes will fly, where they will fly, and what instruments need to be available.
+
+Aside from flight-level measurements of wind speed, estimates of the storm's central pressure, and radar mapping of the storm's structure, a key instrument over the past four decades has been the dropwindsonde (often called a "dropsonde"). This is an instrument package released from an aircraft that collects high-resolution in-situ data along a vertical profile of the atmosphere down to the ocean surface as it falls slowly with the aid of a parachute.
+
+These data are not just collected, they are ingested by forecast models in real-time. In principle, providing more data to a model will improve its ability to accurately represent and forecast the atmosphere. This process is called data assimilation (DA) and it is a fundamental and complex step in all of numerical weather prediction. Providing a hurricane model with information about the intensity, structure, and surrounding environment of the hurricane should, in general, make that model more accurate.
+
+\subsection{Data Denial Experiments}
+
+One of the earliest studies to document the impact of dropsonde observations on hurricane track forecast models was \cite{Franklin_DeMaria1992}. They utilized data from fourteen Atlantic hurricane surveillance flights spanning 1982-1989 and conducted data denial experiments in a research-grade model. In a data denial experiment, a model is run with and without a specific dataset, then the results are validated against the observations ("truth"), and relative improvements or degradations are calculated. In this case, when including dropsonde data, the overall reduction in track error was approximately 16\% in the critical 24-36-hour lead times, with a positive impact at all lead times.
+
+\cite{BurpeeEA1996} provides the first robust accounting of a data denial study using an operational forecast model. This experiment utilized data from 28 Atlantic hurricane flights spanning 1982-1993 with a total of 686 dropsondes. In that seminal study, track errors were reduced by 16-30\% in the 12-60-hour lead times by including the dropsonde data, a feat the authors appropriately called a "breakthrough".
+
+HRD acquired a Gulfstream-IV high-altitude aircraft in 1997 and that has been utilized for hurricane surveillance flights to this day. Some of the earlier data-denial studies were conducted using dropsonde data collected by that aircraft include \cite{Aberson_Franklin1999}, \cite{Aberson2002}, and \cite{Aberson2010}. 
+
+There have been many more recent hurricane-related data-denial studies using operational models and dropsondes from various aircraft platforms: \cite{Aberson2011}, \cite{ChouEA2011}, \cite{MajumdarEA2013}, \cite{ChristophersonEA2017}, \cite{ChristophersonEA2018}, \cite{KrenEA2018}, \cite{TongEA2018}, \cite{AksoyEA2022}, \cite{SippelEA2022}, and \cite{DitchekEA2023}, to highlight a few. \cite{Majumdar2016} provides a comprehensive review of "targeted" observations, which is the practice of collecting observations in carefully selected regions around high-impact weather systems. Since collecting aircraft data in hurricanes is fairly costly, data denial studies help to justify their continued use by demonstrating the improved accuracy they provide to the models.
+
+Although adding data from instruments such as dropsondes generally improves a model, that is not always the case. All data that are collected could have errors that escape quality control checks, and all DA schemes are extremely complex and data collected at different times and locations could introduce unexpected interactions and instabilities resulting in a less-than-optimal initial condition for the model. \cite{Aberson2008} provides a documentation of cases during the impactful 2004 and 2005 Atlantic hurricane seasons in which the forecasts made by an operational model were significantly degraded by the addition of dropsonde data. Although these are extreme examples, they illustrate that, on average, the impact should be positive, but depending on the case, the impact could be neutral or even negative. 
+
+\subsection{Data Used}
+
+The data used in this study are the subset of those described in \cite{DitchekEA2023} that made landfall in the continental United States. Ditchek et al. is a comprehensive data denial experiment on tropical cyclones (TCs) that occurred in the Atlantic and East Pacific basins from 2017-2020. They conducted the experiment using the 2020 version of the research-grade quasi-operational basin-scale configuration of the HWRF model (\cite{ZhangEA2016}, \cite{AlakaEA2022}).  Of the 92 TCs in their database, 41 had dropsonde data from reconnaissance flights available, 27 of those occurred in the Atlantic, and 10 of those eventually made landfall in the continental United States (described in Table \ref{table:1}). Those same 10 landfalling tropical storms and hurricanes are the focus of \cite{SippelEA2026} which investigates the impact of aircraft reconnaissance data on forecasts of post-landfall hazards. Aircraft reconnaissance flights by the U.S. Air Force and NOAA released a total of 50,285 dropsondes into these ten storms, with individual storm totals ranging from 184 into Hanna to 9,413 into Florence.
+
+\begin{table}
+    \centering
+    \begin{threeparttable}
+      \caption{Summary of the cases used in this study. The landfall intensity is categorized according to the Saffir-Simpson Hurricane Wind Scale, the landfall time is rounded to the next-earliest synoptic time (UTC), and the damage (millions 2026 USD) and casualty figures are for the U.S. only.}
+      \label{table:1}
+      \begin{tabular}{c c c c c c}
+        \hline
+        Year & Storm Name & Landfall Intensity & Landfall Time & Damage & Casualties \\
+        \hline
+        2017 & Harvey     & Category 4         & 26 Aug 0000   & xxx    & xxx \\
+        2017 & Irma       & Category 4         & 10 Sep 1200   & xxx    & xxx \\
+        2018 & Florence   & Category 1         & 14 Sep 0600   & xxx    & xxx \\
+        2018 & Gordon     & Tropical Storm     &  5 Sep 0000   & xxx    & xxx \\
+        2018 & Michael    & Category 5         & 10 Oct 1200   & xxx    & xxx \\
+        2020 & Hanna      & Category 1         & 25 Jul 1800   & xxx    & xxx \\
+        2020 & Isaias     & Category 1         &  4 Aug 0000   & xxx    & xxx \\
+        2020 & Laura      & Category 4         & 27 Aug 0600   & xxx    & xxx \\
+        2020 & Sally      & Category 2         & 16 Sep 0600   & xxx    & xxx \\
+        2020 & Beta       & Tropical Storm     & 22 Sep 0000   & xxx    & xxx \\
+        \hline
+      \end{tabular}
+    \end{threeparttable}
+\end{table}
+
+These ten storms combined caused an estimated \$x in economic damage and caused x fatalities. This data set is uniquely suited for this study due to the large number of model cycles that were run, the large number of dropsondes that were assimilated into the model, the modern model that was used to generate the output, and the series of impactful landfalls in the United States in a relatively short period of time. In \cite{DitchekEA2023}, the experiment that assimilates all available observations into the model is called "ALL" and the experiment that omits the dropsonde data is called "NO"; the same nomenclature will be used here. 
+
+
+
+\printbibliography{}
+
+\end{document}

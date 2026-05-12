@@ -1,0 +1,26 @@
+\begin{table}
+
+\caption{Regression Analysis of the Effect of Augmented Observations in Ex-Ante Uncertainty \label{tab:noaa-controls}}
+\centering
+\begin{adjustbox}{width = .9\textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lcccc}
+\toprule
+  & (1) & (2) & (3) & (4)\\
+\midrule
+$\delta$: Augmented Observations & \num{-0.258} & \num{-0.258} & \num{-0.258} & \num{-0.258}\\
+ & (\num{0.093}) & (\num{0.095}) & (\num{0.094}) & (\num{0.096})\\
+ &  &  &  & \\
+Observations & 124 & 124 & 124 & 124\\
+ &  &  &  & \\
+Wind Controls &  &  & \checkmark & \checkmark\\
+County FE & \checkmark & \checkmark & \checkmark & \checkmark\\
+Hurricane FE &  & \checkmark &  & \checkmark\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item Standard errors clustered at county level.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}
