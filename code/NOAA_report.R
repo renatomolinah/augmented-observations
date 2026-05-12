@@ -432,6 +432,7 @@ sample_benefits <- reg_data |>
   arrange(desc(total_benefit_M))
 
 total_value_B <- sum(sample_benefits$total_benefit_M) / 1000
+total_value_M <- total_value_B * 1000
 
 stage3_lines <- c(
   sprintf("beta_hurr (Hurricane, $M per (m/s)^2)  = %.3f",     beta_hurr),
@@ -446,3 +447,62 @@ stage3_lines <- c(
 cat("\n--- Valuation Summary (in-sample, 2017-2020 denial experiments) ---\n")
 cat(paste(stage3_lines, collapse = "\n"), "\n")
 writeLines(stage3_lines, here("output/stage3_numbers.txt"))
+
+# ==============================================================================
+# Stage 4 - Cost-Benefit benchmark vs ANSER (2016) and NOAA Aircraft Plan (2022)
+# ==============================================================================
+# Reference values are treated as fixed literature inputs. Update only if a
+# newer official NOAA cost-benefit report supersedes the 2016 AoA.
+
+anser2016 <- list(
+  # 2016 ANSER External Benefits Report, BY$2024 NPV at 7% discount, 2030–2055.
+  # Figure 34, p.60.
+  npv_evacuation    = 138.84,
+  npv_air_traffic   = 134.18,
+  npv_maritime      =   0.18,
+  npv_chemistry     = 227.65,
+  npv_total         = 500.86,
+  lcc_alt2_c130j_M  = 680.00,   # Alt 2 (two modified C-130J) – least-cost alt, Fig 33 p.59
+  bcr_base          =   0.75,   # base-case BCR, Section 4 p.61
+  years_horizon     =  25       # 2030 (retirement) through 2055 (end of service life)
+)
+
+# 2022 NOAA Aircraft Recapitalization Plan + GAO-25-107210 (Jan 2025):
+# total acquisition cost for four C-130J aircraft.
+noaa_capital <- list(
+  total_acq_B  = 1.40,          # GAO-25-107210, undiscounted total acquisition for 4 C-130J
+  remaining_B  = 0.678          # remaining to be funded as of January 2025
+)
+
+cb_lines <- c(
+  "-- ANSER (2016) External Benefits AoA, NPV BY$2024 @ 7%, 2030-2055 --",
+  sprintf("  Evacuation avoided NPV ($M)             = %.2f", anser2016$npv_evacuation),
+  sprintf("  Air traffic disruption NPV ($M)         = %.2f", anser2016$npv_air_traffic),
+  sprintf("  Maritime traffic disruption NPV ($M)    = %.2f", anser2016$npv_maritime),
+  sprintf("  Air chemistry research NPV ($M)         = %.2f", anser2016$npv_chemistry),
+  sprintf("  TOTAL benefit NPV ($M)                  = %.2f", anser2016$npv_total),
+  sprintf("  LCC Alt 2 (C-130J) NPV ($M)             = %.2f", anser2016$lcc_alt2_c130j_M),
+  sprintf("  Base-case BCR                           = %.2f", anser2016$bcr_base),
+  "",
+  "-- Our retrospective valuation (2017-2020) --",
+  sprintf("  Total retrospective value ($M)          = %.2f", total_value_M),
+  sprintf("  Active years covered                    = %d",   4L),
+  sprintf("  Annualized rate ($M/yr)                 = %.2f", total_value_M / 4),
+  "",
+  "-- Comparisons --",
+  sprintf("  Our 2017-2020 value / ANSER 25-yr NPV   = %.2fx",
+          total_value_M / anser2016$npv_total),
+  sprintf("  Our annualized / ANSER annualized       = %.2fx",
+          (total_value_M / 4) / (anser2016$npv_total / anser2016$years_horizon)),
+  sprintf("  Our 2017-2020 value / ANSER Alt 2 LCC   = %.2fx",
+          total_value_M / anser2016$lcc_alt2_c130j_M),
+  sprintf("  Our 2017-2020 value / NOAA total acq    = %.2fx",
+          total_value_B / noaa_capital$total_acq_B),
+  "",
+  "-- NOAA Aircraft Recapitalization (NOAA 2022 / GAO 2025) --",
+  sprintf("  Total acquisition, 4x C-130J ($B)       = %.2f", noaa_capital$total_acq_B),
+  sprintf("  Remaining to fund (Jan 2025, $B)        = %.2f", noaa_capital$remaining_B)
+)
+cat("\n--- Stage 4 cost-benefit benchmark ---\n")
+cat(paste(cb_lines, collapse = "\n"), "\n")
+writeLines(cb_lines, here("output/stage4_costbenefit_numbers.txt"))
