@@ -371,24 +371,41 @@ msummary(
 add_adjust_box(here("output/noaa_report_controls_table.tex"))
 
 # Stage 2 in-text numbers (noise context for the manuscript paragraph) -------
-delta_se     <- sqrt(diag(vcov(mod_precision)))["augmented_obs"]
-delta_p      <- 2 * (1 - pnorm(abs(coef(mod_precision)["augmented_obs"]) / delta_se))
-sigma_mean   <- mean(reg_data$wind_fc_sd, na.rm = TRUE)
-sigma_sd     <- sd(reg_data$wind_fc_sd,   na.rm = TRUE)
-sigma_iqr    <- IQR(reg_data$wind_fc_sd,  na.rm = TRUE)
-delta_pct    <- 100 * delta / sigma_mean
-delta_z      <- delta / sigma_sd
+denial_full <- forecast_data_lead_times |> filter(!is.na(augmented_obs))
+
+delta_se   <- sqrt(diag(vcov(mod_precision)))["augmented_obs"]
+delta_p    <- 2 * (1 - pnorm(abs(coef(mod_precision)["augmented_obs"]) / delta_se))
+
+# (i) Stage-3 baseline: HF + 3-day, AO-only
+hf3_ao    <- denial_full |> filter(lead_days == 3, wind_obs > 33, augmented_obs == 1)
+sigma_bar_hf3ao <- mean(hf3_ao$wind_fc_sd, na.rm = TRUE)
+sigma_sd_hf3ao  <- sd(hf3_ao$wind_fc_sd,   na.rm = TRUE)
+
+# (ii) 3-day lead, all wind speeds, pooled (broader noise benchmark)
+lead3     <- denial_full |> filter(lead_days == 3)
+sigma_bar_lead3 <- mean(lead3$wind_fc_sd, na.rm = TRUE)
+sigma_sd_lead3  <- sd(lead3$wind_fc_sd,   na.rm = TRUE)
 
 stage2_lines <- c(
-  sprintf("delta              = %.3f m/s",            delta),
-  sprintf("delta SE           = %.3f",                delta_se),
-  sprintf("delta p-value      = %.4f",                delta_p),
-  sprintf("baseline sigma_bar = %.2f m/s",            sigma_mean),
-  sprintf("sd(wind_fc_sd)     = %.2f m/s",            sigma_sd),
-  sprintf("iqr(wind_fc_sd)    = %.2f m/s",            sigma_iqr),
-  sprintf("delta / sigma_bar  = %.2f%% of the mean",  delta_pct),
-  sprintf("delta / sd_sigma   = %.2f standard deviations of sigma", delta_z)
+  sprintf("delta                              = %.3f m/s",       delta),
+  sprintf("delta SE                           = %.3f",           delta_se),
+  sprintf("delta p-value                      = %.4f",           delta_p),
+  "",
+  "-- HF + 3-day lead, AO-only (Stage 3 baseline) --",
+  sprintf("  N                                = %d",             nrow(hf3_ao)),
+  sprintf("  sigma_bar                        = %.2f m/s",       sigma_bar_hf3ao),
+  sprintf("  sd(sigma)                        = %.2f m/s",       sigma_sd_hf3ao),
+  sprintf("  delta / sigma_bar                = %.2f%% of mean", 100 * delta / sigma_bar_hf3ao),
+  sprintf("  delta / sd(sigma)                = %.2f SDs",       delta / sigma_sd_hf3ao),
+  "",
+  "-- 3-day lead, all wind speeds, pooled (broader noise benchmark) --",
+  sprintf("  N                                = %d",             nrow(lead3)),
+  sprintf("  sigma_bar                        = %.2f m/s",       sigma_bar_lead3),
+  sprintf("  sd(sigma)                        = %.2f m/s",       sigma_sd_lead3),
+  sprintf("  delta / sigma_bar                = %.2f%% of mean", 100 * delta / sigma_bar_lead3),
+  sprintf("  delta / sd(sigma)                = %.2f SDs",       delta / sigma_sd_lead3)
 )
+
 cat("\n--- Stage 2 in-text numbers ---\n")
 cat(paste(stage2_lines, collapse = "\n"), "\n")
 writeLines(stage2_lines, here("output/stage2_numbers.txt"))
