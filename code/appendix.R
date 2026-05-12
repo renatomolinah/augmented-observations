@@ -210,10 +210,10 @@ B1_disp <- B1 |>
   )
 
 B1_tex <- kbl(B1_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              caption = "Lead-time sensitivity of $\\delta$, hurricane-force ($>33$ m/s) realizations. \\label{tab:appB_leadtime}",
+              caption = "Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. \\label{tab:appB_leadtime}",
               align = c("c","c","c","c","c","c"), linesep = "") |>
-  footnote(general = "Each row estimates $\\sigma = \\alpha_c + \\gamma_h + \\delta \\mathbb{1}(\\text{AO})$ on the indicated lead-time subset. County-clustered standard errors in parentheses.",
-           threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
+  footnote(general = "Each row reports the controls-table specification estimated on the indicated lead-time subset of hurricane-force observations (wind > 33 m/s). County-clustered standard errors in parentheses.",
+           threeparttable = TRUE, fixed_small_size = TRUE)
 writeLines(as.character(B1_tex), here("output/appB_leadtime.tex"))
 add_adjust_box(here("output/appB_leadtime.tex"))
 
@@ -369,12 +369,11 @@ C_tex <- kbl(
 ) |>
   footnote(
     general = sprintf(
-      "Value per affected county-storm $= \\hat{\\beta}^w_{Hurr} \\times [(\\bar{\\sigma}+\\delta)^2 - \\bar{\\sigma}^2] = %.2f \\times %.2f \\approx \\$%.2fM$. Counties counted are those with a 3-day-lead hurricane-force ($>33$ m/s) prediction in the denial sample, matching the main report's Stage 3.",
+      "Value per affected county-storm equals the marginal cost parameter times the variance reduction (%.2f x %.2f = $%.2fM). Counties counted are those with a 3-day-lead hurricane-force prediction (wind > 33 m/s) in the denial sample, matching the main report's Stage 3.",
       beta_hurr, delta_sigma_sq, value_per_county
     ),
     threeparttable = TRUE,
-    fixed_small_size = TRUE,
-    escape = FALSE
+    fixed_small_size = TRUE
   )
 writeLines(as.character(C_tex), here("output/appC_per_storm.tex"))
 add_adjust_box(here("output/appC_per_storm.tex"))
