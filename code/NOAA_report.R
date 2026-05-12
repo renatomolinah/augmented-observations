@@ -431,12 +431,18 @@ sample_benefits <- reg_data |>
   ) |>
   arrange(desc(total_benefit_M))
 
-cat("\n--- Valuation Summary (in-sample, 2017-2020 denial experiments) ---")
-cat("\nbeta_hurr  (estimated, $M per (m/s)^2):", round(beta_hurr, 3))
-cat("\nObservations (HF impacts at 3-day lead):", nrow(reg_data))
-cat("\nReduction in SD (delta, m/s):", round(delta, 3))
-cat("\nBaseline SD (sigma, m/s):", round(baseline_sd, 2))
-cat("\nReduction in Variance (Delta sigma^2, (m/s)^2):", round(delta_sigma_sq, 2))
-cat("\nValue per Affected County ($M):", round(value_per_county, 2))
-cat("\nTotal Retrospective Value ($B):",
-    round(sum(sample_benefits$total_benefit_M) / 1000, 2), "\n")
+total_value_B <- sum(sample_benefits$total_benefit_M) / 1000
+
+stage3_lines <- c(
+  sprintf("beta_hurr (Hurricane, $M per (m/s)^2)  = %.3f",     beta_hurr),
+  sprintf("N (HF impacts at 3-day lead)           = %d",       nrow(reg_data)),
+  sprintf("delta (m/s)                            = %.3f",     delta),
+  sprintf("baseline sigma_All (m/s)               = %.2f",     baseline_sd),
+  sprintf("delta_sigma_sq = (sigma+delta)^2-sigma^2 = %.2f (m/s)^2", delta_sigma_sq),
+  sprintf("Value per Affected County ($M)         = %.2f",     value_per_county),
+  sprintf("Affected hurricane-force counties      = %d",       nrow(reg_data)),
+  sprintf("Total Retrospective Value ($B)         = %.2f",     total_value_B)
+)
+cat("\n--- Valuation Summary (in-sample, 2017-2020 denial experiments) ---\n")
+cat(paste(stage3_lines, collapse = "\n"), "\n")
+writeLines(stage3_lines, here("output/stage3_numbers.txt"))
