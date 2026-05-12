@@ -145,17 +145,18 @@ jack_rows <- list()
 for (s in c("none", top_storms)) {
   d <- if (s == "none") voi_load() else voi_load_drop(s)
   m <- run_conley(spec_col7("total_cost"), d)
-  cf <- coef(m); se <- sqrt(diag(vcov(m)))
-  hurr_ix <- grep("categoryHurricane", names(cf))
-  sub_ix  <- grep("categoryTropical Storm", names(cf))
+  # conleyreg returns a `coeftest` matrix: cols are Estimate / Std. Error / t / Pr(>|t|)
+  ce <- as.matrix(m)
+  hurr_ix <- grep("categoryHurricane", rownames(ce))
+  sub_ix  <- grep("categoryTropical Storm", rownames(ce))
   jack_rows[[s]] <- tibble(
     dropped = s,
     n_storms = length(unique(d$hurricane)),
     n_rows = nrow(d),
-    beta_hurr = cf[hurr_ix],
-    se_hurr = se[hurr_ix],
-    beta_subhurr = cf[sub_ix],
-    se_subhurr = se[sub_ix]
+    beta_hurr    = ce[hurr_ix, "Estimate"],
+    se_hurr      = ce[hurr_ix, "Std. Error"],
+    beta_subhurr = ce[sub_ix,  "Estimate"],
+    se_subhurr   = ce[sub_ix,  "Std. Error"]
   )
 }
 jack_df <- bind_rows(jack_rows) |>
