@@ -48,7 +48,6 @@ code/
   workshop_responses.R   Appendix D tables from data/workshop/Part {1,2}.csv
   cleaning_voi/          VOI panel cleaning (37-storm continental-US panel, 2005-2024)
   cleaning_denial/       denial sample cleaning (1.01 -> 1.03)
-  code_VOI/              reference: original Molina2024 paper code (read-only)
   exploratory/           Quarto notebooks
 data/                    symlink to Box (gitignored)
   raw/, clean/             VOI inputs and processed panel

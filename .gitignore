@@ -43,6 +43,9 @@ Thumbs.db
 data/
 output/
 
+# Manuscript directory (lives on Overleaf, not git)
+augmented_observations/
+
 # Output and temporary files
 *.log
 *.tmp
