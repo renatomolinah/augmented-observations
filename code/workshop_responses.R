@@ -13,8 +13,8 @@
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, here, kableExtra)
 
-p1_path <- here("Part 1.csv")
-p2_path <- here("Part 2.csv")
+p1_path <- here("data/workshop/Part 1.csv")
+p2_path <- here("data/workshop/Part 2.csv")
 out_dir <- here("output")
 stopifnot(file.exists(p1_path), file.exists(p2_path))
 dir.create(out_dir, showWarnings = FALSE)

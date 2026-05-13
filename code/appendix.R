@@ -340,6 +340,51 @@ B2_tex_str <- paste0(
 )
 writeLines(B2_tex_str, here("output/appB_intensity.tex"))
 
+# B.2b — same Saffir-Simpson category grid with Maria included ----------------
+cats_maria <- tibble(
+  label = c("Category 1 and above ($\\geq$33 m/s)",
+            "Category 2 and above ($\\geq$43 m/s)",
+            "Category 3 and above ($\\geq$50 m/s)",
+            "Category 4 and above ($\\geq$58 m/s)",
+            "Category 5 ($\\geq$70 m/s)"),
+  thr   = c(33, 43, 50, 58, 70)
+)
+B2m <- map2_dfr(cats_maria$label, cats_maria$thr, function(lab, thr) {
+  d <- denial_with_maria |> filter(lead_days == 3, wind_obs >= thr)
+  if (nrow(d) < 10) return(NULL)
+  m <- delta_spec(d)
+  cf <- coef(m)["augmented_obs"]; se <- sqrt(diag(vcov(m)))["augmented_obs"]
+  tibble(category = lab, threshold = thr, n = nrow(d),
+         delta = abs(cf), se = se,
+         p = 2*(1 - pnorm(abs(cf)/se)),
+         sigma_bar = mean(d$wind_fc_sd, na.rm=TRUE))
+})
+
+B2m_rows <- paste(sapply(seq_len(nrow(B2m)), function(i) with(B2m[i, ], sprintf(
+  "%s & %s & %.2f & %.3f & (%.3f) & %s\\\\",
+  category, format(n, big.mark = ","), sigma_bar, delta, se,
+  ifelse(p < 0.001, "$<$0.001", sprintf("%.3f", p))
+))), collapse = "\n")
+B2m_tex_str <- paste0(
+  "\\begin{table}\n\n",
+  "\\caption{Saffir-Simpson category sensitivity of $\\delta$ with Hurricane Maria included, 3-day lead. \\label{tab:appB_intensity_maria}}\n",
+  "\\centering\n",
+  "\\begin{threeparttable}\n",
+  "\\begin{tabular}[t]{lccccc}\n",
+  "\\toprule\n",
+  "Category & Obs. & $\\bar{\\sigma}$ (m/s) & $\\delta$ (m/s) & SE & p\\\\\n",
+  "\\midrule\n",
+  B2m_rows, "\n",
+  "\\bottomrule\n",
+  "\\end{tabular}\n",
+  "\\begin{tablenotes}\n\\small\n",
+  "\\item Sample is the seven 2017--2020 landfalling hurricanes in the denial archive (the six continental-US storms used in Table \\ref{tab:appB_intensity} plus Hurricane Maria). Cumulative cut-offs on realized wind speed. County-clustered standard errors in parentheses. Category 5 ($\\geq$70 m/s) is absent from the sample.\n",
+  "\\end{tablenotes}\n",
+  "\\end{threeparttable}\n",
+  "\\end{table}\n"
+)
+writeLines(B2m_tex_str, here("output/appB_intensity_maria.tex"))
+
 # B.3 — one-storm-out jackknife on delta --------------------------------------
 hf3_storms <- denial |>
   filter(lead_days == 3, wind_obs > 33) |>

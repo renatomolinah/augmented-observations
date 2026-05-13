@@ -79,8 +79,8 @@ appendix: output/appA_jackknife.tex
 
 ## Step 5 - Workshop response tabulation (Appendix D)
 output/appD_sample.tex: code/workshop_responses.R \
-                       Part\ 1.csv \
-                       Part\ 2.csv
+                       data/workshop/Part\ 1.csv \
+                       data/workshop/Part\ 2.csv
 	@echo -e "$(YELLOW)[5/5] Workshop responses (Appendix D)...$(NC)"
 	@mkdir -p output
 	@$(R) code/workshop_responses.R
