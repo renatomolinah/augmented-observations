@@ -46,9 +46,10 @@ code/
   NOAA_report.R          main report: Stage 0 tables + Stage 1 (beta) + Stage 2 (delta) + Stages 3-4 (valuation, cost-benefit)
   appendix.R             Appendices A (beta robustness), B (delta robustness), C (per-storm decomposition)
   workshop_responses.R   Appendix D tables from data/workshop/Part {1,2}.csv
+  functions_table.r      table-rendering helpers (sourced by NOAA_report.R and appendix.R)
   cleaning_voi/          VOI panel cleaning (37-storm continental-US panel, 2005-2024)
   cleaning_denial/       denial sample cleaning (1.01 -> 1.03)
-  exploratory/           Quarto notebooks
+  exploratory/           Quarto notebooks (Ditchek replication, wind-error inference)
 data/                    symlink to Box (gitignored)
   raw/, clean/             VOI inputs and processed panel
   raw_denial/, clean_denial/  denial archive
