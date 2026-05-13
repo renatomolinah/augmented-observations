@@ -2,7 +2,6 @@
 # NOAA Report - Appendices A, B, C
 # ------------------------------------------------------------------------------
 # A. Beta robustness on the VOI panel:
-#    - Sample comparison (2005-2022 vs 2005-2024)
 #    - Three outcomes (total_cost, per_GDP, per_capita) in col-7 spec
 #    - One-storm-out jackknife on the col-7 Hurricane beta
 # B. Delta robustness on the denial panel:
@@ -43,7 +42,6 @@ voi_load <- function() {
     drop_na(lat, lon, total_cost_pc, total_cost_per_gdp)
 }
 voi_load_drop  <- function(storm) voi_load() |> filter(hurricane != storm)
-voi_load_until <- function(yr)    voi_load() |> filter(year <= yr)
 
 # Spec used throughout: paper's preferred col (7) specification.
 spec_col7 <- function(lhs = "total_cost") {
@@ -66,49 +64,7 @@ run_conley <- function(formula, data) {
   )
 }
 
-# A.1 — sample window comparison ----------------------------------------------
-mA1_2024 <- run_conley(spec_col7("total_cost"), voi_load())
-mA1_2022 <- run_conley(spec_col7("total_cost"), voi_load_until(2022))
-
-voi_full <- voi_load()  # for downstream non-regression summaries
-
-# conleyreg returns a coeftest object, not a fixest; nobs lives in an attribute
-n_obs <- function(m) {
-  if (!is.null(attr(m, "nobs"))) attr(m, "nobs")
-  else if (!is.null(m$nobs))     m$nobs
-  else NA_integer_
-}
-rowsA1 <- tribble(
-  ~term, ~"(1) 2005-2022", ~"(2) 2005-2024",
-  "Observations",
-    format(nrow(voi_load_until(2022)), big.mark = ","),
-    format(nrow(voi_load()),           big.mark = ","),
-  "Storms",
-    as.character(length(unique(voi_load_until(2022)$hurricane))),
-    as.character(length(unique(voi_load()$hurricane)))
-)
-
-msummary(
-  list("2005-2022 (paper sample)" = mA1_2022,
-       "2005-2024 (updated sample)" = mA1_2024),
-  coef_rename = c(
-    "$\\beta_2$: Hurricane",
-    "$\\beta_2$: Sub-Hurricane"
-  ),
-  coef_omit = "(?i)(precip|level_error)",
-  gof_omit  = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors|Num.Obs.",
-  fmt       = "%.3f",
-  stars     = stars_econ,
-  add_rows  = rowsA1,
-  title     = "Sample-window robustness: $\\hat{\\beta}^w_{Hurr}$ before and after adding 2023--2024 storms. \\label{tab:appA_sample}",
-  notes     = list("Coefficients on level errors and the precipitation squared error are absorbed into the controls and omitted from display. Standard errors are Conley Spatial HAC with a 400~km distance cutoff."),
-  threeparttable = TRUE,
-  escape    = FALSE,
-  output    = here("output/appA_sample_compare.tex")
-)
-add_adjust_box(here("output/appA_sample_compare.tex"))
-
-# A.2 — three outcomes (col-7 spec) -------------------------------------------
+# A.1 — three outcomes (col-7 spec) -------------------------------------------
 mA2_tot <- run_conley(spec_col7("total_cost"),    voi_load())
 mA2_gdp <- run_conley(
   total_cost_per_gdp * 100 ~ squared_error:category + squared_error_precip +
@@ -131,12 +87,107 @@ msummary(
   fmt       = "%.3f",
   stars     = stars_econ,
   title     = "Outcome robustness: $\\hat{\\beta}^w_{Hurr}$ across cost outcomes (2005--2024 panel). \\label{tab:appA_outcomes}",
-  notes     = list("All specifications match column (7) of Table~\\ref{tab:voi-table} with county and state-by-hurricane fixed effects plus realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400~km distance cutoff."),
+  notes     = list("All specifications match column (7) of Table @REF{tab:voi-table} with county and state-by-hurricane fixed effects plus realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400 km distance cutoff."),
   threeparttable = TRUE,
   escape    = FALSE,
   output    = here("output/appA_outcomes.tex")
 )
-add_adjust_box(here("output/appA_outcomes.tex"))
+# modelsummary's footnote pass strips backslashes; restore the cross-ref
+# via a sentinel-substitution so the resulting LaTeX has a working \ref.
+.aoa_path <- here("output/appA_outcomes.tex")
+writeLines(gsub("@REF\\{", "\\\\ref{", readLines(.aoa_path)), .aoa_path)
+add_adjust_box(.aoa_path)
+
+# A.2 — implied retrospective value under each outcome -----------------------
+# Use the three column-(7) coefficients above to compute the dollar value of
+# augmented observations under each notion of value, summed over the same
+# 2017--2020 hurricane-force / 3-day-lead county-storm panel as the main
+# Stage 3 valuation in NOAA_report.R.
+
+denial_full <- as_tibble(data.table::fread(denial_path)) |>
+  filter(name != "maria")
+hf3 <- denial_full |>
+  filter(lead_days == 3, wind_obs > 33, !is.na(augmented_obs))
+
+m_delta_app <- feols(wind_fc_sd ~ augmented_obs | county + name,
+                     data = hf3, vcov = ~county)
+delta_app      <- abs(coef(m_delta_app)["augmented_obs"])
+sigma_bar_app  <- hf3 |>
+  filter(augmented_obs == 1) |>
+  summarise(s = mean(wind_fc_sd, na.rm = TRUE)) |>
+  pull(s)
+delta_sigma_sq <- (sigma_bar_app + delta_app)^2 - sigma_bar_app^2
+
+# pop / GDP are constant within (county, year)
+county_attr <- voi_load() |>
+  distinct(county, year, population, gdp)
+val <- hf3 |>
+  left_join(county_attr, by = c("county", "year"))
+stopifnot(sum(is.na(val$gdp) | is.na(val$population)) == 0)
+
+get_hurr <- function(m) {
+  ce <- as.matrix(m)
+  unname(ce[grep("categoryHurricane", rownames(ce)), "Estimate"])
+}
+b_tot <- get_hurr(mA2_tot)   # $M     per (m/s)^2
+b_gdp <- get_hurr(mA2_gdp)   # %      per (m/s)^2 (LHS scaled by 100)
+b_pc  <- get_hurr(mA2_pc)    # $/pers per (m/s)^2
+
+val <- val |>
+  mutate(
+    v_tot_M = b_tot * delta_sigma_sq,
+    v_gdp_M = (b_gdp / 100) * delta_sigma_sq * gdp / 1e3,
+    v_pc_M  = b_pc * delta_sigma_sq * population / 1e6
+  )
+
+agg <- tibble(
+  Outcome = c("Total cost (\\$M)",
+              "Cost / county GDP (\\%)",
+              "Cost per capita (\\$)"),
+  beta    = c(b_tot, b_gdp, b_pc),
+  per_co  = c(mean(val$v_tot_M),
+              mean(val$v_gdp_M),
+              mean(val$v_pc_M)),
+  total_B = c(sum(val$v_tot_M) / 1000,
+              sum(val$v_gdp_M) / 1000,
+              sum(val$v_pc_M)  / 1000)
+)
+
+# Build the LaTeX directly so the math note (\Delta, \sigma, \bar, \ref) is not
+# stripped by kableExtra's footnote() escape pass.
+val_tex_str <- sprintf(
+'\\begin{table}
+
+\\caption{Implied retrospective social value of augmented observations under three notions of value. \\label{tab:appA_valuations}}
+\\centering
+\\begin{adjustbox}{width = .9\\textwidth}
+\\begin{threeparttable}
+\\begin{tabular}[t]{lccc}
+\\toprule
+Outcome variable & $\\hat{\\beta}^w_{Hurr}$ & Mean per-county value (\\$M) & Aggregate value 2017--2020 (\\$B)\\\\
+\\midrule
+Total cost (\\$M) & %.3f & %.2f & %.2f\\\\
+Cost / county GDP (\\%%) & %.3f & %.2f & %.2f\\\\
+Cost per capita (\\$) & %.3f & %.2f & %.2f\\\\
+\\bottomrule
+\\end{tabular}
+\\begin{tablenotes}
+\\small
+\\item Per-county value equals the column-(7) Hurricane coefficient times the variance reduction $\\Delta\\sigma^{2}=(\\bar{\\sigma}+\\delta)^{2}-\\bar{\\sigma}^{2}=%.2f$ (m/s)$^{2}$, evaluated in the 2017--2020 hurricane-force / 3-day-lead sample. For the total-cost specification the per-county value is uniform across counties; for cost/GDP and cost per capita it scales with county GDP and population, respectively, so the table reports the mean per-county value. Aggregate values sum the per-county dollar valuation over the %d county--storm rows in the same denial sample, matching the panel used in Section \\ref{sec:results}.
+\\end{tablenotes}
+\\end{threeparttable}
+\\end{adjustbox}
+\\end{table}
+',
+  b_tot, mean(val$v_tot_M), sum(val$v_tot_M) / 1000,
+  b_gdp, mean(val$v_gdp_M), sum(val$v_gdp_M) / 1000,
+  b_pc,  mean(val$v_pc_M),  sum(val$v_pc_M)  / 1000,
+  delta_sigma_sq, nrow(val)
+)
+writeLines(val_tex_str, here("output/appA_valuations.tex"))
+
+cat(sprintf("[Appendix A] aggregate value 2017--2020 (B$): total=%.2f gdp=%.2f pc=%.2f\n",
+            agg$total_B[1], agg$total_B[2], agg$total_B[3]))
 
 # A.3 — one-storm-out jackknife on Hurricane beta -----------------------------
 top_storms <- c("katrina", "harvey", "sandy", "ian", "ida",
@@ -186,6 +237,7 @@ jack_tex <- kbl(
 ) |>
   footnote(
     general = "Each row reports column (7) estimates after dropping the indicated storm from the panel. Conley Spatial HAC standard errors (400 km cutoff) in parentheses. The baseline row drops no storm.",
+    general_title = "",
     threeparttable = TRUE,
     fixed_small_size = TRUE,
     escape = FALSE
@@ -234,40 +286,59 @@ B1_disp <- B1 |>
 B1_tex <- kbl(B1_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. \\label{tab:appB_leadtime}",
               align = c("c","c","c","c","c","c"), linesep = "") |>
-  footnote(general = "Each row reports the controls-table specification estimated on the indicated lead-time subset of hurricane-force observations (wind > 33 m/s). County-clustered standard errors in parentheses.",
+  footnote(general = "Each row reports the controls-table specification estimated on the indicated lead-time subset of hurricane-force observations (wind $>$ 33 m/s). County-clustered standard errors in parentheses.",
+           general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE)
 writeLines(as.character(B1_tex), here("output/appB_leadtime.tex"))
 add_adjust_box(here("output/appB_leadtime.tex"))
 
-# B.2 — intensity threshold grid ----------------------------------------------
-B2 <- map_dfr(c(25, 33, 40), function(thr) {
-  d <- denial |> filter(lead_days == 3, wind_obs > thr)
+# B.2 — Saffir-Simpson category sensitivity -----------------------------------
+# Cumulative cut-offs: Cat 1+ (>=33 m/s), Cat 2+ (>=43), Cat 3+ (>=50),
+# Cat 4+ (>=58), Cat 5 (>=70).  Rows with fewer than 10 obs are skipped.
+cats <- tibble(
+  label = c("Category 1 and above ($\\geq$33 m/s)",
+            "Category 2 and above ($\\geq$43 m/s)",
+            "Category 3 and above ($\\geq$50 m/s)",
+            "Category 4 and above ($\\geq$58 m/s)",
+            "Category 5 ($\\geq$70 m/s)"),
+  thr   = c(33, 43, 50, 58, 70)
+)
+B2 <- map2_dfr(cats$label, cats$thr, function(lab, thr) {
+  d <- denial |> filter(lead_days == 3, wind_obs >= thr)
   if (nrow(d) < 10) return(NULL)
   m <- delta_spec(d)
   cf <- coef(m)["augmented_obs"]; se <- sqrt(diag(vcov(m)))["augmented_obs"]
-  tibble(threshold = thr, n = nrow(d),
+  tibble(category = lab, threshold = thr, n = nrow(d),
          delta = abs(cf), se = se,
          p = 2*(1 - pnorm(abs(cf)/se)),
          sigma_bar = mean(d$wind_fc_sd, na.rm=TRUE))
 })
 
-B2_disp <- B2 |>
-  transmute(
-    `Threshold` = sprintf("$>%d$ m/s", threshold),
-    `Obs.` = format(n, big.mark = ","),
-    `$\\bar{\\sigma}$ (m/s)` = sprintf("%.2f", sigma_bar),
-    `$\\delta$ (m/s)` = sprintf("%.3f", delta),
-    `SE` = sprintf("(%.3f)", se),
-    `p` = ifelse(p < 0.001, "$<$0.001", sprintf("%.3f", p))
-  )
-
-B2_tex <- kbl(B2_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              caption = "Intensity-threshold sensitivity of $\\delta$, 3-day lead. \\label{tab:appB_intensity}",
-              align = c("l","c","c","c","c","c"), linesep = "") |>
-  footnote(general = "County-clustered standard errors in parentheses.",
-           threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
-writeLines(as.character(B2_tex), here("output/appB_intensity.tex"))
-add_adjust_box(here("output/appB_intensity.tex"))
+# Build LaTeX directly so the math note ($\geq$) survives.
+B2_rows <- paste(sapply(seq_len(nrow(B2)), function(i) with(B2[i, ], sprintf(
+  "%s & %s & %.2f & %.3f & (%.3f) & %s\\\\",
+  category, format(n, big.mark = ","), sigma_bar, delta, se,
+  ifelse(p < 0.001, "$<$0.001", sprintf("%.3f", p))
+))), collapse = "\n")
+B2_tex_str <- paste0(
+  "\\begin{table}\n\n",
+  "\\caption{Saffir-Simpson category sensitivity of $\\delta$, 3-day lead. \\label{tab:appB_intensity}}\n",
+  "\\centering\n",
+  "\\begin{threeparttable}\n",
+  "\\begin{tabular}[t]{lccccc}\n",
+  "\\toprule\n",
+  "Category & Obs. & $\\bar{\\sigma}$ (m/s) & $\\delta$ (m/s) & SE & p\\\\\n",
+  "\\midrule\n",
+  B2_rows, "\n",
+  "\\bottomrule\n",
+  "\\end{tabular}\n",
+  "\\begin{tablenotes}\n\\small\n",
+  "\\item Cumulative cut-offs on realized wind speed. County-clustered standard errors in parentheses. Category 4 and above ($\\geq$58 m/s) is omitted because the denial sample contains fewer than 10 such observations; Category 5 ($\\geq$70 m/s) is absent from the sample.\n",
+  "\\end{tablenotes}\n",
+  "\\end{threeparttable}\n",
+  "\\end{table}\n"
+)
+writeLines(B2_tex_str, here("output/appB_intensity.tex"))
 
 # B.3 — one-storm-out jackknife on delta --------------------------------------
 hf3_storms <- denial |>
@@ -298,9 +369,9 @@ B3_tex <- kbl(B3_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "One-storm-out jackknife of $\\delta$, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife}",
               align = c("l","c","c","c","c"), linesep = "") |>
   footnote(general = "County-clustered standard errors in parentheses. The baseline row drops no storm.",
+           general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
 writeLines(as.character(B3_tex), here("output/appB_jackknife.tex"))
-add_adjust_box(here("output/appB_jackknife.tex"))
 
 # B.4 — Maria-in vs Maria-out -------------------------------------------------
 mB4_off <- delta_spec(denial             |> filter(lead_days == 3, wind_obs > 33))
@@ -327,9 +398,53 @@ B4_tex <- kbl(B4_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "Inclusion of Hurricane Maria: effect on $\\delta$. \\label{tab:appB_maria}",
               align = c("l","c","c","c","c"), linesep = "") |>
   footnote(general = "Maria is excluded from the main analysis because it did not make landfall in the continental US. County-clustered standard errors in parentheses.",
+           general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
 writeLines(as.character(B4_tex), here("output/appB_maria.tex"))
 add_adjust_box(here("output/appB_maria.tex"))
+
+# B.5 — one-storm-out jackknife with Maria included --------------------------
+# Same design as B.3 but on the broader denial archive including Maria.
+hf3_maria <- denial_with_maria |>
+  filter(lead_days == 3, wind_obs > 33)
+storms_maria <- hf3_maria |> distinct(name) |> pull(name) |> sort()
+
+B5 <- map_dfr(c("(none)", storms_maria), function(s) {
+  d <- if (s == "(none)") hf3_maria else hf3_maria |> filter(name != s)
+  if (nrow(d) < 10) return(NULL)
+  m <- delta_spec(d)
+  cf <- coef(m)["augmented_obs"]
+  se <- sqrt(diag(vcov(m)))["augmented_obs"]
+  tibble(dropped = s, n = nrow(d),
+         delta = abs(cf), se = se,
+         p = 2*(1 - pnorm(abs(cf)/se)))
+}) |> arrange(if_else(dropped == "(none)", -1L, 0L))
+
+# Build LaTeX directly so the \ref{} cross-reference in the footnote survives.
+B5_rows <- paste(sapply(seq_len(nrow(B5)), function(i) with(B5[i, ], sprintf(
+  "%s & %s & %.3f & (%.3f) & %s\\\\",
+  str_to_title(dropped), format(n, big.mark = ","), delta, se,
+  ifelse(p < 0.001, "$<$0.001", sprintf("%.3f", p))
+))), collapse = "\n")
+B5_tex_str <- paste0(
+  "\\begin{table}\n\n",
+  "\\caption{One-storm-out jackknife of $\\delta$ with Hurricane Maria included, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife_maria}}\n",
+  "\\centering\n",
+  "\\begin{threeparttable}\n",
+  "\\begin{tabular}[t]{lcccc}\n",
+  "\\toprule\n",
+  "Dropped & Obs. & $\\delta$ (m/s) & SE & p\\\\\n",
+  "\\midrule\n",
+  B5_rows, "\n",
+  "\\bottomrule\n",
+  "\\end{tabular}\n",
+  "\\begin{tablenotes}\n\\small\n",
+  "\\item Sample is the seven 2017--2020 landfalling hurricanes with hurricane-force / 3-day-lead realizations in the denial archive (the six continental-US storms used in Table \\ref{tab:appB_jackknife} plus Hurricane Maria). County-clustered standard errors in parentheses. The baseline row drops no storm.\n",
+  "\\end{tablenotes}\n",
+  "\\end{threeparttable}\n",
+  "\\end{table}\n"
+)
+writeLines(B5_tex_str, here("output/appB_jackknife_maria.tex"))
 
 # ==============================================================================
 # Appendix C — per-storm decomposition of total $2.91B
@@ -367,14 +482,16 @@ per_storm_disp <- per_storm |>
   transmute(
     Storm = str_to_title(name),
     `HF Counties Affected` = affected_counties,
-    `Value (\\$M)` = sprintf("%.1f", value_M),
+    `Value (\\$M)` = formatC(value_M, format = "f", digits = 1, big.mark = ","),
     `Share of Total` = sprintf("%.1f\\%%", 100 * share)
   ) |>
   bind_rows(
     tibble(
       Storm = "\\textbf{Total}",
       `HF Counties Affected` = sum(per_storm$affected_counties),
-      `Value (\\$M)` = sprintf("\\textbf{%.1f}", sum(per_storm$value_M)),
+      `Value (\\$M)` = sprintf("\\textbf{%s}",
+                                formatC(sum(per_storm$value_M),
+                                        format = "f", digits = 1, big.mark = ",")),
       `Share of Total` = "\\textbf{100.0\\%}"
     )
   )
@@ -390,40 +507,14 @@ C_tex <- kbl(
 ) |>
   footnote(
     general = sprintf(
-      "Value per affected county-storm equals the marginal cost parameter times the variance reduction (%.2f x %.2f = $%.2fM). Counties counted are those with a 3-day-lead hurricane-force prediction (wind > 33 m/s) in the denial sample, matching the main report's Stage 3.",
+      "Value per affected county-storm equals the marginal cost parameter times the variance reduction (%.2f x %.2f = $%.2fM). Counties counted are those with a 3-day-lead hurricane-force prediction (wind $>$ 33 m/s) in the denial sample, matching the main report's Stage 3.",
       beta_hurr, delta_sigma_sq, value_per_county
     ),
+    general_title = "",
     threeparttable = TRUE,
     fixed_small_size = TRUE
   )
 writeLines(as.character(C_tex), here("output/appC_per_storm.tex"))
 add_adjust_box(here("output/appC_per_storm.tex"))
 
-# C — bar chart ---------------------------------------------------------------
-storm_plot <- per_storm |>
-  mutate(name = str_to_title(name),
-         name = fct_reorder(name, value_M)) |>
-  ggplot(aes(x = name, y = value_M)) +
-  geom_col(fill = "#1B9E77", width = 0.7) +
-  geom_text(aes(label = sprintf("$%.0fM", value_M)),
-            hjust = -0.1, size = 4) +
-  coord_flip() +
-  scale_y_continuous(
-    labels  = scales::dollar_format(prefix = "$", suffix = "M", accuracy = 1),
-    expand  = expansion(mult = c(0, 0.18))
-  ) +
-  labs(
-    x = NULL,
-    y = "Retrospective social value of augmented observations"
-  ) +
-  theme_minimal(base_size = 13) +
-  theme(panel.grid.major.y = element_blank(),
-        panel.grid.minor   = element_blank())
-
-ggsave(
-  plot     = storm_plot,
-  filename = here("output/appC_per_storm.png"),
-  width    = 10, height = 5, dpi = 300
-)
-
-cat("\nAppendix outputs written to output/appA_*.tex, output/appB_*.tex, output/appC_per_storm.{tex,png}.\n")
+cat("\nAppendix outputs written to output/appA_*.tex, output/appB_*.tex, output/appC_per_storm.tex.\n")

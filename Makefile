@@ -8,10 +8,10 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-.PHONY: all clean_voi clean_denial report appendix clean help
+.PHONY: all clean_voi clean_denial report appendix workshop clean help
 
 ## Default
-all: report appendix
+all: report appendix workshop
 	@echo -e "$(GREEN)Pipeline complete.$(NC)"
 
 ## Help
@@ -19,11 +19,12 @@ help:
 	@echo -e "$(GREEN)Augmented Observations replication$(NC)"
 	@echo
 	@echo "Targets:"
-	@echo "  all          full pipeline: VOI cleaning -> denial cleaning -> NOAA_report.R -> appendix"
+	@echo "  all          full pipeline: VOI cleaning -> denial cleaning -> NOAA_report.R -> appendix -> workshop"
 	@echo "  clean_voi    run code/cleaning_voi/* -> data/clean/final_dataset.rds"
 	@echo "  clean_denial run code/cleaning_denial/* -> data/clean_denial/*"
 	@echo "  report       run code/NOAA_report.R -> output/{table_voi,summary_dmg,data_denial,noaa_report_controls_table}.tex + output/augmented_panel.png"
-	@echo "  appendix     run code/appendix.R -> output/app{A,B}_*.tex + output/appC_per_storm.{tex,png}"
+	@echo "  appendix     run code/appendix.R -> output/app{A,B}_*.tex (incl. appA_valuations) + output/appC_per_storm.tex"
+	@echo "  workshop     run code/workshop_responses.R -> output/appD_*.tex"
 	@echo "  clean        remove output/ (preserves data/raw/ and data/clean/*)"
 	@echo
 	@echo "Prereqs: R packages restored via renv (renv::restore()) and"
@@ -72,9 +73,20 @@ output/appA_jackknife.tex: data/clean/final_dataset.rds \
 	@mkdir -p output
 	@$(R) code/appendix.R
 	@echo -e "$(GREEN)  -> output/app{A,B}_*.tex$(NC)"
-	@echo -e "$(GREEN)  -> output/appC_per_storm.{tex,png}$(NC)"
+	@echo -e "$(GREEN)  -> output/appC_per_storm.tex$(NC)"
 
 appendix: output/appA_jackknife.tex
+
+## Step 5 - Workshop response tabulation (Appendix D)
+output/appD_sample.tex: code/workshop_responses.R \
+                       Part\ 1.csv \
+                       Part\ 2.csv
+	@echo -e "$(YELLOW)[5/5] Workshop responses (Appendix D)...$(NC)"
+	@mkdir -p output
+	@$(R) code/workshop_responses.R
+	@echo -e "$(GREEN)  -> output/appD_{sample,likert_part1,likert_part2,quotes_part1,quotes_part2}.tex$(NC)"
+
+workshop: output/appD_sample.tex
 
 ## Cleanup
 clean:

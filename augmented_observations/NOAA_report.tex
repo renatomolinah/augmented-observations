@@ -64,6 +64,19 @@ This study quantifies the socio-economic value of augmented aircraft observation
 
 \newpage
 %------------------------------------------%
+%             Executive Summary
+%------------------------------------------%
+\section*{Executive Summary}
+\addcontentsline{toc}{section}{Executive Summary}
+
+This report quantifies the socio-economic value of augmented aircraft observations (AO) used by NOAA to initialize hurricane forecast models. Using one-storm-out data-denial experiments for eight continental-US landfalling hurricanes between 2017 and 2020, linked to a structural model of hurricane costs estimated on a 37-storm panel spanning 2005--2024, we find that AO reduce ex-ante 3-day wind-speed forecast uncertainty by 0.26~m/s and that this precision gain generates approximately \$23 million in social value per affected county-storm, totalling \$2.91 billion in retrospective value over the four-year sample.
+
+The framework decomposes the value of AO into three stages. We first estimate the marginal cost of forecast error from the county-level damage panel ($\hat{\beta}^{w}_{Hurr} \approx \$5$M per $(\text{m/s})^{2}$ at hurricane-force wind speeds, with Conley Spatial HAC standard errors); we then estimate the precision gain attributable to AO from the denial experiments ($\hat{\delta} = 0.258$~m/s, $p < 0.01$ at the 3-day lead); and we finally combine the two into a per-county valuation summed across the 2017--2020 hurricane-force sample. The headline figure is the most conservative of three reasonable cost normalizations: calculations using cost as a share of county GDP or cost per capita imply aggregate values of \$7.5 billion and \$6.0 billion, respectively. The estimate is robust to the choice of cost outcome and, once the denial archive is expanded to include Hurricane Maria, to dropping any single storm.
+
+Set against the \$1.4 billion total acquisition cost of NOAA's planned C-130J recapitalization (GAO-25-107210), the four-year retrospective benefit is roughly twice the entire fleet investment, and the annualized rate of \$726 million per year exceeds the ANSER (2016) external-benefits benchmark by a factor of approximately 36. These returns provide quantitative support for the strategic recapitalization of NOAA's hurricane reconnaissance fleet. The principal limitations flagged by the stakeholder workshop are the wind-only specification---which omits storm-surge, inland-flooding, and precipitation damages and therefore likely understates total social value---and the geographic restriction to continental-US landfalls, which leaves Hurricane Maria (a Puerto Rico landfall whose denial sample alone would raise $\hat{\delta}$ by roughly 38\%) outside the headline estimates.
+
+\newpage
+%------------------------------------------%
 %                Table of Contents
 %------------------------------------------%
 
@@ -152,7 +165,7 @@ The framework also accommodates a \emph{finite} improvement in precision, as del
 \end{align}
 so that the social value of moving from the no-reconnaissance counterfactual to the all-observations baseline is exactly proportional to the reduction in forecast error \emph{variance}. Expression \eqref{eq:voi_finite} is the core identity that links the data-denial experiments to dollar values.
 
-Operationalizing the framework requires three inputs, which structure the remainder of this section: (i) an estimate of $\beta_{2}$ from realized damages and forecast errors (Stage~1); (ii) an estimate of the variance contraction $\sigma_{\text{NO}}^{2}-\sigma_{\text{ALL}}^{2}$ attributable to augmented observations (Stage~2); and (iii) a projection of the resulting dollar value across affected counties (Stage~3).
+Operationalizing the framework requires three inputs, which structure the remainder of this section: (i) an estimate of $\beta_{2}$ from realized damages and forecast errors (Stage 1); (ii) an estimate of the variance contraction $\sigma_{\text{NO}}^{2}-\sigma_{\text{ALL}}^{2}$ attributable to augmented observations (Stage 2); and (iii) a projection of the resulting dollar value across affected counties (Stage 3).
 
 \subsection{Stage 1: Estimating the Marginal Cost of Forecast Errors}
 
@@ -188,7 +201,7 @@ For each storm $h$ and lead time, we compute the ex-ante error standard deviatio
 
 \subsection{Stage 3: Projecting Economic Gains}
 
-In the final stage, we monetize the precision gain identified in Stage~2 by applying the valuation identity \eqref{eq:voi_finite}. Combining the Stage 1 estimate of the loss-function curvature, $\hat{\beta}^w_2$, with the Stage 2 estimate of the precision differential, $\hat{\delta} = \sigma_{\text{NO}} - \sigma_{\text{ALL}}$, the storm- and county-specific social value of augmented observations is:
+In the final stage, we monetize the precision gain identified in Stage 2 by applying the valuation identity \eqref{eq:voi_finite}. Combining the Stage 1 estimate of the loss-function curvature, $\hat{\beta}^w_2$, with the Stage 2 estimate of the precision differential, $\hat{\delta} = \sigma_{\text{NO}} - \sigma_{\text{ALL}}$, the storm- and county-specific social value of augmented observations is:
 \begin{equation} \label{eq:value_calc}
       V^{AO}_{csh} \;=\; \hat{\beta}^w_2 \,\left(\sigma_{\text{NO},h}^{2} - \sigma_{\text{ALL},h}^{2}\right).
 \end{equation}
@@ -212,7 +225,7 @@ Estimation of $\beta^{w}_{2}$ draws on the county-by-storm panel constructed in 
       \item \textbf{Damages and recovery expenditures.} Post-landfall costs combine direct economic damages from the Spatial Hazard Events and Losses Database for the United States (SHELDUS) with FEMA Public Assistance obligations, which capture federally reimbursed recovery activity. Both series are aggregated to the county level to align with the spatial resolution of the forecast grid.
 \end{itemize}
 
-We use this panel to estimate $\beta^{w}_{2}$, the marginal damage of a unit increase in the squared demeaned wind speed forecast error. Table~\ref{tab:summary_dmg} reports summary statistics for the 31 hurricanes in the sample. The data display substantial heterogeneity across storms in realized wind speed, precipitation, and forecast errors, with total damages summing to \$377 billion over the period.
+We use this panel to estimate $\beta^{w}_{2}$, the marginal damage of a unit increase in the squared demeaned wind speed forecast error. Table \ref{tab:summary_dmg} reports summary statistics for the 31 hurricanes in the sample. The data display substantial heterogeneity across storms in realized wind speed, precipitation, and forecast errors, with total damages summing to \$377 billion over the period.
 
 \include{figures and tables/summary_dmg}
 
@@ -228,7 +241,7 @@ We measure the \emph{ex-ante differential} in forecast uncertainty attributable 
 \begin{equation}\label{eq:delta_sigma}
     \Delta \sigma_{AO} \;=\; \sigma_{\text{NO}} - \sigma_{\text{ALL}},
 \end{equation}
-where $\sigma$ denotes the ensemble spread of the HWRF forecast under each assimilation regime. The quantity $\Delta\sigma_{AO}$ isolates the share of forecast uncertainty resolved by dropsonde observations, which we monetize in Stage~3 by combining it with the loss-function curvature $\hat{\beta}^{w}_{2}$ estimated from the economic panel.
+where $\sigma$ denotes the ensemble spread of the HWRF forecast under each assimilation regime. The quantity $\Delta\sigma_{AO}$ isolates the share of forecast uncertainty resolved by dropsonde observations, which we monetize in Stage 3 by combining it with the loss-function curvature $\hat{\beta}^{w}_{2}$ estimated from the economic panel.
  
 
 %------------------------------------------%
@@ -350,55 +363,39 @@ However, our estimates likely represent a lower bound. Our framework focuses on 
 % ============================================================================
 \section{Robustness of the Marginal Cost Parameter \texorpdfstring{$\hat{\beta}^w_{Hurr}$}{beta\_Hurr}} \label{app:beta}
 
-We assess the stability of the Stage~1 estimate of $\hat{\beta}^w_{Hurr}$
-along three dimensions. First, the choice of sample window: extending the
-panel from the 2005--2022 sample used in \citet{molina2024social} to our
-updated 2005--2024 panel barely moves the headline coefficient
-(Table~\ref{tab:appA_sample}). Second, the choice of cost outcome:
-re-estimating the column~(7) specification on total cost, total cost
-expressed as a share of county GDP, and total cost per capita yields point
-estimates of the same sign across all three outcomes
-(Table~\ref{tab:appA_outcomes}). Third, sensitivity to individual storms:
-a one-storm-out jackknife across the ten largest landfalls in the panel
-brackets the baseline estimate of \$4.99M between approximately \$3.50M
-(Katrina dropped) and \$6.73M (Michael dropped), with the sub-hurricane
-coefficient remaining small across every drop
-(Table~\ref{tab:appA_jackknife}). Throughout this appendix, standard errors
-are Conley Spatial HAC with a 400~km distance cutoff and unbounded
-serial-correlation lag, matching the methodology of column~(7) of
-Table~\ref{tab:voi-table}.
+Here we assess the stability of the Stage 1 estimate of $\hat{\beta}^w_{Hurr}$ along two dimensions. First, we cover the choice of outcome variable. We re-estimate the Table \ref{tab:voi-table} column~(7) specification on total cost, total cost expressed as a share of county GDP, and total cost per capita (Table \ref{tab:appA_outcomes}). The table demonstrates that our results are not driven by population or economy size. The marginal cost of forecast error is positive and significant across all three normalizations.
 
-\include{figures and tables/appA_sample_compare}
+We then use each coefficient to compute the implied retrospective social value of augmented observations over the 2017--2020 hurricane-force / 3-day-lead denial panel (Table \ref{tab:appA_valuations}). The total-cost specification yields a uniform per-county-storm value, while the per-GDP and per-capita specifications scale the per-county value with county economic output and population, respectively. The three normalizations deliver aggregate values of the same economic order of magnitude, so the headline retrospective figure reported in Section \ref{sec:results} is not an artifact of weighting the panel by absolute dollar exposure.
+
+Second, we test sensitivity of our results to individual storms. A one-storm-out jackknife across the ten largest landfalls in the panel brackets the baseline estimate of \$4.99 million between approximately \$3.50 million (Katrina dropped) and \$6.73 million (Michael dropped), with the sub-hurricane coefficient remaining small and statis significant every drop (Table~\ref{tab:appA_jackknife}). The implication for robustness is that no single storm drives the parameter; Katrina and Michael are the most influential observations, but removing either one leaves the headline coefficient well within an economically meaningful range.
+
 \include{figures and tables/appA_outcomes}
+\include{figures and tables/appA_valuations}
 \include{figures and tables/appA_jackknife}
 
-\FloatBarrier
 % ============================================================================
 % Appendix B — delta robustness on the denial panel
 % ============================================================================
 \section{Robustness of the Precision Gain \texorpdfstring{$\delta$}{delta}} \label{app:delta}
 
-We assess the stability of the Stage~2 estimate of the
-augmented-observations precision gain $\delta$ along four dimensions.
-First, $\delta$ grows monotonically in lead time, from a small and
-statistically insignificant 0.063~m/s at 1-day lead to 0.258~m/s
-($p < 0.01$) at the 3-day lead used in the main analysis
-(Table~\ref{tab:appB_leadtime}); the denial archive contains only 1-, 2-,
-and 3-day forecasts. Second, the precision gain is positive at the standard
-hurricane-force threshold ($>33$~m/s) and remains positive at higher
-thresholds (Table~\ref{tab:appB_intensity}). Third, a one-storm-out
-jackknife across the eight hurricane-force denials at the 3-day lead shows
-that no single storm drives the precision-gain result
-(Table~\ref{tab:appB_jackknife}). Fourth, including Hurricane Maria
-(excluded from the main analysis because its landfall was in Puerto Rico)
-has negligible effect on $\delta$ (Table~\ref{tab:appB_maria}). Standard
-errors are clustered at the county level, matching
-Table~\ref{tab:noaa-controls}.
+Here we assess the stability of the Stage 2 estimate of the augmented-observations precision gain $\delta$ along four dimensions. First, sensitivity to the forecast lead time. The precision gain $\delta$ grows monotonically in lead time, from a small and statistically insignificant 0.063 m/s at 1-day lead to 0.258 m/s ($p < 0.01$) at the 3-day lead used in the main analysis (Table \ref{tab:appB_leadtime}). These results indicate that the value of AO is concentrated at  operationally relevant horizons, and that augmented observations deliver the largest ex-ante precision gains when forecast uncertainty is greatest.
+
+Second, sensitivity across Saffir-Simpson hurricane categories. The precision gain is identified at Category 1 and above ($\hat{\delta} = 0.258$ m/s, $p < 0.01$) but attenuates and loses statistical significance at higher-category cut-offs: $\hat{\delta} = 0.06$ m/s ($p = 0.62$) at Category 2 and above (N = 36) and $\hat{\delta} = 0.13$ m/s ($p = 0.41$) at Category 3 and above (N = 18) (Table \ref{tab:appB_intensity}). Category 4 and above cannot be estimated because the denial sample contains fewer than 10 such observations, and no Category 5 landfalls are represented. The results indicate that the headline precision gain is anchored on Category 1 forecasts, where the denial sample is large enough to identify $\delta$, while exposure to major-hurricane subsets (Cat 2+ and above) is too thin for proper statistical anlysis.
+
+Third, sensitivity to individual storms. A one-storm-out jackknife across the six hurricane-force denials at the 3-day lead shows that the precision gain is heavily concentrated with Hurricane Irma collapses. Removing that storm collapses $\hat{\delta}$ from 0.258 m/s to 0.035 m/s and renders it statistically indistinguishable from zero (Table \ref{tab:appB_jackknife}). Removing any of the other storms does not meaningfully affect our results.
+
+Fourth, the inclusion of Hurricane Maria. Maria is excluded from the main analysis because but its denial archive contributes 150 additional hurricane-force / 3-day-lead county observations. We note that this is more than the entire continental-US sample. Adding Maria back roughly doubles the panel and raises the precision-gain estimate from 0.258 m/s to 0.356 m/s, with the standard error falling by about 50\% (Table \ref{tab:appB_maria}).
+
+Finally, re-running the one-storm-out jackknife on this larger sample shows that the estimate is robust to dropping any single storm: $\hat{\delta}$ ranges from 0.258 m/s (drop Maria) to 0.430 m/s (drop Laura), and remains statistically significant ($p < 0.01$) in every drop, including dropping Irma (Table \ref{tab:appB_jackknife_maria}). We interpret this result as evidence that  that the fragility documented in Table \ref{tab:appB_jackknife} is a small-sample feature of the continental-US restriction rather than a weakness of the precision-gain identification itself.
+
 
 \include{figures and tables/appB_leadtime}
 \include{figures and tables/appB_intensity}
 \include{figures and tables/appB_jackknife}
 \include{figures and tables/appB_maria}
+\include{figures and tables/appB_jackknife_maria}
+
+\clearpage
 
 \FloatBarrier
 % ============================================================================
@@ -406,25 +403,15 @@ Table~\ref{tab:noaa-controls}.
 % ============================================================================
 \section{Per-Storm Decomposition of the Retrospective Social Value} \label{app:per-storm}
 
-Table~\ref{tab:appC_per_storm} and Figure~\ref{fig:appC_per_storm}
-decompose the \$2.91~billion retrospective valuation of augmented
-observations across the 2017--2020 sample by storm. Six of the eight
-hurricane-force denials contribute, with Hurricane Michael (2018) and
-Hurricane Laura (2020) jointly accounting for approximately 64\% of the
-total realized value due to the large number of hurricane-force counties
-each storm generated at the 3-day lead.
+Here we decompose the \$2.91 billion retrospective social value of augmented observations across the 2017--2020 denial sample by individual storm. Per-county value equals the marginal cost parameter times the variance reduction, $\hat{\beta}^{w}_{Hurr} \times \Delta\sigma^{2} \approx \$23.43$M, summed across the affected hurricane-force / 3-day-lead county observations of each storm (Table \ref{tab:appC_per_storm}). We organize the discussion along three dimensions.
+
+First, the distribution of contributing storms. Six of the eight 2017--2020 landfalling hurricanes with denial experiments in the continental-US archive contribute to the retrospective valuation; Hurricanes Harvey and Hanna do not appear because they did not produce hurricane-force wind realizations at the 3-day lead in the denial sample. The implication is that the headline retrospective figure is identified from storms with substantial hurricane-force exposure at the operational lead time, not from a broad cross-section of weak landfalls.
+
+Second, concentration in the top contributors. Hurricane Michael (2018) generates \$1{,}265M (43.5\% of the total), and Hurricane Laura (2020) generates \$609M (21.0\%), reflecting their large hurricane-force footprints at the 3-day lead (54 and 26 affected counties, respectively). The remaining four storms (Irma, Sally, Florence, Isaias) jointly account for the remaining 35\%. The implication for robustness is that the headline aggregate is heavily weighted by the two largest landfalls in the sample; conditional on the wind-only specification, removing either Michael or Laura would substantially reduce the retrospective value.
+
+Third, the source of the concentration. The dominance of Michael and Laura is mechanical rather than statistical: every affected county-storm in the denial sample contributes the same per-county valuation of \$23.43M, so a storm's total value scales linearly with its hurricane-force / 3-day-lead county count. Michael's 54 counties and Laura's 26 simply reflect the geographic breadth of their hurricane-force impacts, not a special weight in any regression. Every storm in the sample contributes positive value to the aggregate, and the per-storm decomposition is a transparent quantity for policy interpretation---each affected county-storm represents one \$23.43M unit of retrospective social value.
 
 \include{figures and tables/appC_per_storm}
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.9\textwidth]{figures and tables/appC_per_storm.png}
-    \caption{\textbf{Per-storm retrospective social value of augmented observations, 2017--2020.}
-    Each storm's value is the product of the count of hurricane-force, 3-day-lead county-storm
-    observations in the denial sample and the per-county valuation
-    $\hat{\beta}^w_{Hurr} \times \Delta\sigma^2 \approx \$23.43$M.}
-    \label{fig:appC_per_storm}
-\end{figure}
 
 \FloatBarrier
 % ============================================================================
@@ -432,95 +419,98 @@ each storm generated at the 3-day lead.
 % ============================================================================
 \section{Stakeholder Workshop Report} \label{app:workshop}
 
-This appendix reproduces the report from the stakeholder workshop on
-\emph{The Socio-Economic Benefits of Augmented Observations} held on
-13~March~2026 in the Map and Chart Room of the University of Miami Rosenstiel
-Campus. Of the 22~individuals invited, 14 participated (2 in person and 12
-online), representing forecasting and atmospheric science, economics and
-policy analysis, and operational observation systems. The participant pool
-spanned career stages from early- and mid-career researchers to senior
-experts with more than 20~years of experience. After a presentation of
-preliminary results, attendees evaluated the methodological framework,
-operational relevance, and policy implications of the project through
-structured and open-ended questionnaires.
+This appendix summarizes the stakeholder workshop on \emph{The
+Socio-Economic Benefits of Augmented Observations} held on 13 March 2026 in
+the Map and Chart Room of the University of Miami Rosenstiel Campus. Of the
+22 individuals invited, 14 participated (2 in person and 12 online),
+representing forecasting and atmospheric science, economics and policy
+analysis, and operational observation systems. After a presentation of
+preliminary results, attendees evaluated the framework through two
+structured questionnaires: Part 1 (methodology and the marginal cost
+parameter $\hat{\beta}$) and Part 2 (economic valuation and the
+cost--benefit framework). The composition of the respondent pool is
+reported in Table \ref{tab:appD_sample}, and the closed-ended Likert
+distributions are reported in
+Tables \ref{tab:appD_likert_part1}--\ref{tab:appD_likert_part2}.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth]{figures/workshop/image1.jpeg}
     \caption{\textbf{Workshop in the Map and Chart Room of the University of Miami, Rosenstiel Campus.}
-    13~March 2026; 14~participants attended (2 in person, 12 online).}
+    13 March 2026; 14 participants attended (2 in person, 12 online).}
     \label{fig:workshop_photo}
 \end{figure}
 
-Stakeholders expressed strong support for the study's scientific framework,
-particularly the use of augmented observations to improve hurricane
-forecasting and the associated economic valuation methodology. All
-respondents agreed that the data-denial experiment credibly isolated the
-contribution of augmented observations to forecast performance, considered
-the experimental design scientifically valid and operationally relevant, and
-endorsed the focus on a 3-day forecast horizon as appropriate given how
-operational and emergency-management decisions are typically made several
-days before landfall. Regarding the estimated 0.26~m/s reduction in forecast
-uncertainty, respondents generally agreed that the improvement was
-statistically meaningful; several noted that even modest precision gains
-become highly relevant when aggregated across storms, counties, and
-populations. One participant remarked that ``any improvement is valuable,
-even less than 1~m/s, especially if you are the individual impacted by the
-storm.''
+\begin{landscape}
+\include{figures and tables/appD_sample}
+\include{figures and tables/appD_likert_part1}
+\include{figures and tables/appD_likert_part2}
+\end{landscape}
 
-A major theme of the workshop was the recommendation to broaden the
-analysis beyond wind speed. Participants consistently emphasized that
-hurricane impacts arise from multiple interconnected hazards---storm surge,
-inland flooding, precipitation, and storm track---and that water-related
-hazards frequently dominate wind in destructiveness. One respondent stated
-directly that ``wind speed is not the killer of the public, it's water,''
-and several pointed to Harvey, Ida, and Helene as cases where rainfall and
-inland flooding drove the bulk of damages. Stakeholders also recommended
-integrating additional forecast metrics such as wind duration, wind gusts,
-storm size, and minimum central pressure, and suggested that existing work
-on track error and hurricane damage offers useful methodological guidance
-for expanding the framework.
+We organize the responses along four dimensions. First, identification and
+scope: all respondents agreed that the data-denial design credibly isolates
+the contribution of augmented observations, and the focus on a 3-day lead
+time was endorsed as appropriate given how operational and
+emergency-management decisions are typically made several days before
+landfall (Table \ref{tab:appD_likert_part1}). The 0.26 m/s reduction in
+ex-ante forecast uncertainty was viewed as statistically meaningful, with
+several respondents noting that even modest precision gains become highly
+relevant when aggregated across storms, counties, and populations. The
+workshop did not identify a credible threat to the identification strategy
+or the choice of lead time, suggesting that the Stage 2 estimate of
+$\delta$ in Section \ref{sec:results} is robust to the design choices most
+salient to subject-matter experts.
 
-On the economic side, stakeholders viewed the valuation framework as
-conceptually sound, particularly the translation from forecast uncertainty
-reduction to monetary value, and considered the per-county and aggregate
-retrospective values plausible. However, several respondents flagged
-uncertainty regarding the interpretation of specific economic parameters
-and asked for additional sensitivity analysis around baseline uncertainty
-and the marginal cost parameter. One conceptual concern raised was the
-distinction between statistical valuation and causal damage reduction:
-the study estimates the value of forecast improvements but does not
-explicitly demonstrate that improved forecasts \emph{cause} damage
-reduction through behavioral or preparedness channels, a distinction
-participants viewed as important for framing policy conclusions.
-Stakeholders also indicated that the framework likely understates total
-social value because life safety, behavioral adaptation, and indirect
-societal impacts are not fully represented.
+Second, the marginal cost parameter $\hat{\beta}$: respondents agreed that
+the estimation strategy is clear and methodologically sound, and that the
+finding that forecast errors significantly increase costs only for
+hurricane-force winds is supported by the evidence
+(Table \ref{tab:appD_likert_part1}). Stakeholders flagged that the
+interpretation of $\hat{\beta}$ is more nuanced than its statistical
+content: the panel identifies a dollar value of forecast precision, but
+does not directly establish that improved forecasts \emph{cause} damage
+reduction through behavioral or preparedness channels. The implication for
+robustness is that $\hat{\beta}$ should be framed as a statistical
+valuation of forecast precision rather than as a behavioural causal
+estimate, which leaves the headline coefficient unchanged but reshapes how
+the parameter enters the policy discussion.
 
-On policy and cost-benefit implications, participants broadly agreed that
-the operational-cost assumptions and benefit-to-cost framework provided
-meaningful evidence for evaluating investments in hurricane reconnaissance
-and augmented observations. The estimated benefit-to-cost ratio was viewed
-as credible and supportive of fleet recapitalization, with several
-respondents arguing that even under more conservative assumptions the
-projected benefits would justify the investment in observational
-infrastructure. Stakeholders recommended expanding the cost framework to
-include long-term maintenance, staffing, infrastructure, and operational
-lifecycle costs, and comparing augmented observations against alternative
-forecasting investments---computational capacity, AI-based forecasting,
-commercial providers, and drone-based platforms. Participants also
-recommended incorporating distributional and equity analyses to evaluate
-which populations and regions benefit most from improved forecasts.
+Third, the scope of the forecast outcome and the hazard space: a major
+theme of the workshop was the recommendation to broaden the analysis
+beyond wind speed, since hurricane impacts arise from multiple
+interconnected hazards---storm surge, inland flooding, precipitation, and
+storm track---and water-related hazards frequently dominate wind in
+destructiveness. Participants pointed to Harvey, Ida, and Helene as cases
+where rainfall and inland flooding drove the bulk of damages, and several
+recommended integrating wind duration, wind gusts, storm size, and minimum
+central pressure into future iterations. The implication for robustness is
+that the wind-only specification understates the full social value of
+augmented observations, so the retrospective valuation in
+Section \ref{sec:results} and the benefit--cost ratio in
+Section \ref{sec:policyrecs} should be read as lower bounds rather than
+point estimates.
 
-In summary, the workshop demonstrated broad support for the study's
-scientific and operational framework and for the conclusion that augmented
-observations provide measurable value for hurricane forecasting. The
-strongest and most consistent recommendation was to broaden the analysis
-beyond wind-focused metrics---to incorporate water-related hazards, life
-safety, behavioral responses, and additional sources of uncertainty---and
-to strengthen methodological transparency, robustness testing, and the
-interpretation of economic results. These recommendations directly inform
-the planned next stages of the project.
+Fourth, the economic valuation and cost--benefit framework: stakeholders
+viewed the translation from forecast uncertainty reduction to monetary
+value as conceptually sound and the per-county and aggregate retrospective
+values as plausible (Table \ref{tab:appD_likert_part2}). Several
+respondents asked for additional sensitivity analyses on baseline
+uncertainty and $\hat{\beta}$, recommended expanding the cost framework to
+include long-term maintenance, staffing, and infrastructure costs, and
+suggested benchmarking augmented observations against alternative
+forecasting investments such as additional compute, AI-based models, and
+drone-based platforms. The benefit--cost ratio was nonetheless viewed as
+credible and supportive of fleet recapitalization, with several
+respondents arguing that even under more conservative cost assumptions the
+projected benefits would justify the investment.
+
+In summary, the workshop demonstrated broad support for the identification
+strategy, the marginal-cost estimate, and the cost--benefit framework. The
+strongest recommendations were to broaden the analysis beyond
+wind-focused metrics, to clarify the statistical-versus-causal
+interpretation of $\hat{\beta}$, and to expand the cost framework to
+include long-term operational and infrastructure components; these
+recommendations directly inform the planned next stages of the project.
 
 \end{appendices}
 
