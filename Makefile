@@ -8,12 +8,10 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-.PHONY: all analysis_all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial report appendix workshop clean help
+.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial report appendix workshop clean help
 
 ## Default
-all: analysis_all
-
-analysis_all: raw_check report appendix workshop
+all: raw_check report appendix workshop
 	@echo -e "$(GREEN)Pipeline complete.$(NC)"
 
 ## Help

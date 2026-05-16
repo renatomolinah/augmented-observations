@@ -16,15 +16,11 @@ options(conleyreg.verbose = FALSE)
 
 source(here("code/functions_table.r"))
 
-# Resolve VOI panel path: prefer in-repo symlink, fall back to Box
-voi_path_local <- here("data/clean/final_dataset.rds")
-voi_path_box   <- "~/Library/CloudStorage/Box-Box/augmented-observations/data/clean/final_dataset.rds"
-voi_path <- if (file.exists(voi_path_local)) voi_path_local else path.expand(voi_path_box)
-stopifnot(file.exists(voi_path))
+# Resolve analysis inputs from the project data folder
+voi_path <- here("data/clean/final_dataset.rds")
+denial_path <- here("data/clean_denial/forecast_denial_data_with_lead_times.csv")
 
-denial_path_local <- here("data/clean_denial/forecast_denial_data_with_lead_times.csv")
-denial_path_box   <- "~/Library/CloudStorage/Box-Box/augmented-observations/data/clean_denial/forecast_denial_data_with_lead_times.csv"
-denial_path <- if (file.exists(denial_path_local)) denial_path_local else path.expand(denial_path_box)
+stopifnot(file.exists(voi_path))
 stopifnot(file.exists(denial_path))
 
 # ==============================================================================
