@@ -63,15 +63,15 @@ or `EXPERIMENT=ALL`, then re-run `make raw_exact_check` once the refreshed
 files have replaced the current baseline set.
 
 Primitive upstream inputs should be staged separately from generated raw
-products under `data/raw/raw_raw/`. That folder is organized by workflow and
+products under `data/raw/primitive_inputs/`. That folder is organized by workflow and
 storm:
 
-- `data/raw/raw_raw/standard/<storm>/nhc_files/`
-- `data/raw/raw_raw/standard/<storm>/mcrall_inputs/`
-- `data/raw/raw_raw/denial/<storm>/nhc_files/`
-- `data/raw/raw_raw/denial/<storm>/mcrall_inputs/`
+- `data/raw/primitive_inputs/standard/<storm>/nhc_files/`
+- `data/raw/primitive_inputs/standard/<storm>/mcrall_inputs/`
+- `data/raw/primitive_inputs/denial/<storm>/nhc_files/`
+- `data/raw/primitive_inputs/denial/<storm>/mcrall_inputs/`
 
-For example, `data/raw/raw_raw/standard/irma/` is the template location for
+For example, `data/raw/primitive_inputs/standard/irma/` is the template location for
 Irma's preserved deck files and Monte Carlo aggregate inputs before any wind,
 track, or rain outputs are generated into `data/raw/` or `data/raw_denial/`.
 

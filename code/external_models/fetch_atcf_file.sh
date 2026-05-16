@@ -77,7 +77,7 @@ ao_manifest_require
 stormid="$(ao_manifest_field "$storm" 2)"
 year="$(ao_manifest_field "$storm" 3)"
 current_year="$(date +%Y)"
-primitive_atcf_dir="${AO_ATCF_PRIMITIVE_DIR:-${repo_root}/data/raw/raw_raw/standard/${storm}/nhc_files}"
+primitive_atcf_dir="${AO_ATCF_PRIMITIVE_DIR:-${repo_root}/data/raw/primitive_inputs/standard/${storm}/nhc_files}"
 atcf_dir="${AO_ATCF_DIR:-${repo_root}/data/raw/atcf}"
 
 if [ "$file_type" = "adeck" ]; then

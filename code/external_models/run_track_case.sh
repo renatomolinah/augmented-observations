@@ -54,9 +54,9 @@ if [ -z "$storm" ]; then
 fi
 
 if [ "$denial" -eq 1 ]; then
-  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/raw_raw/denial/${storm}/nhc_files"
+  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/primitive_inputs/denial/${storm}/nhc_files"
 else
-  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/raw_raw/standard/${storm}/nhc_files"
+  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/primitive_inputs/standard/${storm}/nhc_files"
 fi
 
 export AO_SKIP_ATCF_DOWNLOAD=1

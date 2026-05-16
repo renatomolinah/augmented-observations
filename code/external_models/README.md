@@ -26,12 +26,12 @@ For an upstream rerun workflow, the expected sequence is:
 6. If that passes, run `make all`.
 
 Primitive upstream inputs are staged separately from generated raw outputs
-under `data/raw/raw_raw/`, organized by workflow and storm:
+under `data/raw/primitive_inputs/`, organized by workflow and storm:
 
-- `data/raw/raw_raw/standard/<storm>/nhc_files/`
-- `data/raw/raw_raw/standard/<storm>/mcrall_inputs/`
-- `data/raw/raw_raw/denial/<storm>/nhc_files/`
-- `data/raw/raw_raw/denial/<storm>/mcrall_inputs/`
+- `data/raw/primitive_inputs/standard/<storm>/nhc_files/`
+- `data/raw/primitive_inputs/standard/<storm>/mcrall_inputs/`
+- `data/raw/primitive_inputs/denial/<storm>/nhc_files/`
+- `data/raw/primitive_inputs/denial/<storm>/mcrall_inputs/`
 
 Those folders are meant for preserved deck files and Monte Carlo aggregate
 inputs only. Generated wind, track, and rain raw products should continue to

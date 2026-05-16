@@ -91,8 +91,8 @@ if [ -n "$lead_filter" ]; then
 fi
 
 stormid="$(ao_manifest_field "$storm" 2)"
-primitive_mc_input_root="${repo_root}/data/raw/raw_raw/standard/${storm}/mcrall_inputs"
-primitive_mc_input_root_denial="${repo_root}/data/raw/raw_raw/denial/${storm}/mcrall_inputs"
+primitive_mc_input_root="${repo_root}/data/raw/primitive_inputs/standard/${storm}/mcrall_inputs"
+primitive_mc_input_root_denial="${repo_root}/data/raw/primitive_inputs/denial/${storm}/mcrall_inputs"
 mc_input_root_standard="${repo_root}/data/raw/stormwindmodel_inputs/${storm}"
 mc_input_root_denial="${repo_root}/data/raw_denial/${storm}/wind/inputs"
 temp_denial_root="${repo_root}/data/tmp/external_models/denial/${storm}/precip/${experiment}"
@@ -106,9 +106,9 @@ if [ -d "$primitive_mc_input_root_denial" ]; then
 fi
 
 if [ "$denial" -eq 1 ]; then
-  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/raw_raw/denial/${storm}/nhc_files"
+  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/primitive_inputs/denial/${storm}/nhc_files"
 else
-  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/raw_raw/standard/${storm}/nhc_files"
+  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/primitive_inputs/standard/${storm}/nhc_files"
 fi
 
 export AO_SKIP_ATCF_DOWNLOAD=1
