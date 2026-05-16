@@ -8,7 +8,11 @@ cat("===========================================================================
 # 1. Read actual track files
 #=============================
 
-unzip("data/raw/track_raw.zip", exdir = "data/raw/")
+if (file.exists("data/raw/track_raw.zip")) {
+  unzip("data/raw/track_raw.zip", exdir = "data/raw/")
+} else if (!dir.exists("data/raw/track_raw")) {
+  stop("Missing track raw input: expected data/raw/track_raw/ or data/raw/track_raw.zip")
+}
 
 file_names <- list.files(
   path = "data/raw/track_raw/",

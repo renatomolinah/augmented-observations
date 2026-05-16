@@ -38,10 +38,13 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
+__pycache__/
+*.pyc
 
 # Data and output directories
 data/
 output/
+code/external_models/assets/
 
 # Manuscript directory (lives on Overleaf, not git)
 augmented_observations/

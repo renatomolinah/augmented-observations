@@ -1,0 +1,16 @@
+#!/bin/bash
+# Edit project / queue settings for your cluster before submitting.
+#BSUB -J windmodel
+#BSUB -o windmodel.%J.out
+#BSUB -e windmodel.%J.err
+#BSUB -P svf
+#BSUB -W 6:00
+#BSUB -q normal
+#BSUB -n 38
+#BSUB -R "span[ptile=38]"
+
+echo "hurricane_processing.R starting at `date`"
+R_exe="${AO_R_EXE:-R}"
+$R_exe CMD BATCH hurricane_processing_parallel.R
+$R_exe CMD BATCH hurricane_processing.R
+echo "hurricane_processing.R finished at `date`"

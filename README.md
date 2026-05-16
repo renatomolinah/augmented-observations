@@ -20,8 +20,15 @@ produces the tables, figures, and in-text numbers the manuscript imports.
 ## Run
 
 ```
-make help      # list targets
-make all       # full pipeline: clean_voi -> clean_denial -> report -> appendix -> workshop
+make help           # list targets
+make raw_check      # verify required raw files are present
+make raw_exact_check  # verify those raw files match the current baseline byte-for-byte
+make raw_exact_check_storm STORM=irma  # verify one storm's raw files
+make external_setup_free  # set up repo-owned free-toolchain pieces and print remaining install steps
+make all            # analysis pipeline only: clean_voi -> clean_denial -> report -> appendix -> workshop
+make analysis_all   # same as make all
+make external_run_case STORM=irma      # rerun standard raw generation for one storm
+make external_run_denial_case STORM=irma EXPERIMENT=NO  # rerun one denial case
 make clean_voi      # VOI panel cleaning only
 make clean_denial   # denial panel cleaning only (depends on clean_voi)
 make report         # NOAA_report.R: main tables + Stages 1-4
@@ -32,6 +39,29 @@ make clean          # remove output/
 
 Outputs land in `output/` (gitignored). The relevant `.tex` / `.png` files are
 manually copied into the Overleaf project for the manuscript build.
+
+`make all` is intentionally analysis-only. It assumes the upstream wind, rain,
+and track raw products have already been generated and placed under
+`data/raw/` and `data/raw_denial/`. Run `make raw_check` first if you want a
+quick prerequisite check before launching the analysis pipeline.
+
+If the upstream raw-generation layer is rerun and refreshed raw files are
+available, run `make raw_exact_check` to compare them byte-for-byte against the
+current baseline captured in
+`code/external_models/config/raw_output_manifest.tsv`.
+
+The upstream rerun path now lives behind dedicated wrapper targets instead of
+manual source edits. The standard path is:
+
+1. `make external_assets_stage`
+2. `make external_setup_free`
+3. `make external_toolchain_check`
+4. `make external_run_case STORM=<storm>`
+5. `make raw_exact_check_storm STORM=<storm>`
+
+For denial reruns, use `make external_run_denial_case STORM=<storm> EXPERIMENT=NO`
+or `EXPERIMENT=ALL`, then re-run `make raw_exact_check` once the refreshed
+files have replaced the current baseline set.
 
 | Stage | Files |
 |---|---|
@@ -50,6 +80,7 @@ code/
   cleaning_voi/          VOI panel cleaning (37-storm continental-US panel, 2005-2024)
   cleaning_denial/       denial sample cleaning (1.01 -> 1.03)
   exploratory/           Quarto notebooks (Ditchek replication, wind-error inference)
+  external_models/       archived upstream wind/rain/track generator code imported from Box
 data/                    symlink to Box (gitignored)
   raw/, clean/             VOI inputs and processed panel
   raw_denial/, clean_denial/  denial archive
@@ -62,3 +93,25 @@ renv.lock                pinned R package versions
 The manuscript Overleaf project includes the contents of `output/` (manually
 synced) plus its own `latex_extras/`, `references/`, `figures/`, and
 `NOAA_report.tex`; nothing manuscript-side is tracked in this repo.
+
+## External Model Provenance
+
+The main replication pipeline reads precomputed wind, rain, and track products
+from `data/raw/` and `data/raw_denial/`; it does not rerun the upstream
+stormwindmodel / P-RAIN / cone-generation workflows during `make all`.
+
+The corresponding generator scripts now live in `code/external_models/`. That
+tree contains the external modeling steps that produce files such as:
+
+- `data/raw/wind_error/*.csv`
+- `data/raw/precip_error/*.csv`
+- `data/raw/track_raw/*/track`
+- `data/raw_denial/*/{wind,precip,track}/...`
+
+Large compiled assets and machine-specific binaries from Box are not tracked in
+git. See [`code/external_models/README.md`](code/external_models/README.md) for
+the rerun wrappers and prerequisite checks.
+
+The legacy `.pro` execution layer now prefers the free GNU Data Language
+runtime (`gdl`) when it is available, and only falls back to proprietary
+`idl` if needed.

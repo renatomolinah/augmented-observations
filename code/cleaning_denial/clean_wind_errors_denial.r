@@ -7,6 +7,17 @@ pacman::p_load(
 options("tidylog.display" = NULL)
 `%notin%` = Negate(`%in%`)
 
+parse_env_list <- function(var_name, default) {
+  raw_value <- trimws(Sys.getenv(var_name, unset = ""))
+  if (raw_value == "") {
+    return(default)
+  }
+
+  values <- unlist(strsplit(raw_value, ",", fixed = TRUE))
+  values <- trimws(values)
+  values[values != ""]
+}
+
 # =============================
 # Clean wind errors
 # =============================
@@ -180,20 +191,25 @@ wrapper_function <- function(storm_names, file_type = c("NO", "ALL")) {
 }
 
 # Define a vector of storm names
-storm_names <- c("sally",
-                 "michael",
-                 "maria",
-                 "laura",
-                 "isaias",
-                 "irma",
-                 "harvey",
-                 "hanna",
-                 "florence",
-                 "dorian"
-
+storm_names <- parse_env_list(
+  "AO_STORM_LIST",
+  c(
+    "sally",
+    "michael",
+    "maria",
+    "laura",
+    "isaias",
+    "irma",
+    "harvey",
+    "hanna",
+    "florence",
+    "dorian"
+  )
 ) # add all directories here
 
+file_types <- parse_env_list("AO_DENIAL_FILE_TYPES", c("NO", "ALL"))
 
 # Get errors
-wrapper_function(storm_names, file_type = "NO")
-wrapper_function(storm_names, file_type = "ALL")
+invisible(lapply(file_types, function(file_type) {
+  wrapper_function(storm_names, file_type = file_type)
+}))

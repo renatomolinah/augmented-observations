@@ -9,6 +9,9 @@ cat("===========================================================================
 # 1. Load wind and rain forecasts
 #=============================
 
+# These CSVs are generated upstream by the archived workflows in
+# code/external_models/stormwindmodel and code/external_models/prain.
+
 # Read and tag wind files
 wind_file_names <- list.files(
   path = "data/raw/wind_error",

@@ -160,7 +160,8 @@ saveRDS(tract_population, "data/clean/popw/tract_population_2005.rds")
 grid_tracts <- unique(tract_grid$gridid)
 pop_tracts <- unique(tract_population$tract_fips)
 
-# Base directory for storms
+# Base directory for storms. The zip contents are produced by the upstream
+# stormwindmodel workflow archived under code/external_models/stormwindmodel.
 unzip("data/raw/stormwindmodel_inputs.zip", exdir = "data/raw/")
 storms_dir <- "data/raw/stormwindmodel_inputs"
 

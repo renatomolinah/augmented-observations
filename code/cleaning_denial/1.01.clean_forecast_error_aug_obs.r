@@ -4,6 +4,9 @@ print("Cleaning forecasts.")
 # 1. load wind and rain forecasts
 #=============================
 
+# These denial-case CSVs come from the upstream stormwindmodel / P-RAIN
+# workflows archived in code/external_models/.
+
 wind_file_names_all = list.files(
   path = "data/raw_denial/wind_error_ALL",
   recursive = FALSE,
