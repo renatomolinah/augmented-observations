@@ -137,4 +137,4 @@ echo "  make external_toolchain_check"
 echo
 echo "Then test one storm:"
 echo "  make external_run_case STORM=irma"
-echo "  make raw_exact_check_storm STORM=irma"
+echo "  make raw_exact_check"

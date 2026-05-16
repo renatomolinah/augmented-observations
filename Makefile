@@ -8,7 +8,7 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-.PHONY: all analysis_all raw_check raw_exact_check raw_exact_check_storm raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial report appendix workshop clean help
+.PHONY: all analysis_all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial report appendix workshop clean help
 
 ## Default
 all: analysis_all
@@ -25,7 +25,6 @@ help:
 	@echo "  analysis_all same as 'all'"
 	@echo "  raw_check    verify required pre-generated raw files are present under data/"
 	@echo "  raw_exact_check verify raw files against the byte-for-byte baseline manifest"
-	@echo "  raw_exact_check_storm verify one storm's raw files against the byte-for-byte baseline manifest (set STORM=...)"
 	@echo "  raw_manifest_refresh rebuild the byte-for-byte raw baseline manifest from the current data/"
 	@echo "  external_help explain the separate external-model generation layer"
 	@echo "  external_assets_stage copy required non-source external assets from data/code/ into repo-local asset dirs"
@@ -50,10 +49,6 @@ raw_check:
 
 raw_exact_check:
 	@python3 code/external_models/verify_raw_manifest.py
-
-raw_exact_check_storm:
-	@test -n "$(STORM)" || (echo "Set STORM=<stormname>." >&2; exit 1)
-	@python3 code/external_models/verify_raw_manifest.py --storm "$(STORM)"
 
 raw_manifest_refresh:
 	@python3 code/external_models/build_raw_manifest.py

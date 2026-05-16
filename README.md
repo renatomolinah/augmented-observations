@@ -23,7 +23,6 @@ produces the tables, figures, and in-text numbers the manuscript imports.
 make help           # list targets
 make raw_check      # verify required raw files are present
 make raw_exact_check  # verify those raw files match the current baseline byte-for-byte
-make raw_exact_check_storm STORM=irma  # verify one storm's raw files
 make external_setup_free  # set up repo-owned free-toolchain pieces and print remaining install steps
 make all            # analysis pipeline only: clean_voi -> clean_denial -> report -> appendix -> workshop
 make analysis_all   # same as make all
@@ -57,7 +56,7 @@ manual source edits. The standard path is:
 2. `make external_setup_free`
 3. `make external_toolchain_check`
 4. `make external_run_case STORM=<storm>`
-5. `make raw_exact_check_storm STORM=<storm>`
+5. `make raw_exact_check`
 
 For denial reruns, use `make external_run_denial_case STORM=<storm> EXPERIMENT=NO`
 or `EXPERIMENT=ALL`, then re-run `make raw_exact_check` once the refreshed

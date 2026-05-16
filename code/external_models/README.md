@@ -12,8 +12,6 @@ The intended replication boundary is:
   present.
 - `make raw_exact_check`: verify those raw products match the current baseline
   byte-for-byte using `config/raw_output_manifest.tsv`.
-- `make raw_exact_check_storm STORM=<storm>`: verify one storm's raw products
-  during an incremental rerun.
 - `make all`: run the analysis pipeline on top of those raw files.
 
 For an upstream rerun workflow, the expected sequence is:
@@ -24,9 +22,7 @@ For an upstream rerun workflow, the expected sequence is:
 4. Run `make external_run_case STORM=<storm>` for standard storms, or
    `make external_run_denial_case STORM=<storm> EXPERIMENT=NO|ALL` for denial
    outputs.
-5. Run `make raw_exact_check_storm STORM=<storm>` while validating an
-   incremental rerun, or `make raw_exact_check` after replacing the full raw
-   baseline.
+5. Run `make raw_exact_check` after replacing the refreshed raw baseline.
 6. If that passes, run `make all`.
 
 For the legacy `.pro` scripts, the wrappers now prefer the free GNU Data
