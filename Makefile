@@ -22,7 +22,6 @@ help:
 	@echo
 	@echo "Targets:"
 	@echo "  all          analysis pipeline on top of pre-generated raw files"
-	@echo "  analysis_all same as 'all'"
 	@echo "  raw_check    verify required pre-generated raw files are present under data/"
 	@echo "  raw_exact_check verify raw files against the byte-for-byte baseline manifest"
 	@echo "  raw_manifest_refresh rebuild the byte-for-byte raw baseline manifest from the current data/"

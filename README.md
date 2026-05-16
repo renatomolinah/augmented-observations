@@ -25,9 +25,6 @@ make raw_check      # verify required raw files are present
 make raw_exact_check  # verify those raw files match the current baseline byte-for-byte
 make external_setup_free  # set up repo-owned free-toolchain pieces and print remaining install steps
 make all            # analysis pipeline only: clean_voi -> clean_denial -> report -> appendix -> workshop
-make analysis_all   # same as make all
-make external_run_case STORM=irma      # regenerate standard raw products for one storm
-make external_run_denial_case STORM=irma EXPERIMENT=NO  # regenerate denial raw products for one storm
 make clean_voi      # VOI panel cleaning only
 make clean_denial   # denial panel cleaning only (depends on clean_voi)
 make report         # NOAA_report.R: main tables + Stages 1-4
@@ -49,8 +46,8 @@ available, run `make raw_exact_check` to compare them byte-for-byte against the
 current baseline captured in
 `code/external_models/config/raw_output_manifest.tsv`.
 
-The upstream generation path is exposed through wrapper targets. The standard
-path is:
+The upstream generation path is separate from the analysis pipeline. The
+standard path is:
 
 1. `make external_assets_stage`
 2. `make external_setup_free`
