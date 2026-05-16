@@ -32,8 +32,8 @@ help:
 	@echo "  external_setup_free set up repo-owned free-toolchain pieces and print remaining platform-specific install steps"
 	@echo "  external_build_phram compile phram.exe into code/external_models/assets/prain/bin/"
 	@echo "  external_install_stormwindmodel install the staged stormwindmodel tarball into the active R library"
-	@echo "  external_run_case regenerate one storm's standard raw products (set STORM=..., optional SKIP_ERA5_DOWNLOAD=1 SKIP_ERA5_SPLIT=1)"
-	@echo "  external_run_denial_case regenerate one storm's denial raw products (set STORM=..., optional EXPERIMENT=NO|ALL)"
+	@echo "  external_run_case generate one storm's standard raw products (set STORM=..., optional SKIP_ERA5_DOWNLOAD=1 SKIP_ERA5_SPLIT=1)"
+	@echo "  external_run_denial_case generate one storm's denial raw products (set STORM=..., optional EXPERIMENT=NO|ALL)"
 	@echo "  clean_voi    run code/cleaning_voi/* -> data/clean/final_dataset.rds"
 	@echo "  clean_denial run code/cleaning_denial/* -> data/clean_denial/*"
 	@echo "  report       run code/NOAA_report.R -> output/{table_voi,summary_dmg,data_denial,noaa_report_controls_table}.tex + output/augmented_panel.png"
@@ -56,11 +56,11 @@ raw_manifest_refresh:
 external_help:
 	@echo "The external-model layer is separate from the analysis Make pipeline."
 	@echo "Use generated raw files under data/raw/ and data/raw_denial/ before running 'make all'."
-	@echo "The legacy .pro scripts now prefer the free 'gdl' runtime and fall back to 'idl'."
+	@echo "The legacy .pro scripts prefer the free 'gdl' runtime and fall back to 'idl'."
 	@echo "Use 'make external_setup_free' to stage repo-owned assets and print the remaining free-software install steps."
-	@echo "To rerun upstream products, use 'make external_run_case STORM=<storm>' or"
+	@echo "To generate upstream raw products, use 'make external_run_case STORM=<storm>' or"
 	@echo "  'make external_run_denial_case STORM=<storm> EXPERIMENT=NO|ALL'."
-	@echo "Use 'make raw_exact_check' after a rerun to compare those raw files byte-for-byte to the current baseline."
+	@echo "Use 'make raw_exact_check' after generation to compare those raw files byte-for-byte to the current baseline."
 	@echo "See README.md and code/external_models/README.md for details."
 
 external_assets_stage:

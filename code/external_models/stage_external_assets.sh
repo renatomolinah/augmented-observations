@@ -4,8 +4,8 @@ set -euo pipefail
 ################################################################################
 # External asset stager
 # ------------------------------------------------------------------------------
-# Copy required non-source external-model assets from the Box-backed data/code
-# tree into canonical repo-local asset directories.
+# Copy required non-source external-model assets from the data/code tree into
+# canonical repo-local asset directories.
 ################################################################################
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)

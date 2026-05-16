@@ -49,7 +49,7 @@ contains
 ! -----------------------------------------------------------------------------------
 ! B. McNoldy 8/2012
 ! - added the ability to have vectors be in monotonically DECREASING order as well.
-! - endpoints are now extrapolated rather that copied from original endpoints
+! - endpoints are extrapolated rather than copied from the original endpoints
 !
   subroutine interp1(nk,x,y,ni,xi,yi)
 

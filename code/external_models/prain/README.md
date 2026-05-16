@@ -27,7 +27,7 @@ Some non-source dependencies remain outside git, including the large topo file,
 IDL `.sav` binaries, and the archived `eccodes` bundle listed in the parent
 README.
 
-The repo-native defaults now use these intermediate directories:
+The repo defaults use these intermediate directories:
 
 - `data/raw/prain/DATA/<atcf_id>_<start_time>/` for `storm_data_xxxx.txt`
   inputs created by `1_create_phram_inputs/`

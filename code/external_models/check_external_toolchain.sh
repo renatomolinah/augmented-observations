@@ -130,10 +130,10 @@ fi
 if [ "$missing" -ne 0 ]; then
   cat >&2 <<'EOF'
 
-The external raw-generation toolchain is not complete yet. Stage the Box-backed
+The external raw-generation toolchain is not complete. Stage the required
 assets, install the stormwindmodel package, build phram.exe if needed, and make
 sure GDL or IDL, plus wgrib / grib_filter / cdsapi, are available before
-expecting a full rerun to work.
+expecting a full raw-generation run to work.
 EOF
   exit 1
 fi

@@ -2,7 +2,7 @@
 ! P-RAIN input creator
 ! ------------------------------------------------------------------------------
 ! Create the 12-column storm_data_xxxx.txt files that PHRAM expects as input.
-! The defaults now point at repo-native data locations, with environment
+! The defaults point at repo-native data locations, with environment
 ! variables available for storm selection and path overrides.
 ! ==============================================================================
 
@@ -182,7 +182,7 @@ program create_storm_data
     close(1)
   end if
 
-  !now interpolate to deltat
+  ! Interpolate to deltat
   allocate(ships_hour(ntimes))
   allocate(shr_mag(ntimes))
   allocate(uu_interp(ntimes))
@@ -221,7 +221,7 @@ program create_storm_data
     read(1,*)
   end do
 
-  !now loop over each ensemble member and write out a text file for each
+  ! Loop over each ensemble member and write out one text file per member
   do e=1,nmembers
 
     ii = 1

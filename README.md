@@ -8,11 +8,11 @@ produces the tables, figures, and in-text numbers the manuscript imports.
 
 ## Setup
 
-1. **Data**: symlink `data/` to the Box `augmented-observations/data/` folder
+1. **Data**: symlink `data/` to the project data folder
    (or otherwise populate `data/raw/`, `data/raw_denial/`,
    `data/workshop/Part 1.csv`, `data/workshop/Part 2.csv`).
    ```
-   ln -s ~/Library/CloudStorage/Box-Box/augmented-observations/data data
+   ln -s /path/to/data data
    ```
 2. **R packages**: open the project (`augmented-observations.Rproj`) and run
    `renv::restore()` to install the locked package versions.
@@ -26,8 +26,8 @@ make raw_exact_check  # verify those raw files match the current baseline byte-f
 make external_setup_free  # set up repo-owned free-toolchain pieces and print remaining install steps
 make all            # analysis pipeline only: clean_voi -> clean_denial -> report -> appendix -> workshop
 make analysis_all   # same as make all
-make external_run_case STORM=irma      # rerun standard raw generation for one storm
-make external_run_denial_case STORM=irma EXPERIMENT=NO  # rerun one denial case
+make external_run_case STORM=irma      # regenerate standard raw products for one storm
+make external_run_denial_case STORM=irma EXPERIMENT=NO  # regenerate denial raw products for one storm
 make clean_voi      # VOI panel cleaning only
 make clean_denial   # denial panel cleaning only (depends on clean_voi)
 make report         # NOAA_report.R: main tables + Stages 1-4
@@ -49,8 +49,8 @@ available, run `make raw_exact_check` to compare them byte-for-byte against the
 current baseline captured in
 `code/external_models/config/raw_output_manifest.tsv`.
 
-The upstream rerun path now lives behind dedicated wrapper targets instead of
-manual source edits. The standard path is:
+The upstream generation path is exposed through wrapper targets. The standard
+path is:
 
 1. `make external_assets_stage`
 2. `make external_setup_free`
@@ -63,8 +63,8 @@ or `EXPERIMENT=ALL`, then re-run `make raw_exact_check` once the refreshed
 files have replaced the current baseline set.
 
 Primitive upstream inputs should be staged separately from generated raw
-products under the Box-backed `data/raw/raw_raw/` tree. That folder is now
-organized by workflow and storm:
+products under `data/raw/raw_raw/`. That folder is organized by workflow and
+storm:
 
 - `data/raw/raw_raw/standard/<storm>/nhc_files/`
 - `data/raw/raw_raw/standard/<storm>/mcrall_inputs/`
@@ -92,8 +92,8 @@ code/
   cleaning_voi/          VOI panel cleaning (37-storm continental-US panel, 2005-2024)
   cleaning_denial/       denial sample cleaning (1.01 -> 1.03)
   exploratory/           Quarto notebooks (Ditchek replication, wind-error inference)
-  external_models/       archived upstream wind/rain/track generator code imported from Box
-data/                    symlink to Box (gitignored)
+  external_models/       archived upstream wind/rain/track generator code
+data/                    data folder (gitignored)
   raw/, clean/             VOI inputs and processed panel
   raw_denial/, clean_denial/  denial archive
   workshop/                Qualtrics CSV exports for Appendix D
@@ -112,18 +112,17 @@ The main replication pipeline reads precomputed wind, rain, and track products
 from `data/raw/` and `data/raw_denial/`; it does not rerun the upstream
 stormwindmodel / P-RAIN / cone-generation workflows during `make all`.
 
-The corresponding generator scripts now live in `code/external_models/`. That
-tree contains the external modeling steps that produce files such as:
+The corresponding generator scripts live in `code/external_models/`. That tree
+contains the external modeling steps that produce files such as:
 
 - `data/raw/wind_error/*.csv`
 - `data/raw/precip_error/*.csv`
 - `data/raw/track_raw/*/track`
 - `data/raw_denial/*/{wind,precip,track}/...`
 
-Large compiled assets and machine-specific binaries from Box are not tracked in
-git. See [`code/external_models/README.md`](code/external_models/README.md) for
+Large compiled assets and machine-specific binaries are not tracked in git. See
+[`code/external_models/README.md`](code/external_models/README.md) for
 the rerun wrappers, primitive-input layout, and prerequisite checks.
 
-The legacy `.pro` execution layer now prefers the free GNU Data Language
-runtime (`gdl`) when it is available, and only falls back to proprietary
-`idl` if needed.
+The legacy `.pro` execution layer prefers the free GNU Data Language runtime
+(`gdl`) when it is available and falls back to proprietary `idl` if needed.

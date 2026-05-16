@@ -44,7 +44,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-echo "Staging Box-backed non-source assets..."
+echo "Staging required non-source assets..."
 bash "${script_dir}/stage_external_assets.sh"
 
 echo
@@ -132,7 +132,7 @@ EOF
 esac
 
 echo
-echo "When those are installed, rerun:"
+echo "When those are installed, run:"
 echo "  make external_toolchain_check"
 echo
 echo "Then test one storm:"

@@ -37,15 +37,14 @@ Those folders are meant for preserved deck files and Monte Carlo aggregate
 inputs only. Generated wind, track, and rain raw products should continue to
 land under `data/raw/` and `data/raw_denial/`.
 
-For the legacy `.pro` scripts, the wrappers now prefer the free GNU Data
-Language runtime (`gdl`) and only fall back to proprietary `idl` if `gdl` is
-not available. That makes the last non-free execution layer optional rather
-than mandatory.
+For the legacy `.pro` scripts, the wrappers prefer the free GNU Data Language
+runtime (`gdl`) and fall back to proprietary `idl` only if `gdl` is not
+available.
 
-The main user-facing R, Python, shell, Fortran, and IDL entry points now share
+The main user-facing R, Python, shell, Fortran, and IDL entry points share
 storm timing metadata through `config/storm_manifest.csv`. The legacy IDL files
 still keep their original in-file tables as fallbacks for older archival storms
-that are not yet represented in the shared manifest.
+that are not represented in the shared manifest.
 
 ## Layout
 
@@ -66,7 +65,7 @@ that are not yet represented in the shared manifest.
 - `counties_in_cone/` underlies the track products in `data/raw/track_raw/`
   and `data/raw_denial/*/track/`.
 
-The rerun wrappers that now drive the portable entry points are:
+The rerun wrappers that drive the portable entry points are:
 
 - `run_external_case.sh`: full standard wind + track + precipitation rerun for
   one storm.

@@ -22,7 +22,7 @@ parse_env_list <- function(var_name, default) {
 # Clean wind errors
 # =============================
 
-# NOTE: precip errors were direct from model output from Brian McNoldy
+# NOTE: precipitation errors come directly from the model output files
 
 # =============================
 # Updated `get_errors` Function
