@@ -53,6 +53,12 @@ if [ -z "$storm" ]; then
   exit 1
 fi
 
+if [ "$denial" -eq 1 ]; then
+  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/raw_raw/denial/${storm}/nhc_files"
+else
+  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/raw_raw/standard/${storm}/nhc_files"
+fi
+
 export AO_SKIP_ATCF_DOWNLOAD=1
 bash "${script_dir}/fetch_atcf_file.sh" --storm "$storm" --file-type bdeck >/dev/null
 if [ "$denial" -eq 0 ]; then

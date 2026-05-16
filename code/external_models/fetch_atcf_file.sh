@@ -77,8 +77,8 @@ ao_manifest_require
 stormid="$(ao_manifest_field "$storm" 2)"
 year="$(ao_manifest_field "$storm" 3)"
 current_year="$(date +%Y)"
+primitive_atcf_dir="${AO_ATCF_PRIMITIVE_DIR:-${repo_root}/data/raw/raw_raw/standard/${storm}/nhc_files}"
 atcf_dir="${AO_ATCF_DIR:-${repo_root}/data/raw/atcf}"
-mkdir -p "$atcf_dir"
 
 if [ "$file_type" = "adeck" ]; then
   file_name="a${stormid}${year}.dat"
@@ -107,6 +107,13 @@ else
   echo "Unsupported file type: ${file_type}" >&2
   exit 1
 fi
+
+if [ -f "${primitive_atcf_dir}/${file_name}" ]; then
+  printf '%s\n' "${primitive_atcf_dir}/${file_name}"
+  exit 0
+fi
+
+mkdir -p "$atcf_dir"
 
 if [ -f "$final_path" ]; then
   printf '%s\n' "$final_path"

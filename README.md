@@ -62,6 +62,19 @@ For denial reruns, use `make external_run_denial_case STORM=<storm> EXPERIMENT=N
 or `EXPERIMENT=ALL`, then re-run `make raw_exact_check` once the refreshed
 files have replaced the current baseline set.
 
+Primitive upstream inputs should be staged separately from generated raw
+products under the Box-backed `data/raw/raw_raw/` tree. That folder is now
+organized by workflow and storm:
+
+- `data/raw/raw_raw/standard/<storm>/nhc_files/`
+- `data/raw/raw_raw/standard/<storm>/mcrall_inputs/`
+- `data/raw/raw_raw/denial/<storm>/nhc_files/`
+- `data/raw/raw_raw/denial/<storm>/mcrall_inputs/`
+
+For example, `data/raw/raw_raw/standard/irma/` is the template location for
+Irma's preserved deck files and Monte Carlo aggregate inputs before any wind,
+track, or rain outputs are generated into `data/raw/` or `data/raw_denial/`.
+
 | Stage | Files |
 |---|---|
 | Main report (`make report`) | `table_voi.tex`, `summary_dmg.tex`, `data_denial.tex`, `noaa_report_controls_table.tex`, `augmented_panel.png`, `stage{2,3,4}_*numbers.txt` |
@@ -109,7 +122,7 @@ tree contains the external modeling steps that produce files such as:
 
 Large compiled assets and machine-specific binaries from Box are not tracked in
 git. See [`code/external_models/README.md`](code/external_models/README.md) for
-the rerun wrappers and prerequisite checks.
+the rerun wrappers, primitive-input layout, and prerequisite checks.
 
 The legacy `.pro` execution layer now prefers the free GNU Data Language
 runtime (`gdl`) when it is available, and only falls back to proprietary

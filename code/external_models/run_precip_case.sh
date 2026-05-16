@@ -17,12 +17,13 @@ asset_root="${AO_EXTERNAL_ASSET_ROOT:-${script_dir}/assets}"
 storm=""
 denial=0
 experiment="NO"
+lead_filter=""
 skip_era5_download=0
 skip_era5_split=0
 
 usage() {
   cat <<'EOF'
-Usage: run_precip_case.sh --storm NAME [--denial 0|1] [--experiment NO|ALL] [--skip-era5-download] [--skip-era5-split]
+Usage: run_precip_case.sh --storm NAME [--lead 24|48|72] [--denial 0|1] [--experiment NO|ALL] [--skip-era5-download] [--skip-era5-split]
 EOF
 }
 
@@ -30,6 +31,10 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --storm)
       storm="$2"
+      shift 2
+      ;;
+    --lead)
+      lead_filter="$2"
       shift 2
       ;;
     --denial)
@@ -74,10 +79,37 @@ if [ -z "$available_leads" ]; then
   exit 1
 fi
 
+if [ -n "$lead_filter" ]; then
+  case "$lead_filter" in
+    24|48|72) ;;
+    *)
+      echo "--lead must be one of 24, 48, or 72." >&2
+      exit 1
+      ;;
+  esac
+  available_leads="$lead_filter"
+fi
+
 stormid="$(ao_manifest_field "$storm" 2)"
+primitive_mc_input_root="${repo_root}/data/raw/raw_raw/standard/${storm}/mcrall_inputs"
+primitive_mc_input_root_denial="${repo_root}/data/raw/raw_raw/denial/${storm}/mcrall_inputs"
 mc_input_root_standard="${repo_root}/data/raw/stormwindmodel_inputs/${storm}"
 mc_input_root_denial="${repo_root}/data/raw_denial/${storm}/wind/inputs"
 temp_denial_root="${repo_root}/data/tmp/external_models/denial/${storm}/precip/${experiment}"
+
+if [ -d "$primitive_mc_input_root" ]; then
+  mc_input_root_standard="$primitive_mc_input_root"
+fi
+
+if [ -d "$primitive_mc_input_root_denial" ]; then
+  mc_input_root_denial="$primitive_mc_input_root_denial"
+fi
+
+if [ "$denial" -eq 1 ]; then
+  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/raw_raw/denial/${storm}/nhc_files"
+else
+  export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/raw_raw/standard/${storm}/nhc_files"
+fi
 
 export AO_SKIP_ATCF_DOWNLOAD=1
 bash "${script_dir}/fetch_atcf_file.sh" --storm "$storm" --file-type bdeck >/dev/null

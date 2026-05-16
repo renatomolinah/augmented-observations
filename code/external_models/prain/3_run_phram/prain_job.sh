@@ -21,7 +21,9 @@ denial_exp="${AO_DENIAL_EXPERIMENT:-NO}"
 stormname="${AO_STORMNAME:-milton}"
 lead_hours="${AO_PRAIN_LEAD_HOURS:-72}"
 data_dir="${AO_DATA_DIR:-data}"
-asset_root="${AO_EXTERNAL_ASSET_ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")"/../../.. && pwd)/code/external_models/assets}"
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH= cd -- "${script_dir}/../../../.." && pwd)
+asset_root="${AO_EXTERNAL_ASSET_ROOT:-${repo_root}/code/external_models/assets}"
 
 #.stag="al03_2005070400" #Cindy 48h 
 #stag="al03_2005070500" #Cindy 24h 

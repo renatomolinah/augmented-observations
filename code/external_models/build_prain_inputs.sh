@@ -71,7 +71,12 @@ if [ -z "$forecast_timestamp" ]; then
 fi
 
 runtime_tag="$(printf '%s' "$forecast_timestamp" | cut -c1-10)"
-default_mc_input_dir="${AO_STORMWINDMODEL_MC_DIR:-${repo_root}/data/raw/stormwindmodel_inputs/${storm}}"
+primitive_mc_input_dir="${repo_root}/data/raw/raw_raw/standard/${storm}/mcrall_inputs"
+legacy_mc_input_dir="${repo_root}/data/raw/stormwindmodel_inputs/${storm}"
+default_mc_input_dir="${AO_STORMWINDMODEL_MC_DIR:-$legacy_mc_input_dir}"
+if [ -z "${AO_STORMWINDMODEL_MC_DIR:-}" ] && [ -d "$primitive_mc_input_dir" ]; then
+  default_mc_input_dir="$primitive_mc_input_dir"
+fi
 default_output_dir="${repo_root}/data/raw/prain/DATA/${stormid}_${runtime_tag}"
 default_ships_dir="${repo_root}/data/raw/prain/ships"
 

@@ -25,6 +25,18 @@ For an upstream rerun workflow, the expected sequence is:
 5. Run `make raw_exact_check` after replacing the refreshed raw baseline.
 6. If that passes, run `make all`.
 
+Primitive upstream inputs are staged separately from generated raw outputs
+under `data/raw/raw_raw/`, organized by workflow and storm:
+
+- `data/raw/raw_raw/standard/<storm>/nhc_files/`
+- `data/raw/raw_raw/standard/<storm>/mcrall_inputs/`
+- `data/raw/raw_raw/denial/<storm>/nhc_files/`
+- `data/raw/raw_raw/denial/<storm>/mcrall_inputs/`
+
+Those folders are meant for preserved deck files and Monte Carlo aggregate
+inputs only. Generated wind, track, and rain raw products should continue to
+land under `data/raw/` and `data/raw_denial/`.
+
 For the legacy `.pro` scripts, the wrappers now prefer the free GNU Data
 Language runtime (`gdl`) and only fall back to proprietary `idl` if `gdl` is
 not available. That makes the last non-free execution layer optional rather
