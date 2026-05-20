@@ -189,8 +189,8 @@ write_likert <- function(df, items, caption_text, file_name, label) {
 
 write_likert(
   p1, items_p1,
-  paste("Workshop responses---methodology and marginal cost",
-        "($\\hat{\\beta}$): response distribution and summary statistics."),
+  paste("Workshop responses---methodology and marginal cost:",
+        "response distribution and summary statistics."),
   "appD_likert_part1.tex", "appD_likert_part1"
 )
 write_likert(
@@ -263,7 +263,7 @@ write_quotes <- function(df, q_index, caption_text, file_name, label) {
 
 write_quotes(
   p1, quotes_p1,
-  paste("Open-ended workshop responses---methodology and $\\hat{\\beta}$.",
+  paste("Open-ended workshop responses---methodology and marginal cost.",
         "Verbatim quotes; empty entries and pure `N/A' answers are omitted."),
   "appD_quotes_part1.tex", "appD_quotes_part1"
 )

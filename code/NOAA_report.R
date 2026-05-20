@@ -136,7 +136,7 @@ denial_tex <- c(
   "\\begin{tablenotes}",
   "\\small",
   "\\item \\textit{Note: }",
-  "\\item The landfall intensity is categorized according to the Saffir-Simpson Hurricane Wind Scale, the landfall time is rounded to the next-earliest synoptic time (UTC).",
+  "\\item The landfall intensity is categorized according to the Saffir-Simpson Hurricane Wind Scale, and the landfall time is rounded to the next-earliest synoptic time (UTC). These eight continental-US landfalling hurricanes form the Stage 2 analysis sample, and we draw on the corresponding \\citet{DitchekEA2023} data-denial experiments---which assimilate or omit dropsonde profiles while holding all other reconnaissance products constant---to identify the precision gain $\\delta$.",
   "\\end{tablenotes}",
   "\\end{threeparttable}",
   "\\end{table}"

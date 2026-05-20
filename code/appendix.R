@@ -86,7 +86,7 @@ msummary(
   gof_omit  = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors|Num.Obs.",
   fmt       = "%.3f",
   stars     = stars_econ,
-  title     = "Outcome robustness: $\\hat{\\beta}^w_{Hurr}$ across cost outcomes (2005--2024 panel). \\label{tab:appA_outcomes}",
+  title     = "Outcome robustness across cost specifications (2005--2024 panel). \\label{tab:appA_outcomes}",
   notes     = list("All specifications match column (7) of Table @REF{tab:voi-table} with county and state-by-hurricane fixed effects plus realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400 km distance cutoff."),
   threeparttable = TRUE,
   escape    = FALSE,
@@ -286,7 +286,7 @@ B1_disp <- B1 |>
 B1_tex <- kbl(B1_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. \\label{tab:appB_leadtime}",
               align = c("c","c","c","c","c","c"), linesep = "") |>
-  footnote(general = "Each row reports the controls-table specification estimated on the indicated lead-time subset of hurricane-force observations (wind $\\geq$ 33 m/s). County-clustered standard errors in parentheses.",
+  footnote(general = "Each row reports the controls-table specification of Table \\ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\\geq$ 33 m/s) in the 2017--2020 continental-US AO denial archive (excluding Hurricane Maria). The coefficient $\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\citet{DitchekEA2023}); the precision gain is reported as $|\\hat{\\delta}|$, so larger positive values indicate a larger noise reduction from AO. County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE,
            escape = FALSE)
@@ -323,7 +323,7 @@ B2_rows <- paste(sapply(seq_len(nrow(B2)), function(i) with(B2[i, ], sprintf(
 ))), collapse = "\n")
 B2_tex_str <- paste0(
   "\\begin{table}\n\n",
-  "\\caption{Saffir-Simpson category sensitivity of $\\delta$, 3-day lead. \\label{tab:appB_intensity}}\n",
+  "\\caption{Saffir-Simpson category sensitivity, 3-day lead. \\label{tab:appB_intensity}}\n",
   "\\centering\n",
   "\\begin{threeparttable}\n",
   "\\begin{tabular}[t]{lccccc}\n",
@@ -368,7 +368,7 @@ B2m_rows <- paste(sapply(seq_len(nrow(B2m)), function(i) with(B2m[i, ], sprintf(
 ))), collapse = "\n")
 B2m_tex_str <- paste0(
   "\\begin{table}\n\n",
-  "\\caption{Saffir-Simpson category sensitivity of $\\delta$ with Hurricane Maria included, 3-day lead. \\label{tab:appB_intensity_maria}}\n",
+  "\\caption{Saffir-Simpson category sensitivity with Hurricane Maria included, 3-day lead. \\label{tab:appB_intensity_maria}}\n",
   "\\centering\n",
   "\\begin{threeparttable}\n",
   "\\begin{tabular}[t]{lccccc}\n",
@@ -412,9 +412,9 @@ B3_disp <- B3 |>
   )
 
 B3_tex <- kbl(B3_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              caption = "One-storm-out jackknife of $\\delta$, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife}",
+              caption = "One-storm-out jackknife, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife}",
               align = c("l","c","c","c","c"), linesep = "") |>
-  footnote(general = "County-clustered standard errors in parentheses. The baseline row drops no storm.",
+  footnote(general = "Each row reports the Stage 2 precision-gain specification of Table \\ref{tab:noaa-controls} re-estimated after dropping the indicated storm from the 2017--2020 continental-US AO denial archive (hurricane-force / 3-day lead, Maria excluded). The baseline row drops no storm. The coefficient $\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\citet{DitchekEA2023}). County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
 writeLines(as.character(B3_tex), here("output/appB_jackknife.tex"))
@@ -441,9 +441,9 @@ B4_disp <- B4 |>
   )
 
 B4_tex <- kbl(B4_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              caption = "Inclusion of Hurricane Maria: effect on $\\delta$. \\label{tab:appB_maria}",
+              caption = "Inclusion of Hurricane Maria. \\label{tab:appB_maria}",
               align = c("l","c","c","c","c"), linesep = "") |>
-  footnote(general = "Maria is excluded from the main analysis because it did not make landfall in the continental US. County-clustered standard errors in parentheses.",
+  footnote(general = "Both rows estimate the Stage 2 precision-gain specification of Table \\ref{tab:noaa-controls} on hurricane-force ($\\geq$ 33 m/s) realizations at the 3-day lead. The baseline row uses the six 2017--2020 continental-US landfalls in the AO denial archive; the second row adds Hurricane Maria back into the panel. The coefficient $\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\citet{DitchekEA2023}). Maria is excluded from the main analysis because it did not make landfall in the continental US. County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
 writeLines(as.character(B4_tex), here("output/appB_maria.tex"))
@@ -474,7 +474,7 @@ B5_rows <- paste(sapply(seq_len(nrow(B5)), function(i) with(B5[i, ], sprintf(
 ))), collapse = "\n")
 B5_tex_str <- paste0(
   "\\begin{table}\n\n",
-  "\\caption{One-storm-out jackknife of $\\delta$ with Hurricane Maria included, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife_maria}}\n",
+  "\\caption{One-storm-out jackknife with Hurricane Maria included, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife_maria}}\n",
   "\\centering\n",
   "\\begin{threeparttable}\n",
   "\\begin{tabular}[t]{lcccc}\n",
