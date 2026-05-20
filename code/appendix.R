@@ -88,6 +88,7 @@ msummary(
   stars     = stars_econ,
   title     = "Outcome robustness across cost specifications (2005--2024 panel). \\label{tab:appA_outcomes}",
   notes     = list("All specifications match column (7) of Table @REF{tab:voi-table} with county and state-by-hurricane fixed effects plus realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400 km distance cutoff."),
+  align     = "lrrr",
   threeparttable = TRUE,
   escape    = FALSE,
   output    = here("output/appA_outcomes.tex")
@@ -162,7 +163,7 @@ val_tex_str <- sprintf(
 \\centering
 \\begin{adjustbox}{max width = \\textwidth}
 \\begin{threeparttable}
-\\begin{tabular}[t]{lccc}
+\\begin{tabular}[t]{lrrr}
 \\toprule
 Outcome variable & $\\hat{\\beta}^w_{Hurr}$ & Mean per-county value (\\$M) & Aggregate value 2017--2020 (\\$B)\\\\
 \\midrule
@@ -220,7 +221,6 @@ jack_df <- bind_rows(jack_rows) |>
 jack_disp <- jack_df |>
   transmute(
     Dropped        = dropped,
-    `Storms`       = n_storms,
     `Obs.`         = n_rows,
     `$\\beta_2$: Hurricane` = paste0(beta_hurr, " (", se_hurr, ")"),
     `$\\beta_2$: Sub-Hurr.` = paste0(beta_subhurr, " (", se_subhurr, ")")
@@ -233,7 +233,7 @@ jack_tex <- kbl(
   escape    = FALSE,
   caption   = "One-storm-out jackknife: stability of column (7) estimates. \\label{tab:appA_jackknife}",
   linesep   = "",
-  align     = c("l", "c", "c", "c", "c")
+  align     = c("l", "r", "r", "r")
 ) |>
   footnote(
     general = "Each row reports column (7) estimates after dropping the indicated storm from the panel. Conley Spatial HAC standard errors (400 km cutoff) in parentheses. The baseline row drops no storm.",
@@ -285,7 +285,7 @@ B1_disp <- B1 |>
 
 B1_tex <- kbl(B1_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. \\label{tab:appB_leadtime}",
-              align = c("c","c","c","c","c","c"), linesep = "") |>
+              align = c("c","r","r","r","r","r"), linesep = "") |>
   footnote(general = "Each row reports the controls-table specification of Table \\\\ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\\\\geq$ 33 m/s) in the 2017--2020 continental-US AO denial archive (excluding Hurricane Maria). The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the precision gain is reported as $|\\\\hat{\\\\delta}|$, so larger positive values indicate a larger noise reduction from AO. County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE,
@@ -326,7 +326,7 @@ B2_tex_str <- paste0(
   "\\caption{Saffir-Simpson category sensitivity, 3-day lead. \\label{tab:appB_intensity}}\n",
   "\\centering\n",
   "\\begin{threeparttable}\n",
-  "\\begin{tabular}[t]{lccccc}\n",
+  "\\begin{tabular}[t]{lrrrrr}\n",
   "\\toprule\n",
   "Category & Obs. & $\\bar{\\sigma}$ (m/s) & $\\delta$ (m/s) & SE & p\\\\\n",
   "\\midrule\n",
@@ -371,7 +371,7 @@ B2m_tex_str <- paste0(
   "\\caption{Saffir-Simpson category sensitivity with Hurricane Maria included, 3-day lead. \\label{tab:appB_intensity_maria}}\n",
   "\\centering\n",
   "\\begin{threeparttable}\n",
-  "\\begin{tabular}[t]{lccccc}\n",
+  "\\begin{tabular}[t]{lrrrrr}\n",
   "\\toprule\n",
   "Category & Obs. & $\\bar{\\sigma}$ (m/s) & $\\delta$ (m/s) & SE & p\\\\\n",
   "\\midrule\n",
@@ -413,7 +413,7 @@ B3_disp <- B3 |>
 
 B3_tex <- kbl(B3_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "One-storm-out jackknife, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife}",
-              align = c("l","c","c","c","c"), linesep = "") |>
+              align = c("l","r","r","r","r"), linesep = "") |>
   footnote(general = "Each row reports the Stage 2 precision-gain specification of Table \\\\ref{tab:noaa-controls} re-estimated after dropping the indicated storm from the 2017--2020 continental-US AO denial archive (hurricane-force / 3-day lead, Maria excluded). The baseline row drops no storm. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
@@ -442,7 +442,7 @@ B4_disp <- B4 |>
 
 B4_tex <- kbl(B4_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "Inclusion of Hurricane Maria. \\label{tab:appB_maria}",
-              align = c("l","c","c","c","c"), linesep = "") |>
+              align = c("l","r","r","r","r"), linesep = "") |>
   footnote(general = "Both rows estimate the Stage 2 precision-gain specification of Table \\\\ref{tab:noaa-controls} on hurricane-force ($\\\\geq$ 33 m/s) realizations at the 3-day lead. The baseline row uses the six 2017--2020 continental-US landfalls in the AO denial archive; the second row adds Hurricane Maria back into the panel. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). Maria is excluded from the main analysis because it did not make landfall in the continental US. County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
@@ -477,7 +477,7 @@ B5_tex_str <- paste0(
   "\\caption{One-storm-out jackknife with Hurricane Maria included, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife_maria}}\n",
   "\\centering\n",
   "\\begin{threeparttable}\n",
-  "\\begin{tabular}[t]{lcccc}\n",
+  "\\begin{tabular}[t]{lrrrr}\n",
   "\\toprule\n",
   "Dropped & Obs. & $\\delta$ (m/s) & SE & p\\\\\n",
   "\\midrule\n",
