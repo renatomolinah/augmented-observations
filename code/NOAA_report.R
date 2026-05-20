@@ -265,8 +265,8 @@ forecast_data_lead_times <- fread(denial_path) |>
 plot_top <- forecast_data_lead_times |>
   mutate(
     intensity_panel = case_when(
-      wind_obs > 33   ~ "> 33 m/s",
-      wind_obs > 17.5 ~ "> 17.5 m/s",
+      wind_obs > 33   ~ "≥ 33 m/s",
+      wind_obs > 17.5 ~ "≥ 17.5 m/s",
       wind_obs > 0    ~ "> 0 m/s"
     )
   ) |>
