@@ -1,7 +1,7 @@
 # ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.07.merge_data.r\n")
-cat("PURPOSE: Merge all data sources - creates final_dataset.rds/csv and final_dataset_popw.rds/csv\n")
+cat("PURPOSE: Merge all data sources - creates final_dataset.rds/csv\n")
 cat("================================================================================\n")
 
 #=============================
@@ -379,61 +379,7 @@ df_track_errors <- readRDS("data/clean/track_errors_all_cutoffs.rds") |>
 saveRDS(df_track_errors, "data/clean/pooled_track_errors_all_cutoffs.rds")
 
 #=============================
-# 7. create population-weighted dataset
-#=============================
-
-print("Creating population-weighted dataset...")
-
-# Get list of all hurricane wind exposure files
-storm_files <- list.files(
-  path = "data/clean/popw",
-  pattern = "_wind_exposure\\.rds$",
-  full.names = TRUE
-)
-
-# Load and combine all hurricane files
-wind_popw <- map_df(storm_files, readRDS)
-
-# Join population-weighted wind variables to main df using hurricane-level granularity
-final_dataset_popw <- final_dataset |>
-  left_join(
-    wind_popw,
-    by = c("county","hurricane")
-  ) |>
-  mutate(
-    wind_obs_popw = ifelse(wind_obs == 0, 0, wind_obs_popw),
-    wind_fc_popw = ifelse(wind_fc == 0, 0, wind_fc_popw),
-    wind_error_popw = wind_obs_popw - wind_fc_popw
-  )
-
-# Calculate new bins
-final_dataset_popw <- final_dataset_popw |>
-  ungroup() |>
-  mutate(
-    wind_popw_clean = ifelse(wind_obs == 0, 0, wind_obs_popw),
-    wind_cut_popw = ifelse(wind_popw_clean == 0, 0, ntile(wind_popw_clean, 20)),
-    
-    wind_fc_popw_bounded = pmin(wind_fc_popw, 40),
-    forecast_cut_popw = cut(wind_fc_popw_bounded, seq(0, 40, 5), include.lowest = TRUE),
-    
-    # Winsorize population-weighted wind error
-    var = pmax(pmin(wind_error_popw, 10), -10),
-    wind_error_popw_bin = cut(var, seq(-10, 10, 2), include.lowest = TRUE)
-    
-  ) |>
-  select(-wind_popw_clean, -wind_fc_popw_bounded, -var) |>
-  mutate(
-    level_error_popw  = (wind_obs_popw-wind_fc_popw),
-    squared_error_popw = level_error_popw^2
-  )
-
-# Save population-weighted dataset
-saveRDS(final_dataset_popw, "data/clean/final_dataset_popw.rds")
-
-print("Population-weighted dataset saved to data/clean/final_dataset_popw.rds")
-
-#=============================
-# 8. Create normalized datasets
+# 7. Create normalized datasets
 #=============================
 
 df_normalized <- final_dataset |>
@@ -473,7 +419,7 @@ df_norm_global <- final_dataset |>
 saveRDS(df_norm_global, "data/clean/normalized_dataset_global.rds")
 
 #=============================
-# 9. Cleanup intermediate files not used by 2.* scripts
+# 8. Cleanup intermediate files not used by 2.* scripts
 #=============================
 
 print("Cleaning up intermediate files not used by 2.* scripts...")

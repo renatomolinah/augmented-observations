@@ -377,8 +377,8 @@ hf3_ao    <- denial_full |> filter(lead_days == 3, wind_obs > 33, augmented_obs 
 sigma_bar_hf3ao <- mean(hf3_ao$wind_fc_sd, na.rm = TRUE)
 sigma_sd_hf3ao  <- sd(hf3_ao$wind_fc_sd,   na.rm = TRUE)
 
-# (ii) 3-day lead, all wind speeds, pooled (broader noise benchmark)
-lead3     <- denial_full |> filter(lead_days == 3)
+# (ii) 3-day lead, all wind speeds, AO-only (broader noise benchmark)
+lead3     <- denial_full |> filter(lead_days == 3, augmented_obs == 1)
 sigma_bar_lead3 <- mean(lead3$wind_fc_sd, na.rm = TRUE)
 sigma_sd_lead3  <- sd(lead3$wind_fc_sd,   na.rm = TRUE)
 

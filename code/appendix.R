@@ -288,7 +288,8 @@ B1_tex <- kbl(B1_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               align = c("c","c","c","c","c","c"), linesep = "") |>
   footnote(general = "Each row reports the controls-table specification estimated on the indicated lead-time subset of hurricane-force observations (wind $>$ 33 m/s). County-clustered standard errors in parentheses.",
            general_title = "",
-           threeparttable = TRUE, fixed_small_size = TRUE)
+           threeparttable = TRUE, fixed_small_size = TRUE,
+           escape = FALSE)
 writeLines(as.character(B1_tex), here("output/appB_leadtime.tex"))
 add_adjust_box(here("output/appB_leadtime.tex"))
 
@@ -557,7 +558,8 @@ C_tex <- kbl(
     ),
     general_title = "",
     threeparttable = TRUE,
-    fixed_small_size = TRUE
+    fixed_small_size = TRUE,
+    escape = FALSE
   )
 writeLines(as.character(C_tex), here("output/appC_per_storm.tex"))
 add_adjust_box(here("output/appC_per_storm.tex"))
