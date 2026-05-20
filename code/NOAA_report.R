@@ -90,16 +90,17 @@ summary_table <- kbl(
   footnote(
     general = paste(
       "The table includes all category 1 and greater hurricanes (maximum wind speeds",
-      "greater than 33 m/s) that made landfall in the continental US.",
+      "$\\geq$ 33 m/s) that made landfall in the continental US.",
       "Wind speed, precipitation, and their associated errors are averaged across counties",
       "to the hurricane level. Damages and expenditures are summed across counties to the",
       "hurricane level. Wind speed is the maximum sustained wind speed in m/s, precipitation",
       "is the total precipitation in mm. Wind speed and precipitation errors are averages",
       "of the absolute values of county-level errors. All damages and expenditures are",
-      "reported in billions of (2019) US$."
+      "reported in billions of (2019) US\\$."
     ),
     threeparttable   = TRUE,
-    fixed_small_size = TRUE
+    fixed_small_size = TRUE,
+    escape           = FALSE
   )
 
 writeLines(as.character(summary_table), here("output/summary_dmg.tex"))
@@ -245,7 +246,7 @@ msummary(
     "Standard errors are Conley Spatial HAC with a distance radius of 400 km for spatial correlation
      and arbitrary autocorrelation within counties. $e$ is the county-hurricane-specific forecast error,
      and $\\\\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds are
-     those greater than 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that threshold."
+     those $\\\\geq$ 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that threshold."
   ),
   threeparttable = TRUE,
   escape = FALSE,
