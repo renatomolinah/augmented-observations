@@ -95,6 +95,7 @@ data/clean/final_dataset.rds: code/cleaning_voi/run_all.r \
                               $(wildcard code/cleaning_voi/*.r) \
                               $(wildcard code/cleaning_voi/*.R)
 	@echo -e "$(YELLOW)[1/3] VOI cleaning...$(NC)"
+	@mkdir -p data/clean
 	@$(R) code/cleaning_voi/run_all.r
 	@echo -e "$(GREEN)  -> data/clean/final_dataset.rds$(NC)"
 
@@ -106,6 +107,7 @@ data/clean_denial/forecast_denial_data_with_lead_times.csv: data/clean/final_dat
                                                             $(wildcard code/cleaning_denial/*.r) \
                                                             $(wildcard code/cleaning_denial/*.R)
 	@echo -e "$(YELLOW)[2/3] Denial cleaning...$(NC)"
+	@mkdir -p data/clean_denial
 	@$(R) code/cleaning_denial/run_all.r
 	@echo -e "$(GREEN)  -> data/clean_denial/forecast_denial_data_with_lead_times.csv$(NC)"
 
