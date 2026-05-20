@@ -90,13 +90,13 @@ summary_table <- kbl(
   footnote(
     general = paste(
       "The table includes all category 1 and greater hurricanes (maximum wind speeds",
-      "$\\geq$ 33 m/s) that made landfall in the continental US.",
+      "$\\\\geq$ 33 m/s) that made landfall in the continental US.",
       "Wind speed, precipitation, and their associated errors are averaged across counties",
       "to the hurricane level. Damages and expenditures are summed across counties to the",
       "hurricane level. Wind speed is the maximum sustained wind speed in m/s, precipitation",
       "is the total precipitation in mm. Wind speed and precipitation errors are averages",
       "of the absolute values of county-level errors. All damages and expenditures are",
-      "reported in billions of (2019) US\\$."
+      "reported in billions of (2019) US\\\\$."
     ),
     threeparttable   = TRUE,
     fixed_small_size = TRUE,
