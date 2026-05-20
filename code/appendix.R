@@ -553,7 +553,7 @@ C_tex <- kbl(
 ) |>
   footnote(
     general = sprintf(
-      "Value per affected county-storm equals the marginal cost parameter times the variance reduction (%.2f x %.2f = $%.2fM). Counties counted are those with a 3-day-lead hurricane-force prediction (wind $>$ 33 m/s) in the denial sample, matching the main report's Stage 3.",
+      "Value per affected county-storm equals the marginal cost parameter times the variance reduction (%.2f x %.2f = \\$%.2fM). Counties counted are those with a 3-day-lead hurricane-force prediction (wind $>$ 33 m/s) in the denial sample, matching the main report's Stage 3.",
       beta_hurr, delta_sigma_sq, value_per_county
     ),
     general_title = "",
