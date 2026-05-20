@@ -89,7 +89,7 @@ comp_tex <- bind_rows(p1_comp, p2_comp) |>
       caption = "Workshop respondents by professional role and experience.",
       label = "appD_sample") |>
   kable_styling(latex_options = c("hold_position")) |>
-  pack_rows("Part 1 (Methodology / @HBETA@)",
+  pack_rows("Part 1 (Methodology / Cost curvature)",
             1, nrow(p1_comp), escape = FALSE) |>
   pack_rows("Part 2 (Valuation / Cost--benefit)",
             nrow(p1_comp) + 1, nrow(p1_comp) + nrow(p2_comp), escape = FALSE) |>
@@ -103,7 +103,6 @@ comp_tex <- bind_rows(p1_comp, p2_comp) |>
     escape = FALSE
   )
 comp_str <- as.character(comp_tex)
-comp_str <- gsub("@HBETA@", "$\\\\hat{\\\\beta}$", comp_str)
 writeLines(comp_str, file.path(out_dir, "appD_sample.tex"))
 
 # ==============================================================================
@@ -114,10 +113,10 @@ items_p1 <- tribble(
   "S1-1",  "Methodology",  "Data denial credibly isolates the contribution of augmented observations",
   "S1-2",  "Methodology",  "The 0.26 m/s ex-ante reduction is statistically and practically meaningful",
   "S1-3",  "Methodology",  "The 3-day lead time is appropriate for assessing the value of augmented observations",
-  "S2-1",  "@HBETA@",      "Estimation strategy for the marginal cost is clear and sound",
-  "S2-2",  "@HBETA@",      "Forecast errors significantly increase costs only at hurricane-force winds",
-  "S2-3",  "@HBETA@",      "$\\hat{\\beta}$ is interpretable for NOAA's operational and informational purposes",
-  "S2-4",  "@HBETA@",      "NOAA can feasibly replicate the analysis independently"
+  "S2-1",  "Cost curvature",      "Estimation strategy for the marginal cost is clear and sound",
+  "S2-2",  "Cost curvature",      "Forecast errors significantly increase costs only at hurricane-force winds",
+  "S2-3",  "Cost curvature",      "$\\hat{\\beta}$ is interpretable for NOAA's operational and informational purposes",
+  "S2-4",  "Cost curvature",      "NOAA can feasibly replicate the analysis independently"
 )
 items_p2 <- tribble(
   ~col,    ~section,        ~short_label,
@@ -182,21 +181,19 @@ write_likert <- function(df, items, caption_text, file_name, label) {
                       escape = FALSE)
   }
   out_str <- as.character(tbl)
-  # pack_rows strips backslashes from math even with escape=FALSE; restore via sentinel.
-  out_str <- gsub("@HBETA@", "$\\\\hat{\\\\beta}$", out_str)
   writeLines(out_str, file.path(out_dir, file_name))
 }
 
 write_likert(
   p1, items_p1,
-  paste("Workshop responses---methodology and marginal cost:",
-        "response distribution and summary statistics."),
+  paste("Responses: methodology and marginal cost.",
+        "Response distribution and summary statistics."),
   "appD_likert_part1.tex", "appD_likert_part1"
 )
 write_likert(
   p2, items_p2,
-  paste("Workshop responses---valuation and cost--benefit:",
-        "response distribution and summary statistics."),
+  paste("Responses: valuation and cost--benefit.",
+        "Response distribution and summary statistics."),
   "appD_likert_part2.tex", "appD_likert_part2"
 )
 
@@ -208,8 +205,8 @@ quotes_p1 <- tribble(
   "S1-4",  "Methodology",  "On whether the 0.26 m/s reduction is operationally meaningful",
   "S1-5",  "Methodology",  "Additional dimensions of forecast quality that should be included",
   "S1-6",  "Methodology",  "Methodological limitations linking augmented observations to forecast precision",
-  "S2-5",  "$\\hat{\\beta}$", "Additional robustness checks or alternative specifications",
-  "S2-6",  "$\\hat{\\beta}$", "Conceptual or empirical gaps in how forecast error is monetised"
+  "S2-5",  "Cost curvature", "Additional robustness checks or alternative specifications",
+  "S2-6",  "Cost curvature", "Conceptual or empirical gaps in how forecast error is monetised"
 )
 quotes_p2 <- tribble(
   ~col,    ~section,        ~prompt,
@@ -263,13 +260,13 @@ write_quotes <- function(df, q_index, caption_text, file_name, label) {
 
 write_quotes(
   p1, quotes_p1,
-  paste("Open-ended workshop responses---methodology and marginal cost.",
+  paste("Open-ended responses: methodology and marginal cost.",
         "Verbatim quotes; empty entries and pure `N/A' answers are omitted."),
   "appD_quotes_part1.tex", "appD_quotes_part1"
 )
 write_quotes(
   p2, quotes_p2,
-  paste("Open-ended workshop responses---valuation, cost--benefit, and overall.",
+  paste("Open-ended responses: valuation, cost--benefit, and overall.",
         "Verbatim quotes; empty entries and pure `N/A' answers are omitted."),
   "appD_quotes_part2.tex", "appD_quotes_part2"
 )

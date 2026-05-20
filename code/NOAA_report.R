@@ -360,12 +360,7 @@ msummary(
   add_rows    = rows_delta,
   title       = "Regression Analysis of the Effect of Augmented Observations in Ex-Ante Uncertainty \\label{tab:noaa-controls}",
   notes       = list(
-    "Standard errors clustered at the county level. The sample is restricted to the 2017--2020 augmented-observations denial archive
-     at the 3-day lead time and hurricane-force realizations ($\\\\geq$ 33 m/s); Hurricane Maria is excluded because of its Puerto Rico landfall.
-     The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the
-     assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the negative sign reflects that AO assimilation
-     lowers ensemble spread relative to the no-dropsonde (NO) counterfactual. Wind Controls includes the realized wind speed (m/s) as a
-     continuous covariate."
+    "Standard errors clustered at the county level. The sample is restricted to the 2017--2020 augmented-observations denial archive at the 3-day lead time and hurricane-force realizations ($\\\\geq$ 33 m/s); Hurricane Maria is excluded because of its Puerto Rico landfall. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the negative sign reflects that AO assimilation lowers ensemble spread relative to the no-dropsonde (NO) counterfactual. Wind Controls includes the realized wind speed (m/s) as a continuous covariate."
   ),
   threeparttable = TRUE,
   escape      = FALSE,

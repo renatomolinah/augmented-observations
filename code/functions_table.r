@@ -1,4 +1,4 @@
-add_adjust_box <- function(file, line_before = "\\begin{adjustbox}{width = .9\\textwidth}", line_after = "\\end{adjustbox}", before = "\\begin{threeparttable}", after = "\\end{threeparttable}") {
+add_adjust_box <- function(file, line_before = "\\begin{adjustbox}{max width = \\textwidth}", line_after = "\\end{adjustbox}", before = "\\begin{threeparttable}", after = "\\end{threeparttable}") {
     # read in the file
     lines <- readLines(file)
 

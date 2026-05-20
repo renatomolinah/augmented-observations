@@ -160,7 +160,7 @@ val_tex_str <- sprintf(
 
 \\caption{Implied retrospective social value of augmented observations under three notions of value. \\label{tab:appA_valuations}}
 \\centering
-\\begin{adjustbox}{width = .9\\textwidth}
+\\begin{adjustbox}{max width = \\textwidth}
 \\begin{threeparttable}
 \\begin{tabular}[t]{lccc}
 \\toprule
@@ -286,7 +286,7 @@ B1_disp <- B1 |>
 B1_tex <- kbl(B1_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. \\label{tab:appB_leadtime}",
               align = c("c","c","c","c","c","c"), linesep = "") |>
-  footnote(general = "Each row reports the controls-table specification of Table \\ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\\geq$ 33 m/s) in the 2017--2020 continental-US AO denial archive (excluding Hurricane Maria). The coefficient $\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\citet{DitchekEA2023}); the precision gain is reported as $|\\hat{\\delta}|$, so larger positive values indicate a larger noise reduction from AO. County-clustered standard errors in parentheses.",
+  footnote(general = "Each row reports the controls-table specification of Table \\\\ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\\\\geq$ 33 m/s) in the 2017--2020 continental-US AO denial archive (excluding Hurricane Maria). The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the precision gain is reported as $|\\\\hat{\\\\delta}|$, so larger positive values indicate a larger noise reduction from AO. County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE,
            escape = FALSE)
@@ -414,7 +414,7 @@ B3_disp <- B3 |>
 B3_tex <- kbl(B3_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "One-storm-out jackknife, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife}",
               align = c("l","c","c","c","c"), linesep = "") |>
-  footnote(general = "Each row reports the Stage 2 precision-gain specification of Table \\ref{tab:noaa-controls} re-estimated after dropping the indicated storm from the 2017--2020 continental-US AO denial archive (hurricane-force / 3-day lead, Maria excluded). The baseline row drops no storm. The coefficient $\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\citet{DitchekEA2023}). County-clustered standard errors in parentheses.",
+  footnote(general = "Each row reports the Stage 2 precision-gain specification of Table \\\\ref{tab:noaa-controls} re-estimated after dropping the indicated storm from the 2017--2020 continental-US AO denial archive (hurricane-force / 3-day lead, Maria excluded). The baseline row drops no storm. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
 writeLines(as.character(B3_tex), here("output/appB_jackknife.tex"))
@@ -443,7 +443,7 @@ B4_disp <- B4 |>
 B4_tex <- kbl(B4_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "Inclusion of Hurricane Maria. \\label{tab:appB_maria}",
               align = c("l","c","c","c","c"), linesep = "") |>
-  footnote(general = "Both rows estimate the Stage 2 precision-gain specification of Table \\ref{tab:noaa-controls} on hurricane-force ($\\geq$ 33 m/s) realizations at the 3-day lead. The baseline row uses the six 2017--2020 continental-US landfalls in the AO denial archive; the second row adds Hurricane Maria back into the panel. The coefficient $\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\citet{DitchekEA2023}). Maria is excluded from the main analysis because it did not make landfall in the continental US. County-clustered standard errors in parentheses.",
+  footnote(general = "Both rows estimate the Stage 2 precision-gain specification of Table \\\\ref{tab:noaa-controls} on hurricane-force ($\\\\geq$ 33 m/s) realizations at the 3-day lead. The baseline row uses the six 2017--2020 continental-US landfalls in the AO denial archive; the second row adds Hurricane Maria back into the panel. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). Maria is excluded from the main analysis because it did not make landfall in the continental US. County-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
 writeLines(as.character(B4_tex), here("output/appB_maria.tex"))
@@ -548,12 +548,12 @@ C_tex <- kbl(
   booktabs  = TRUE,
   escape    = FALSE,
   caption   = "Per-storm decomposition of the \\$2.91B retrospective social value. \\label{tab:appC_per_storm}",
-  align     = c("l", "c", "c", "c"),
+  align     = c("l", "r", "r", "r"),
   linesep   = ""
 ) |>
   footnote(
     general = sprintf(
-      "Value per affected county-storm equals the marginal cost parameter times the variance reduction (%.2f x %.2f = \\$%.2fM). Counties counted are those with a 3-day-lead hurricane-force prediction (wind $\\geq$ 33 m/s) in the denial sample, matching the main report's Stage 3.",
+      "Value per affected county-storm equals the marginal cost parameter times the variance reduction (%.2f x %.2f = \\\\$%.2fM). Counties counted are those with a 3-day-lead hurricane-force prediction (wind $\\\\geq$ 33 m/s) in the denial sample, matching the main report's Stage 3.",
       beta_hurr, delta_sigma_sq, value_per_county
     ),
     general_title = "",
