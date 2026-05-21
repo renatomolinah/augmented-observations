@@ -10,9 +10,6 @@
 #    - One-storm-out jackknife across the 8 hurricane denials
 #    - Maria-in vs Maria-out
 # C. Storm-level decomposition of the $2.91B total valuation.
-#
-# Uses feols with cluster SEs throughout (point estimates identical to the
-# conleyreg main table; SE methodology noted in each table caption).
 # ==============================================================================
 
 if (!require("pacman")) install.packages("pacman")
