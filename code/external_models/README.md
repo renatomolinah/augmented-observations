@@ -30,12 +30,17 @@ under `data/raw/primitive_inputs/`, organized by workflow and storm:
 
 - `data/raw/primitive_inputs/standard/<storm>/nhc_files/`
 - `data/raw/primitive_inputs/standard/<storm>/mcrall_inputs/`
+- `data/raw/primitive_inputs/standard/<storm>/era5/`
 - `data/raw/primitive_inputs/denial/<storm>/nhc_files/`
 - `data/raw/primitive_inputs/denial/<storm>/mcrall_inputs/`
+- `data/raw/primitive_inputs/denial/<storm>/era5/`
 
-Those folders are meant for preserved deck files and Monte Carlo aggregate
-inputs only. Generated wind, track, and rain raw products should continue to
-land under `data/raw/` and `data/raw_denial/`.
+Those folders are meant for preserved deck files, Monte Carlo aggregate
+inputs, and storm-level ERA5 downloads only. Generated wind, track, and rain
+raw products should continue to land under `data/raw/` and `data/raw_denial/`.
+
+The wrapper scripts read those storm folders directly when resolving primitive
+inputs for the standard and denial workflows.
 
 For the legacy `.pro` scripts, the wrappers prefer the free GNU Data Language
 runtime (`gdl`) and fall back to proprietary `idl` only if `gdl` is not

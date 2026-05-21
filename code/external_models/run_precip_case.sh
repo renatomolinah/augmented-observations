@@ -93,9 +93,12 @@ fi
 stormid="$(ao_manifest_field "$storm" 2)"
 primitive_mc_input_root="${repo_root}/data/raw/primitive_inputs/standard/${storm}/mcrall_inputs"
 primitive_mc_input_root_denial="${repo_root}/data/raw/primitive_inputs/denial/${storm}/mcrall_inputs"
+primitive_era5_root_standard="${repo_root}/data/raw/primitive_inputs/standard/${storm}/era5"
+primitive_era5_root_denial="${repo_root}/data/raw/primitive_inputs/denial/${storm}/era5"
 mc_input_root_standard="${repo_root}/data/raw/stormwindmodel_inputs/${storm}"
 mc_input_root_denial="${repo_root}/data/raw_denial/${storm}/wind/inputs"
 temp_denial_root="${repo_root}/data/tmp/external_models/denial/${storm}/precip/${experiment}"
+era5_root="${repo_root}/data/raw/era5"
 
 if [ -d "$primitive_mc_input_root" ]; then
   mc_input_root_standard="$primitive_mc_input_root"
@@ -104,6 +107,14 @@ fi
 if [ -d "$primitive_mc_input_root_denial" ]; then
   mc_input_root_denial="$primitive_mc_input_root_denial"
 fi
+
+if [ "$denial" -eq 1 ] && [ -d "$primitive_era5_root_denial" ]; then
+  era5_root="$primitive_era5_root_denial"
+elif [ -d "$primitive_era5_root_standard" ]; then
+  era5_root="$primitive_era5_root_standard"
+fi
+
+export AO_PRAIN_ERA5_DIR="${AO_PRAIN_ERA5_DIR:-$era5_root}"
 
 if [ "$denial" -eq 1 ]; then
   export AO_ATCF_PRIMITIVE_DIR="${repo_root}/data/raw/primitive_inputs/denial/${storm}/nhc_files"

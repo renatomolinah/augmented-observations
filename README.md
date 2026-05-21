@@ -65,12 +65,18 @@ storm:
 
 - `data/raw/primitive_inputs/standard/<storm>/nhc_files/`
 - `data/raw/primitive_inputs/standard/<storm>/mcrall_inputs/`
+- `data/raw/primitive_inputs/standard/<storm>/era5/`
 - `data/raw/primitive_inputs/denial/<storm>/nhc_files/`
 - `data/raw/primitive_inputs/denial/<storm>/mcrall_inputs/`
+- `data/raw/primitive_inputs/denial/<storm>/era5/`
 
-For example, `data/raw/primitive_inputs/standard/irma/` is the template location for
-Irma's preserved deck files and Monte Carlo aggregate inputs before any wind,
-track, or rain outputs are generated into `data/raw/` or `data/raw_denial/`.
+The external-generation wrappers read those storm folders directly when they
+build wind, track, and rain raw products.
+
+For example, `data/raw/primitive_inputs/standard/irma/` is the location for
+Irma's preserved deck files, Monte Carlo aggregate inputs, and ERA5 downloads
+before any wind, track, or rain outputs are generated into `data/raw/` or
+`data/raw_denial/`.
 
 | Stage | Files |
 |---|---|
