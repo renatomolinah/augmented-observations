@@ -88,7 +88,7 @@ msummary(
   stars     = stars_econ,
   title     = "Outcome robustness across cost specifications (2005--2024 panel). \\label{tab:appA_outcomes}",
   notes     = list("All specifications match column (7) of Table @REF{tab:voi-table} with county and state-by-hurricane fixed effects plus realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400 km distance cutoff."),
-  align     = "lrrr",
+  align     = "lccc",
   threeparttable = TRUE,
   escape    = FALSE,
   output    = here("output/appA_outcomes.tex")
