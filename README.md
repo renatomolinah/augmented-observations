@@ -3,9 +3,6 @@
 Replication pipeline for the NOAA report on the socio-economic value of
 augmented hurricane observations.
 
-The manuscript itself lives on Overleaf; this repo holds the code that
-produces the tables, figures, and in-text numbers the manuscript imports.
-
 ## Setup
 
 1. **Data**: symlink `data/` to the project data folder
@@ -16,6 +13,9 @@ produces the tables, figures, and in-text numbers the manuscript imports.
    ```
 2. **R packages**: open the project (`augmented-observations.Rproj`) and run
    `renv::restore()` to install the locked package versions.
+
+Restricted/private inputs used by the pipeline are documented in
+`CODEBOOK_restricted_data.md`.
 
 ## Run
 
@@ -33,8 +33,7 @@ make workshop       # workshop_responses.R: Appendix D tables
 make clean          # remove output/
 ```
 
-Outputs land in `output/` (gitignored). The relevant `.tex` / `.png` files are
-manually copied into the Overleaf project for the manuscript build.
+Outputs land in `output/` (gitignored).
 
 `make all` is intentionally analysis-only. It assumes the upstream wind, rain,
 and track raw products have already been generated and placed under
@@ -104,10 +103,6 @@ output/                  generated tables and figures (gitignored)
 Makefile                 dependency-tracking pipeline
 renv.lock                pinned R package versions
 ```
-
-The manuscript Overleaf project includes the contents of `output/` (manually
-synced) plus its own `latex_extras/`, `references/`, `figures/`, and
-`NOAA_report.tex`; nothing manuscript-side is tracked in this repo.
 
 ## External Model Provenance
 
