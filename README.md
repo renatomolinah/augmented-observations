@@ -3,6 +3,16 @@
 Replication pipeline for the NOAA report on the socio-economic value of
 augmented hurricane observations.
 
+## Funding and Citation
+
+Please include the NOAA award number in publications, presentations, reports,
+datasets, and code releases derived from this repository. This repository
+should cite NOAA Award `NA23OAR4590366-T1-01`.
+
+Suggested language: "This research was supported by NOAA Weather Program
+Office (<https://ror.org/01q70bz83>) Award NA23OAR4590366-T1-01. Data and code
+are available at <https://github.com/renatomolinah/augmented-observations>."
+
 ## Setup
 
 1. **Data**: symlink `data/` to the project data folder
