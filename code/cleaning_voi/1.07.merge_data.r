@@ -213,7 +213,7 @@ final_dataset = final_dataset |> filter(year <= bea_max_year)
 final_dataset = final_dataset |> 
   mutate(date = as.character(date)) |>
   distinct() |>
-  inner_join(county_demos)
+  inner_join(county_demos, by = "county")
 
 # Merge in county GDP/income
 final_dataset = final_dataset |>
@@ -274,7 +274,7 @@ final_dataset = final_dataset |>
         dur_error = -1 * dur_error,
         pdd = ifelse(is.na(pdd), FALSE, TRUE)
         ) |> 
-  left_join(county_lat_lon) |>
+  left_join(county_lat_lon, by = "county") |>
   drop_na(lat, lon, precip_obs) |>
   ungroup() |>
   ## Winsorize upper and lower tails for errors, forecasts, and realizations
@@ -298,12 +298,6 @@ final_dataset = final_dataset |>
     date = as.numeric(as_date(date)),
     county = as.numeric(county)
     ) |>
-  # The underlying forecast variable is not inherently bounded
-  mutate(
-    var = ifelse(wind_fc > 40, 40, wind_fc)
-  ) |>
-  # Wind forecast bins
-  mutate(forecast_cut = cut(var, seq(0, 40, 5), include.lowest = TRUE)) |>
   # The underlying forecast variable is not inherently bounded
   mutate(
     var = ifelse(wind_fc > 40, 40, wind_fc)

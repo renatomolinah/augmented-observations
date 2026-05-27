@@ -50,9 +50,9 @@ gdp = gdp1 |>
         values_to = "gdp"
     )
 
-income_gdp = inner_join(income, gdp) |>
+income_gdp = inner_join(income, gdp, by = c("county_fips", "year")) |>
     filter(substr(county_fips, 1, 2) != "00" & substr(county_fips, 3, 5) != "000") |>
-    left_join(crosswalk) |>
+    left_join(crosswalk, by = "county_fips") |>
     mutate(county_fips = ifelse(!is.na(fips_census), fips_census, county_fips)) |>
     select(-fips_census)
 

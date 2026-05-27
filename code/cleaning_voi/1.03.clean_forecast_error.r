@@ -95,6 +95,9 @@ weather = weather |>
   ungroup() |>
   as_tibble() |>
   group_by(hurricane, date, gridid, glon, glat, county, county_name, geometry) |>
+  # n_lead = how many lead-time rows contributed to each group's mean;
+  # small values signal a per-group mean driven by very few observations.
+  mutate(n_lead = n()) |>
   summarise_all(
     mean, na.rm = TRUE
   ) |>

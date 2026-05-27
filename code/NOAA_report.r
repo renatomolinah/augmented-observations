@@ -146,8 +146,8 @@ writeLines(denial_tex, here("output/data_denial.tex"))
 # ==============================================================================
 # Stage 1 - Marginal Cost of Forecast Errors (beta)
 # ==============================================================================
-# Single-panel replica of Molina2024 Table 2 (total_cost outcome only),
-# on the AO panel (2005-2024, 37 hurricanes).
+# Single-panel replica of Molina2024 Table 2 (total_cost outcome only).
+# Actual panel coverage is printed by the [Stage 1] log below.
 # ==============================================================================
 
 voi_df <- readRDS(voi_path) |>
@@ -485,6 +485,8 @@ cb_lines <- c(
   "",
   "-- Our retrospective valuation (2017-2020) --",
   sprintf("  Total retrospective value ($M)          = %.2f", total_value_M),
+  # 4 = the 2017-2020 denial-window length in years; if the denial sample
+  # window changes (Ditchek archive expands), update both occurrences.
   sprintf("  Active years covered                    = %d",   4L),
   sprintf("  Annualized rate ($M/yr)                 = %.2f", total_value_M / 4),
   "",
