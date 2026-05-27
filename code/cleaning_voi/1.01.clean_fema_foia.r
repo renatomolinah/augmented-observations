@@ -169,9 +169,15 @@ fema_df = fema_df[,
                     disaster_number %in% sally_num ~ "sally",
                     disaster_number %in% sandy_num ~ "sandy",
                     disaster_number %in% wilma_num ~ "wilma",
-                    disaster_number %in% zeta_num ~ "zeta"
+                    disaster_number %in% zeta_num ~ "zeta",
+                    TRUE ~ NA_character_
                   )
 ]
+
+# Catch the case where a *_num vector was added above but its case_when
+# arm was forgotten: the pre-filter lets the rows in, case_when returns NA,
+# and the storm would be silently dropped by the downstream filter.
+stopifnot(!any(is.na(fema_df$hurricane)))
 
 # Create FIPS and date variables
 fema_df = fema_df[, ':=' (

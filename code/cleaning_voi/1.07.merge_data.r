@@ -120,6 +120,15 @@ data_weather_final = rbind(data_weather, data_unaffected_counties) |>
 # 5. Merge datasets
 #=============================
 
+# Catch SHELDUS hurricane names that have no forecast counterpart.
+# Without this, such rows survive the full_join with NA weather columns,
+# get zeroed by replace_na, and produce county-storm rows with damages
+# but zero wind/precip — silently distorting beta.
+sheldus_orphans = setdiff(unique(data_sheldus$hurricane), unique(data_weather_final$hurricane))
+if (length(sheldus_orphans) > 0) {
+  stop("SHELDUS storms with no forecast match: ", paste(sheldus_orphans, collapse = ", "))
+}
+
 # Join forecast and SHELDUS data
 data_weather_dmg_en = full_join(
   data_weather_final,
@@ -212,7 +221,16 @@ final_dataset = final_dataset |>
   # Rows dropped here are primarily Virginia independent cities and some Alaska counties without GDP
   left_join(coastline_counties, by = c("county" = "county_fips")) |>
   replace_na(list(coastal = FALSE)) |>
-  left_join(county_direction, by = c("county" = "county_id", "hurricane" = "hurricane")) |>
+  left_join(county_direction, by = c("county" = "county_id", "hurricane" = "hurricane"))
+
+# Visibility: how many county-storm rows have no county_direction record
+# and therefore default to left_of_track = TRUE? Large counts bias any
+# asymmetry analysis.
+n_lot_na = sum(is.na(final_dataset$left_of_track))
+cat(sprintf("[1.07] left_of_track defaulted to TRUE for %d / %d rows (%.1f%%)\n",
+            n_lot_na, nrow(final_dataset), 100 * n_lot_na / nrow(final_dataset)))
+
+final_dataset = final_dataset |>
   replace_na(list(left_of_track = TRUE, left_of_track_forecast = TRUE))
 
 final_dataset = final_dataset |> 
