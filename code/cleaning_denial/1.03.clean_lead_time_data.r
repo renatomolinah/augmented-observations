@@ -145,8 +145,8 @@ forecast_lead_times_clean <- forecast_lead_times_clean |>
 # 3. Save cleaned lead time data
 #=============================
 
-# Save cleaned version
-fwrite(forecast_lead_times_clean, "data/clean_denial/forecast_denial_data_with_lead_times_clean.csv")
+# Save cleaned version (rds only; the un-suffixed CSV below is what 1.03
+# downstream reads).
 saveRDS(forecast_lead_times_clean, "data/clean_denial/forecast_denial_data_with_lead_times_clean.rds")
 
 # Also overwrite the original file with consistent column names
@@ -154,7 +154,6 @@ fwrite(forecast_lead_times_clean, "data/clean_denial/forecast_denial_data_with_l
 saveRDS(forecast_lead_times_clean, "data/clean_denial/forecast_denial_data_with_lead_times.rds")
 
 print("Done! Saved cleaned lead time data to:")
-print("  - data/clean_denial/forecast_denial_data_with_lead_times_clean.csv")
 print("  - data/clean_denial/forecast_denial_data_with_lead_times_clean.rds")
 print("  - data/clean_denial/forecast_denial_data_with_lead_times.csv (overwritten with consistent names)")
 print("  - data/clean_denial/forecast_denial_data_with_lead_times.rds (overwritten with consistent names)")

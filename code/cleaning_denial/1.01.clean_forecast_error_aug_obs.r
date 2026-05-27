@@ -173,9 +173,3 @@ weather = weather |>
   ) |>
   ungroup()
 
-# Reorder columns alphabetically after the ID columns (first 12)
-weather = weather |>
-  select(1:12, sort(names(weather)[13:ncol(weather)]))
-
-# save weather data
-fwrite(weather, "data/clean_denial/forecast_denial_data.csv")

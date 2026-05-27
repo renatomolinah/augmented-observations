@@ -376,7 +376,6 @@ final_dataset = final_dataset |>
   ungroup()
 
 saveRDS(final_dataset, "data/clean/final_dataset.rds")
-fwrite(final_dataset, "data/clean/final_dataset.csv")
 
 #=============================
 # 6. create track dataset
