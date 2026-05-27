@@ -175,17 +175,44 @@ fema_df = fema_df[,
 
 # Create FIPS and date variables
 fema_df = fema_df[, ':=' (
-  fips = 1000*state_number_code + county_code, 
+  fips = 1000*state_number_code + county_code,
   declaration_date = date(declaration_date),
   year = year(declaration_date),
   month = month(declaration_date),
   day = day(declaration_date)
 )]
 
+# Deflate project_amount to 2019$ using BLS CPI-U annual averages
+# (series CUUR0000SA0). Use the storm's landfall year (from storm_manifest)
+# as the dollar vintage so each storm's spending is on a single basis;
+# this matches the SHELDUS damages already in 2019$ from the source feed.
+cpi_u = c(
+  "2005" = 195.300, "2006" = 201.600, "2007" = 207.342, "2008" = 215.303,
+  "2009" = 214.537, "2010" = 218.056, "2011" = 224.939, "2012" = 229.594,
+  "2013" = 232.957, "2014" = 236.736, "2015" = 237.017, "2016" = 240.007,
+  "2017" = 245.120, "2018" = 251.107, "2019" = 255.657, "2020" = 258.811,
+  "2021" = 270.970, "2022" = 292.655, "2023" = 304.702, "2024" = 313.689
+)
+
+storm_year_map = fread("code/external_models/config/storm_manifest.csv")[
+  , .(hurricane = str_to_lower(stormname), storm_year = as.integer(year))
+]
+
+fema_df = fema_df |>
+  inner_join(storm_year_map, by = "hurricane") |>
+  mutate(
+    cpi_storm = cpi_u[as.character(storm_year)],
+    project_amount = project_amount * (cpi_u["2019"] / cpi_storm)
+  ) |>
+  select(-storm_year, -cpi_storm) |>
+  as.data.table()
+
+stopifnot(!any(is.na(fema_df$project_amount)))
+
 fema_df_county = fema_df[county_code != 0]
 fema_df_county = fema_df_county[, c("fips", "hurricane", "project_amount", "ex_ante_spending")]
 
-# Aggregate across disaster types (millions of dollars)
+# Aggregate across disaster types (2019 dollars)
 fema_df_county = fema_df_county[, .(
   project_amount = sum(project_amount, na.rm = TRUE)
 ),
