@@ -34,9 +34,8 @@ if (needs_cleaning && !already_cleaned) {
 # 2. Apply cleaned column names
 #=============================
 
-# Rename columns to match the cleaned names used in final_dataset_denial
-# Note: In final_dataset_denial, errors are negated (wind_error = -1 * vmax_sust_dif_mean)
-# Set negate_errors = TRUE to match final_dataset convention (obs - pred)
+# Rename columns to the cleaned-name convention used downstream.
+# Errors are negated so wind_error = obs - pred (matches final_dataset.rds convention).
 negate_errors <- TRUE  # Set to FALSE to keep errors as (pred - obs)
 
 if (needs_cleaning && !already_cleaned) {
@@ -161,7 +160,7 @@ print("  - data/clean_denial/forecast_denial_data_with_lead_times.csv (overwritt
 print("  - data/clean_denial/forecast_denial_data_with_lead_times.rds (overwritten with consistent names)")
 print(paste("  Total rows:", nrow(forecast_lead_times_clean)))
 print(paste("  Columns:", ncol(forecast_lead_times_clean)))
-print("\nColumn names now match final_dataset_denial:")
+print("\nColumn names in cleaned form:")
 print("  - state (extracted from county FIPS: first 2 digits)")
 print("  - wind_obs, wind_fc, wind_error, wind_fc_sd, last_error")
 print("  - gust_obs, gust_fc, gust_error, gust_fc_sd")
