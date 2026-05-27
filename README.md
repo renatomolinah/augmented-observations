@@ -34,21 +34,22 @@ make help           # list targets
 make raw_check      # verify required raw files are present
 make raw_exact_check  # verify those raw files match the current baseline byte-for-byte
 make external_setup_free  # set up repo-owned free-toolchain pieces and print remaining install steps
-make all            # analysis pipeline only: clean_voi -> clean_denial -> report -> appendix -> workshop
+make all            # raw_check -> (cleaning if stale) -> report -> appendix -> workshop
 make clean_voi      # VOI panel cleaning only
 make clean_denial   # denial panel cleaning only (depends on clean_voi)
-make report         # NOAA_report.R: main tables + Stages 1-4
-make appendix       # appendix.R: Appendices A, B, C tables
-make workshop       # workshop_responses.R: Appendix D tables
+make report         # NOAA_report.r: main tables (Stage 0 data tables + Stages 1-4)
+make appendix       # appendix.r: Appendices A, B, C tables
+make workshop       # workshop_responses.r: Appendix D tables
 make clean          # remove output/
 ```
 
 Outputs land in `output/` (gitignored).
 
-`make all` is intentionally analysis-only. It assumes the upstream wind, rain,
+`make all` is intentionally analysis-only and assumes the upstream wind, rain,
 and track raw products have already been generated and placed under
-`data/raw/` and `data/raw_denial/`. Run `make raw_check` first if you want a
-quick prerequisite check before launching the analysis pipeline.
+`data/raw/` and `data/raw_denial/`. The target starts with `raw_check` (a
+presence-only check), so a missing input fails the run immediately rather than
+midway through cleaning.
 
 If the upstream raw-generation layer is rerun and refreshed raw files are
 available, run `make raw_exact_check` to compare them byte-for-byte against the
@@ -97,10 +98,10 @@ before any wind, track, or rain outputs are generated into `data/raw/` or
 
 ```
 code/
-  NOAA_report.R          main report: Stage 0 tables + Stage 1 (beta) + Stage 2 (delta) + Stages 3-4 (valuation, cost-benefit)
-  appendix.R             Appendices A (beta robustness), B (delta robustness), C (per-storm decomposition)
-  workshop_responses.R   Appendix D tables from data/workshop/Part {1,2}.csv
-  functions_table.r      table-rendering helpers (sourced by NOAA_report.R and appendix.R)
+  NOAA_report.r          main report: Stage 0 tables + Stage 1 (beta) + Stage 2 (delta) + Stages 3-4 (valuation, cost-benefit)
+  appendix.r             Appendices A (beta robustness), B (delta robustness), C (per-storm decomposition)
+  workshop_responses.r   Appendix D tables from data/workshop/Part {1,2}.csv
+  functions_table.r      table-rendering helpers (sourced by NOAA_report.r and appendix.r)
   cleaning_voi/          VOI panel cleaning (37-storm continental-US panel, 2005-2024)
   cleaning_denial/       denial sample cleaning (1.01 -> 1.03)
   exploratory/           Quarto notebooks (Ditchek replication, wind-error inference)

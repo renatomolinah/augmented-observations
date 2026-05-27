@@ -50,7 +50,7 @@ Key transformations:
   - `data/workshop/Part 1.csv`
   - `data/workshop/Part 2.csv`
 - Access modality: private survey exports, not publicly fetched by the pipeline
-- Used in: `code/workshop_responses.R`
+- Used in: `code/workshop_responses.r`
 
 The script expects raw Qualtrics CSV exports with:
 
