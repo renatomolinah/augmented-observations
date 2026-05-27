@@ -437,28 +437,3 @@ saveRDS(df_norm_global, "data/clean/normalized_dataset_global.rds")
 # 8. Cleanup intermediate files not used by 2.* scripts
 #=============================
 
-print("Cleaning up intermediate files not used by 2.* scripts...")
-
-# Remove ALL files created by 1.* scripts that are not used by 2.* analysis scripts
-# Keep only: final_dataset.rds, forecast_data.csv, track_forecast.rds, weather_error_sf.rds
-intermediate_files <- c(
-  "data/clean/fema_spending.csv",
-  "data/clean/track_actual.rds",
-  "data/clean/county_direction.csv",
-  "data/clean/data_sheldus.csv", 
-  "data/clean/data_sheldus_all.csv",
-  "data/clean/data_sheldus_all_hurricanes.csv",
-  "data/clean/income_gdp.csv",
-  "data/clean/coastline_counties.csv", 
-  "data/clean/county_demographics.csv",
-  "data/clean/ncei_compare.rds",
-  "data/clean/track_errors.rds",
-  "data/clean/forecast_data.csv"
-)
-
-# Optional cleanup: remove only files that exist
-# for (file in intermediate_files) {
-#   if (file.exists(file)) {
-#     file.remove(file)
-#   }
-# }
