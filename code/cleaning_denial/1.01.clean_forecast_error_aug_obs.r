@@ -50,32 +50,24 @@ rain_list_no = lapply(rain_file_names_no, fread)
 #=============================
 
 # 2. Combine hurricane files
-hurricanes_list = c(
-  "dorian", 
-  "florence", 
-  "hanna", 
-  "harvey", 
-  "irma", 
-  "isaias", 
-  "laura", 
-  "maria", 
-  "michael", 
-  "sally"
-)
+# Parse storm name from filename (e.g. "dorian_wind_errors_ALL.csv" -> "dorian").
+# Robust to new storms or non-alphabetical insertion; the prior positional zip
+# silently mislabeled every file after any misordered insertion.
+parse_storm <- function(path) str_extract(basename(path), "^[a-z]+")
 
 ## 2.1 Wind data
 
-wind_all = lapply(seq_along(wind_list_all), function(j) {
-  wind_list_all[[j]] = wind_list_all[[j]] |>
-    mutate(hurricane = hurricanes_list[j])
-}) |>
+wind_all = Map(
+  function(file, dt) dt |> mutate(hurricane = parse_storm(file)),
+  wind_file_names_all, wind_list_all
+) |>
   rbindlist() |>
   mutate(augmented_obs = 1)
 
-wind_no = lapply(seq_along(wind_list_no), function(j) {
-  wind_list_no[[j]] = wind_list_no[[j]] |>
-    mutate(hurricane = hurricanes_list[j])
-}) |>
+wind_no = Map(
+  function(file, dt) dt |> mutate(hurricane = parse_storm(file)),
+  wind_file_names_no, wind_list_no
+) |>
   rbindlist() |>
   mutate(augmented_obs = 0)
 
@@ -91,36 +83,35 @@ wind = wind |>
     gust_dur_pred_mean  = ifelse(is.na(gust_dur_pred_mean), gust_dur_obs  + gust_dur_dif_mean, gust_dur_pred_mean)
   )
 
-# Ensure no errors matching names and hurricanes
-any(wind$name != wind$hurricane)
+# Filename-derived storm name must match the file's internal `name` field.
+stopifnot(all(wind$name == wind$hurricane))
 
 
 ## 2.2 Rain data
 
-rain_all = lapply(seq_along(rain_list_all), function(j) {
-  rain_list_all[[j]] = rain_list_all[[j]] |>
-    mutate(
-      hurricane = hurricanes_list[j],
-      pred_date = as.IDate(format(pred_date, "%Y-%m-%d"))
-    )
-}) |>
+rain_all = Map(
+  function(file, dt) dt |> mutate(
+    hurricane = parse_storm(file),
+    pred_date = as.IDate(format(pred_date, "%Y-%m-%d"))
+  ),
+  rain_file_names_all, rain_list_all
+) |>
   rbindlist() |>
   mutate(augmented_obs = 1)
 
-rain_no = lapply(seq_along(rain_list_no), function(j) {
-  rain_list_no[[j]] = rain_list_no[[j]] |>
-    mutate(
-      hurricane = hurricanes_list[j],
-      pred_date = as.IDate(format(pred_date, "%Y-%m-%d"))
-    )
-}) |>
+rain_no = Map(
+  function(file, dt) dt |> mutate(
+    hurricane = parse_storm(file),
+    pred_date = as.IDate(format(pred_date, "%Y-%m-%d"))
+  ),
+  rain_file_names_no, rain_list_no
+) |>
   rbindlist() |>
   mutate(augmented_obs = 0)
 
 rain = rbind(rain_all, rain_no)
 
-# Ensure no errors matching names and hurricanes
-any(rain$name != rain$hurricane)
+stopifnot(all(rain$name == rain$hurricane))
 
 
 ## 2.3 Wind + rain merge
