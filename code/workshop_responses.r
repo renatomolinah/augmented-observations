@@ -151,12 +151,19 @@ likert_dist <- function(df, items) {
     select(section, short_label, N, `1`, `2`, `3`, `4`, `5`, Mean, `\\% Agree`)
 }
 
-write_likert <- function(df, items, caption_text, file_name, label) {
+write_likert <- function(df, items, caption_text, file_name, label, extra_note = NULL) {
   dist <- likert_dist(df, items)
   # Section breaks via pack_rows; drop the Section column itself
   sec_runs <- rle(dist$section)
   sec_ends <- cumsum(sec_runs$lengths)
   sec_starts <- c(1L, head(sec_ends, -1) + 1L)
+  base_note <- paste(
+    "Likert scale: 1 = Strongly disagree, 2 = Disagree, 3 = Neutral,",
+    "4 = Agree, 5 = Strongly agree.",
+    "N is the count of non-missing responses.",
+    "Agree pools responses of 4 and 5."
+  )
+  note <- if (is.null(extra_note)) base_note else paste(base_note, extra_note)
   tbl <- dist |>
     rename(Statement = short_label) |>
     select(-section) |>
@@ -165,12 +172,7 @@ write_likert <- function(df, items, caption_text, file_name, label) {
         caption = caption_text, label = label) |>
     kable_styling(latex_options = c("hold_position")) |>
     footnote(
-      general = paste(
-        "Likert scale: 1 = Strongly disagree, 2 = Disagree, 3 = Neutral,",
-        "4 = Agree, 5 = Strongly agree.",
-        "N is the count of non-missing responses.",
-        "Agree pools responses of 4 and 5."
-      ),
+      general = note,
       general_title = "",
       threeparttable = TRUE, footnote_as_chunk = TRUE,
       escape = FALSE
@@ -194,7 +196,13 @@ write_likert(
   p2, items_p2,
   paste("Responses: valuation and cost--benefit.",
         "Response distribution and summary statistics."),
-  "appD_likert_part2.tex", "appD_likert_part2"
+  "appD_likert_part2.tex", "appD_likert_part2",
+  extra_note = paste(
+    "Dollar figures and ratios in the prompts are reproduced verbatim",
+    "from the workshop instrument as shown to respondents at the time.",
+    "Current pipeline estimates are reported in",
+    "\\\\texttt{stage3\\\\_numbers.txt} and \\\\texttt{stage4\\\\_costbenefit\\\\_numbers.txt}."
+  )
 )
 
 # ==============================================================================

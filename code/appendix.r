@@ -171,7 +171,7 @@ Cost per capita (\\$) & %.3f & %.2f & %.2f\\\\
 \\end{tabular}
 \\begin{tablenotes}
 \\small
-\\item Per-county value equals the column-(7) Hurricane coefficient times the variance reduction $\\Delta\\sigma^{2}=(\\bar{\\sigma}+\\delta)^{2}-\\bar{\\sigma}^{2}=%.2f$ (m/s)$^{2}$, evaluated in the 2017--2020 hurricane-force / 3-day-lead sample. For the total-cost specification the per-county value is uniform across counties; for cost/GDP and cost per capita it scales with county GDP and population, respectively, so the table reports the mean per-county value. Aggregate values sum the per-county dollar valuation over the %d county--storm rows in the same denial sample, matching the panel used in Section \\ref{sec:results}.
+\\item Per-county value equals the column-(7) Hurricane coefficient times the variance reduction $\\Delta\\sigma^{2}=(\\bar{\\sigma}_{AO}+\\delta)^{2}-\\bar{\\sigma}_{AO}^{2}=%.2f$ (m/s)$^{2}$, evaluated in the 2017--2020 hurricane-force / 3-day-lead sample. $\\bar{\\sigma}_{AO}$ denotes the mean ex-ante forecast SD on the dropsonde-assimilated (AO=1) subset, which is the baseline that would be lost in the counterfactual without dropsondes. For the total-cost specification the per-county value is uniform across counties; for cost/GDP and cost per capita it scales with county GDP and population, respectively, so the table reports the mean per-county value. Aggregate values sum the per-county dollar valuation over the %d county--storm rows in the same denial sample, matching the panel used in Section \\ref{sec:results}.
 \\end{tablenotes}
 \\end{threeparttable}
 \\end{adjustbox}
@@ -275,14 +275,14 @@ B1_disp <- B1 |>
   transmute(
     `Lead (days)` = lead_days,
     `Obs.` = format(n, big.mark = ","),
-    `$\\bar{\\sigma}$ (m/s)` = sprintf("%.2f", sigma_bar),
+    `$\\bar{\\sigma}_{\\text{pool}}$ (m/s)` = sprintf("%.2f", sigma_bar),
     `$\\delta$ (m/s)` = sprintf("%.3f", delta),
     `SE` = sprintf("(%.3f)", se),
     `p` = ifelse(p < 0.001, "$<$0.001", sprintf("%.3f", p))
   )
 
 B1_tex <- kbl(B1_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              caption = "Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. \\label{tab:appB_leadtime}",
+              caption = "Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. Lead days $>3$ are omitted when the subsample has fewer than 10 observations. \\label{tab:appB_leadtime}",
               align = c("c","r","r","r","r","r"), linesep = "") |>
   footnote(general = "Each row reports the controls-table specification of Table \\\\ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\\\\geq$ 33 m/s) in the 2017--2020 continental-US AO denial archive (excluding Hurricane Maria). The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the precision gain is reported as $|\\\\hat{\\\\delta}|$, so larger positive values indicate a larger noise reduction from AO. County-clustered standard errors in parentheses.",
            general_title = "",
@@ -326,7 +326,7 @@ B2_tex_str <- paste0(
   "\\begin{threeparttable}\n",
   "\\begin{tabular}[t]{lrrrrr}\n",
   "\\toprule\n",
-  "Category & Obs. & $\\bar{\\sigma}$ (m/s) & $\\delta$ (m/s) & SE & p\\\\\n",
+  "Category & Obs. & $\\bar{\\sigma}_{\\text{pool}}$ (m/s) & $\\delta$ (m/s) & SE & p\\\\\n",
   "\\midrule\n",
   B2_rows, "\n",
   "\\bottomrule\n",
@@ -371,7 +371,7 @@ B2m_tex_str <- paste0(
   "\\begin{threeparttable}\n",
   "\\begin{tabular}[t]{lrrrrr}\n",
   "\\toprule\n",
-  "Category & Obs. & $\\bar{\\sigma}$ (m/s) & $\\delta$ (m/s) & SE & p\\\\\n",
+  "Category & Obs. & $\\bar{\\sigma}_{\\text{pool}}$ (m/s) & $\\delta$ (m/s) & SE & p\\\\\n",
   "\\midrule\n",
   B2m_rows, "\n",
   "\\bottomrule\n",

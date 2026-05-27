@@ -125,7 +125,7 @@ denial_tex <- c(
   "    \\begin{threeparttable}",
   "      \\caption{Summary of the cases used.}",
   "      \\label{tab:data_denial}",
-  "      \\begin{tabular}{c c c c c c}",
+  "      \\begin{tabular}{c c c c}",
   "        \\hline",
   "        Year & Storm Name & Landfall Intensity & Landfall Time\\\\",
   "        \\hline",

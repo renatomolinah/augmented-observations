@@ -22,34 +22,29 @@ file_names <- list.files(
   recursive = TRUE
 )
 
-file_names_var <- list.files(
-  path = "data/raw/track_raw/",
-  pattern = "trackline_bdeck.*\\.shp$",
-  full.names = FALSE,
-  all.files = TRUE,
-  recursive = TRUE
-)
-
-forecast_type = lapply(
-  file_names_var,
-  function(x) substr(x, nchar(x)-7, nchar(x)-4)
-) |> 
-  c() |> 
-  unlist()
-
-track_list = lapply(file_names, st_read)
-
-for (i in seq_along(track_list)) {
-  names(track_list[[i]]) = c("Track", "Vertices", "geometry")
+# Read each file and tag with its source type up-front. Avoids a positional
+# zip across the rbind'd frame, which would silently misalign if any
+# shapefile carried more than one feature.
+parse_type <- function(path) {
+  bn <- basename(path)
+  substr(bn, nchar(bn) - 7, nchar(bn) - 4)
 }
+track_list = Map(
+  function(file) {
+    dt <- st_read(file)
+    names(dt) <- c("Track", "Vertices", "geometry")
+    dt$type <- parse_type(file)
+    dt
+  },
+  file_names
+)
 
 #=============================
 # 2. Combine with data for plotting
 #=============================
 
 track = do.call(rbind, track_list) %>%
-  mutate(type = forecast_type,
-         hurricane = gsub(" .*$", "", Track),
+  mutate(hurricane = gsub(" .*$", "", Track),
          date = substr(parse_number(Track), 1, 8),
          date = as_date(date),
          storm_id = paste0(hurricane, "-", str_sub(date,1,4)),
@@ -80,34 +75,23 @@ file_names <- list.files(
   recursive = TRUE
 )
 
-file_names_var <- list.files(
-  path = "data/raw/track_raw/",
-  pattern = "trackline_adeck_OFCL.*\\.shp$",
-  full.names = FALSE,
-  all.files = TRUE,
-  recursive = TRUE
+# Same per-file tagging pattern as the bdeck pass above.
+track_list = Map(
+  function(file) {
+    dt <- st_read(file)
+    names(dt) <- c("Track", "Vertices", "geometry")
+    dt$type <- parse_type(file)
+    dt
+  },
+  file_names
 )
-
-forecast_type = lapply(
-  file_names_var,
-  function(x) substr(x, nchar(x)-7, nchar(x)-4)
-) |> 
-  c() |> 
-  unlist()
-
-track_list = lapply(file_names, st_read)
-
-for (i in seq_along(track_list)) {
-  names(track_list[[i]]) = c("Track", "Vertices", "geometry")
-}
 
 #=============================
 # 5. Combine with data for plotting
 #=============================
 
 track_forecast = do.call(rbind, track_list) %>%
-  mutate(type = forecast_type,
-         hurricane = gsub(" .*$", "", Track),
+  mutate(hurricane = gsub(" .*$", "", Track),
          date = substr(parse_number(Track), 1, 8),
          date = as_date(date),
          storm_id = paste0(hurricane, "-", str_sub(date,1,4)),

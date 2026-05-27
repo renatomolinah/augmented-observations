@@ -37,6 +37,23 @@ check_path() {
 check_glob "VOI wind error files" "data/raw/wind_error/*_errors.csv"
 check_glob "VOI precipitation error files" "data/raw/precip_error/*_precip_error*.csv"
 
+# Per-storm coverage check: for every storm in the analysis manifest,
+# verify that its wind_error CSV exists. The bare globs above pass even
+# when only one storm has files. Continental-US storms only; Maria
+# (Puerto Rico) is excluded by downstream filters and has no standard CSV.
+manifest="code/external_models/config/storm_manifest.csv"
+if [ -f "$manifest" ]; then
+  while IFS=, read -r stormname _rest; do
+    [ "$stormname" = "stormname" ] && continue
+    [ "$stormname" = "maria" ] && continue
+    f="data/raw/wind_error/${stormname}_errors.csv"
+    if [ ! -e "$f" ]; then
+      printf '[missing] VOI wind error file for %s (%s)\n' "$stormname" "$f" >&2
+      missing=1
+    fi
+  done < "$manifest"
+fi
+
 if [ -d "data/raw/track_raw" ] || [ -f "data/raw/track_raw.zip" ]; then
   printf '[ok] VOI track raw source\n'
 else
