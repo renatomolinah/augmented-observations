@@ -1,7 +1,7 @@
 # ==============================================================================
 # Orchestrator: VOI cleaning pipeline
 # ------------------------------------------------------------------------------
-# Sources cleaning scripts 1.00 -> 1.07 (skipping 1.04, popw-only) to produce
+# Sources cleaning scripts 1.00 -> 1.07 to produce
 # data/clean/final_dataset.rds and supporting intermediates.
 # ==============================================================================
 
