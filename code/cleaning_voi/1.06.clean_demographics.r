@@ -8,17 +8,34 @@ cat("===========================================================================
 # 1. Clean BEA income and GDP
 #=============================
 
-income = fread("data/raw/bea/CAINC1__ALL_AREAS_1969_2024.csv", fill = TRUE) |>
+# Locate the latest BEA vintage automatically. Filenames look like
+# CAINC1__ALL_AREAS_1969_<YYYY>.csv and CAGDP1__ALL_AREAS_2001_<YYYY>.csv;
+# picking the highest YYYY lets new vintages drop in without code edits.
+pick_latest_bea = function(prefix) {
+  files = list.files("data/raw/bea", pattern = paste0("^", prefix, "_\\d{4}_\\d{4}\\.csv$"),
+                     full.names = TRUE)
+  stopifnot(length(files) > 0)
+  years = as.integer(str_extract(files, "\\d{4}(?=\\.csv$)"))
+  list(file = files[which.max(years)], end_year = max(years))
+}
+
+inc_info = pick_latest_bea("CAINC1__ALL_AREAS")
+gdp_info = pick_latest_bea("CAGDP1__ALL_AREAS")
+
+income = fread(inc_info$file, fill = TRUE) |>
     filter(str_detect(Description, "capita"))
-gdp1 = fread("data/raw/bea/CAGDP1__ALL_AREAS_2001_2024.csv", fill = TRUE) |>
+gdp1 = fread(gdp_info$file, fill = TRUE) |>
     filter(LineCode == 1)
 crosswalk = readxl::read_xlsx("data/raw/bea/census-bea-crosswalk.xlsx", skip = 1) |>
     select(fips_census = 3, county_fips = 6) |>
     drop_na() |>
     mutate(county_fips = str_pad(county_fips, 5, "left", pad = "0"))
 
+inc_year_cols = as.character(2005:inc_info$end_year)
+gdp_year_cols = as.character(2005:gdp_info$end_year)
+
 income = income |>
-    select(county_fips = GeoFIPS, `2005`:`2024`) |>
+    select(county_fips = GeoFIPS, all_of(inc_year_cols)) |>
     pivot_longer(
         cols = -county_fips,
         names_to = "year",
@@ -26,9 +43,9 @@ income = income |>
     )
 
 gdp = gdp1 |>
-    select(county_fips = GeoFIPS, county_name = GeoName, `2005`:`2024`) |>
+    select(county_fips = GeoFIPS, county_name = GeoName, all_of(gdp_year_cols)) |>
     pivot_longer(
-        cols = `2005`:`2024`,
+        cols = all_of(gdp_year_cols),
         names_to = "year",
         values_to = "gdp"
     )

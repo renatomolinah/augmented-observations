@@ -203,7 +203,11 @@ final_dataset = left_join(
   ) |> # 64 rows only in fema data: county fips starts with 72
   replace_na(list(ex_post_spending = 0, ex_ante_spending = 0))
 
-final_dataset = final_dataset |> filter(year <= 2024)
+# Drop any rows whose year exceeds BEA demographic/GDP coverage, since the
+# inner_join on income_gdp would silently drop them anyway. Computed from the
+# data so adding 2025+ BEA vintages auto-extends without a code edit.
+bea_max_year = max(income_gdp$year, na.rm = TRUE)
+final_dataset = final_dataset |> filter(year <= bea_max_year)
 
 # Merge in county demographics
 final_dataset = final_dataset |> 
