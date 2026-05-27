@@ -180,5 +180,5 @@ bash "${script_dir}/run_idl_procedure.sh" \
 
 if [ "$denial" -eq 1 ]; then
   AO_STORM_LIST="$storm" AO_DENIAL_FILE_TYPES="$experiment" \
-    Rscript --vanilla "${repo_root}/code/cleaning_denial/clean_rain_errors_denial.R"
+    Rscript --vanilla "${repo_root}/code/cleaning_denial/clean_rain_errors_denial.r"
 fi

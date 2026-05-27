@@ -120,7 +120,7 @@ else
 
   tar -czf "$temp_tarball" -C "$mc_output_dir" .
 
-  Rscript --vanilla "${script_dir}/build_wind_errors.R" \
+  Rscript --vanilla "${script_dir}/build_wind_errors.r" \
     "$storm" \
     "$temp_tarball" \
     "${repo_root}/data/raw/wind_error/all_forecasts" \

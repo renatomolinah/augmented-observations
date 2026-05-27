@@ -16,7 +16,7 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) {
-  stop("Usage: Rscript build_wind_errors.R STORM_NAME MC_TARBALL [OBS_DIR] [OUTPUT_DIR] [OBS_PREFIX]")
+  stop("Usage: Rscript build_wind_errors.r STORM_NAME MC_TARBALL [OBS_DIR] [OUTPUT_DIR] [OBS_PREFIX]")
 }
 
 storm_name <- args[[1]]

@@ -49,7 +49,7 @@ spec_col7 <- function(lhs = "total_cost") {
 }
 
 # Conley HAC 400 km / unbounded lag — matches main Table 2 col (7) in
-# NOAA_report.R. Each call gets a fresh load to avoid data.table by-reference
+# NOAA_report.r. Each call gets a fresh load to avoid data.table by-reference
 # mutation inside conleyreg.
 run_conley <- function(formula, data) {
   conleyreg(
@@ -100,7 +100,7 @@ add_adjust_box(.aoa_path)
 # Use the three column-(7) coefficients above to compute the dollar value of
 # augmented observations under each notion of value, summed over the same
 # 2017--2020 hurricane-force / 3-day-lead county-storm panel as the main
-# Stage 3 valuation in NOAA_report.R.
+# Stage 3 valuation in NOAA_report.r.
 
 denial_full <- as_tibble(data.table::fread(denial_path)) |>
   filter(name != "maria")

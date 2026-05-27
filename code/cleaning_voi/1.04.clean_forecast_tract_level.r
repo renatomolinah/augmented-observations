@@ -1,5 +1,5 @@
 cat("================================================================================\n")
-cat("RUNNING: 1.04_clean_forecast_tract_level.r\n")
+cat("RUNNING: 1.04.clean_forecast_tract_level.r\n")
 cat("PURPOSE: Clean tract-level population data and create tract_population_constant_2005.rds\n")
 cat("================================================================================\n")
 

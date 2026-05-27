@@ -40,7 +40,7 @@ library(tidycensus)
 library(housingData)
 
 # Load custom functions
-source("code/cleaning_voi/functions.R")
+source("code/cleaning_voi/functions.r")
 
 #=============================
 # 3. Global Settings and Variables
