@@ -38,6 +38,16 @@ fema_df = fema_df[, .(
 #=============================
 # https://www.fema.gov/disaster/declarations
 
+# 2024
+milton_num = c(3622, 3623, 4834, 4844)
+helene_num = c(3615, 3616, 3617, 3618, 3619, 3620, 4827, 4828, 4829, 4830, 4831, 4832, 4848, 4851)
+francine_num = c(3614, 4817)
+debby_num = c(3605, 3606, 3607, 3608, 4806, 4815, 4821, 4825, 4835)
+beryl_num = c(4798)
+
+# 2023
+idalia_num = c(3596, 3597, 4734, 4738)
+
 # 2022
 ian_num = c(4677, 3586, 4673, 3585, 3584)
 nicole_num = c(4680, 3588, 3587)
@@ -137,6 +147,12 @@ fema_df = fema_df[,
                     disaster_number %in% hermine_num ~ "hermine",
                     disaster_number %in% ian_num ~ "ian",
                     disaster_number %in% ida_num ~ "ida",
+                    disaster_number %in% idalia_num ~ "idalia",
+                    disaster_number %in% beryl_num ~ "beryl",
+                    disaster_number %in% debby_num ~ "debby",
+                    disaster_number %in% francine_num ~ "francine",
+                    disaster_number %in% helene_num ~ "helene",
+                    disaster_number %in% milton_num ~ "milton",
                     disaster_number %in% ike_num ~ "ike",
                     disaster_number %in% irene_num ~ "irene",
                     disaster_number %in% irma_num ~ "irma",
