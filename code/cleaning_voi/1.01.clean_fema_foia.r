@@ -211,4 +211,16 @@ fema_df_county$pdd = TRUE
 # 4. Save FEMA data
 #=============================
 
+# Print per-storm row counts so a missing storm is visible at a glance.
+# If a storm was added to the project but its *_num list and case_when
+# clause above were not updated, it appears here with zero (or absent).
+cat("FEMA storms in fema_spending.csv (project_amount sum, millions $):\n")
+print(
+  fema_df_county |>
+    group_by(hurricane) |>
+    summarise(spending_m = round(sum(ex_post_spending + ex_ante_spending) / 1e6, 1)) |>
+    arrange(hurricane),
+  n = Inf
+)
+
 fwrite(fema_df_county, "data/clean/fema_spending.csv")
