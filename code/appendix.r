@@ -189,7 +189,8 @@ cat(sprintf("[Appendix A] aggregate value 2017--2020 (B$): total=%.2f gdp=%.2f p
 
 # A.3 — one-storm-out jackknife on Hurricane beta -----------------------------
 top_storms <- c("katrina", "harvey", "sandy", "ian", "ida",
-                "michael", "laura", "irma", "wilma", "rita")
+                "michael", "laura", "irma", "wilma", "rita",
+                "helene")
 jack_rows <- list()
 for (s in c("none", top_storms)) {
   d <- if (s == "none") voi_load() else voi_load_drop(s)
