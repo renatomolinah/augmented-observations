@@ -9,7 +9,7 @@
 #    - Intensity threshold grid (>25, >33, >40 m/s)
 #    - One-storm-out jackknife across the 8 hurricane denials
 #    - Maria-in vs Maria-out
-# C. Storm-level decomposition of the $2.91B total valuation.
+# C. Storm-level decomposition of the retrospective valuation.
 # ==============================================================================
 
 if (!require("pacman")) install.packages("pacman")
@@ -491,7 +491,7 @@ B5_tex_str <- paste0(
 writeLines(B5_tex_str, here("output/appB_jackknife_maria.tex"))
 
 # ==============================================================================
-# Appendix C — per-storm decomposition of total $2.91B
+# Appendix C — per-storm decomposition of the retrospective total
 # ==============================================================================
 # Re-derive Stage 3 valuation per storm using the same beta and delta the main
 # report uses.
@@ -545,7 +545,7 @@ C_tex <- kbl(
   format    = "latex",
   booktabs  = TRUE,
   escape    = FALSE,
-  caption   = "Per-storm decomposition of the \\$2.91B retrospective social value. \\label{tab:appC_per_storm}",
+  caption   = sprintf("Per-storm decomposition of the \\$%.2fB retrospective social value. \\label{tab:appC_per_storm}", sum(per_storm$value_M) / 1000),
   align     = c("l", "r", "r", "r"),
   linesep   = ""
 ) |>
