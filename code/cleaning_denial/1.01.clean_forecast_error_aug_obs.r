@@ -1,4 +1,7 @@
-print("Cleaning forecasts.")
+cat("================================================================================\n")
+cat("RUNNING: 1.01.clean_forecast_error_aug_obs.r\n")
+cat("PURPOSE: Combine ALL/NO denial forecasts into wind_data.rds + rain_data.rds\n")
+cat("================================================================================\n")
 
 #=============================
 # 1. load wind and rain forecasts

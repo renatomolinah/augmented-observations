@@ -1,5 +1,5 @@
 #=============================
-# Package Setup for Data Cleaning (1.0.CLEAN_DATA)
+# Package Setup for VOI Data Cleaning (sourced by run_all.r)
 #=============================
 
 # This script sets up packages and environment for data cleaning scripts

@@ -1,4 +1,7 @@
-print("Cleaning lead time data with cleaned column names.")
+cat("================================================================================\n")
+cat("RUNNING: 1.03.clean_lead_time_data.r\n")
+cat("PURPOSE: Reshape forecasts by lead time to forecast_denial_data_with_lead_times.csv\n")
+cat("================================================================================\n")
 
 #=============================
 # 1. Load packages and data

@@ -1,4 +1,7 @@
-print("Merging data.")
+cat("================================================================================\n")
+cat("RUNNING: 1.02.merge_data.r\n")
+cat("PURPOSE: Merge denial forecasts with county geography and VOI panel\n")
+cat("================================================================================\n")
 
 #=============================
 # 1. load county/state data
