@@ -1,0 +1,36 @@
+\begin{table}
+
+\caption{Effect of Augmented Observations on Ex-Ante Uncertainty (full specification). \label{tab:noaa-controls}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lcccc}
+\toprule
+  & (1) & (2) & (3) & (4)\\
+\midrule
+$\delta$: Augmented Observations & -0.258*** & -0.258*** & -0.258*** & -0.258***\\
+ & (0.093) & (0.095) & (0.094) & (0.096)\\
+Realized wind speed (m/s) &  &  & 0.265*** & -0.014\\
+ &  &  & (0.062) & (0.015)\\
+\midrule
+Num.Obs. & 124 & 124 & 124 & 124\\
+R2 & 0.909 & 0.936 & 0.932 & 0.936\\
+R2 Adj. & 0.825 & 0.867 & 0.868 & 0.864\\
+R2 Within & 0.080 & 0.111 & 0.316 & 0.111\\
+R2 Within Adj. & 0.066 & 0.095 & 0.294 & 0.080\\
+County FE & \checkmark & \checkmark & \checkmark & \checkmark\\
+Hurricane FE &  & \checkmark &  & \checkmark\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 Full coefficient table for the Stage 2 precision regressions. Standard errors clustered
+     at the county level. The sample is the 2017--2020 augmented-observations denial archive at
+     the 3-day lead time and hurricane-force realizations ($\geq$ 33 m/s); Hurricane Maria is
+     excluded because of its Puerto Rico landfall. $\delta$ is the average reduction in the
+     ex-ante wind-speed forecast standard deviation attributable to dropsonde assimilation (the
+     ALL configuration of \citet{DitchekEA2023}); the negative sign reflects that AO assimilation
+     lowers ensemble spread relative to the no-dropsonde (NO) counterfactual.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}

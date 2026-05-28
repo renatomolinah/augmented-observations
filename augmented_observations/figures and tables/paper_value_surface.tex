@@ -1,0 +1,28 @@
+\begin{table}
+
+\caption{Lead time $\times$ intensity value surface for augmented observations. \label{tab:value-surface}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{ccccccc}
+\toprule
+Lead (days) & Obs. & $\bar{\sigma}_{\text{ALL}}$ (m/s) & $\hat{\delta}$ (m/s) & SE & $p$ & Value/county (\$M)\\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{7}{l}{\textbf{Hurricane-force ($\geq$ 33 m/s)}}\\
+\hspace{1em}1 & 144 & 7.21 & 0.063 & (0.071) & 0.373 & 4.62\\
+\hspace{1em}2 & 140 & 8.03 & 0.144 & (0.048) & 0.003 & 11.72\\
+\hspace{1em}3 & 124 & 8.98 & 0.258 & (0.095) & 0.007 & 23.61\\
+\addlinespace[0.3em]
+\multicolumn{7}{l}{\textbf{Sub-hurricane ($<$ 33 m/s)}}\\
+\hspace{1em}1 & 42984 & 1.18 & 0.055 & (0.002) & 0.000 & 0.01\\
+\hspace{1em}2 & 38196 & 1.75 & 0.090 & (0.002) & 0.000 & 0.03\\
+\hspace{1em}3 & 33420 & 2.06 & 0.021 & (0.002) & 0.000 & 0.01\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item Each cell estimates the precision gain $\hat{\delta}=|\text{coef}(\text{AO})|$ from the Stage 2 specification $\sigma_{csh}=\delta\,\text{AO}_{csh}+\alpha_c+\gamma_h+\varepsilon_{csh}$ on the indicated lead-time / intensity subset of the 2017--2020 continental-US denial archive (Maria excluded), with county and storm fixed effects and county-clustered standard errors. $\bar{\sigma}_{\text{ALL}}$ is the mean ex-ante forecast standard deviation with dropsondes assimilated. Value per county is $\hat{\beta}_2[(\bar{\sigma}_{\text{ALL}}+\hat{\delta})^2-\bar{\sigma}_{\text{ALL}}^2]$, using the Stage 1 column (7) cost parameters $\hat{\beta}_2^{Hurr}=5.03$ and $\hat{\beta}_2^{Sub}=0.09$ (\$M per (m/s)$^2$). The social value is identified and maximized in the 3-day hurricane-force cell; sub-hurricane value is near zero because $\hat{\beta}_2^{Sub}\approx0$.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}
