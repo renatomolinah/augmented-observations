@@ -1,0 +1,26 @@
+\begin{table}
+
+\caption{Regression Analysis of the Effect of Augmented Observations in Ex-Ante Uncertainty \label{tab:noaa-controls}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lcccc}
+\toprule
+  & (1) & (2) & (3) & (4)\\
+\midrule
+$\delta$: Augmented Observations & \num{-0.258}*** & \num{-0.258}*** & \num{-0.258}*** & \num{-0.258}***\\
+ & (\num{0.093}) & (\num{0.095}) & (\num{0.094}) & (\num{0.096})\\
+ &  &  &  & \\
+Observations & 124 & 124 & 124 & 124\\
+ &  &  &  & \\
+Wind Controls &  &  & \checkmark & \checkmark\\
+County FE & \checkmark & \checkmark & \checkmark & \checkmark\\
+Hurricane FE &  & \checkmark &  & \checkmark\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 Standard errors clustered at the county level. The sample is restricted to the 2017--2020 augmented-observations denial archive at the 3-day lead time and hurricane-force realizations ($\geq$ 33 m/s); Hurricane Maria is excluded because of its Puerto Rico landfall. The coefficient $\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \citet{DitchekEA2023}); the negative sign reflects that AO assimilation lowers ensemble spread relative to the no-dropsonde (NO) counterfactual. Wind Controls includes the realized wind speed (m/s) as a continuous covariate.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}

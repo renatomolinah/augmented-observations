@@ -1,0 +1,8 @@
+beta_hurr (Hurricane, $M per (m/s)^2)  = 5.031
+N (HF impacts at 3-day lead)           = 124
+delta (m/s)                            = 0.258
+baseline sigma_All (m/s)               = 8.98
+delta_sigma_sq = (sigma+delta)^2-sigma^2 = 4.69 (m/s)^2
+Value per Affected County ($M)         = 23.61
+Affected hurricane-force counties      = 124
+Total Retrospective Value ($B)         = 2.93

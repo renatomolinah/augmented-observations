@@ -1,0 +1,17 @@
+delta                              = 0.258 m/s
+delta SE                           = 0.095
+delta p-value                      = 0.0070
+
+-- HF + 3-day lead, AO-only (Stage 3 baseline) --
+  N                                = 62
+  sigma_bar                        = 8.98 m/s
+  sd(sigma)                        = 1.45 m/s
+  delta / sigma_bar                = 2.87% of mean
+  delta / sd(sigma)                = 0.18 SDs
+
+-- 3-day lead, all wind speeds, pooled (broader noise benchmark) --
+  N                                = 16772
+  sigma_bar                        = 2.09 m/s
+  sd(sigma)                        = 2.03 m/s
+  delta / sigma_bar                = 12.35% of mean
+  delta / sd(sigma)                = 0.13 SDs

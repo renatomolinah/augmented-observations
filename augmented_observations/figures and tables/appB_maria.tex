@@ -1,0 +1,21 @@
+\begin{table}
+
+\caption{Inclusion of Hurricane Maria. \label{tab:appB_maria}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lrrrr}
+\toprule
+Sample & Obs. & $\delta$ (m/s) & SE & p\\
+\midrule
+Excluding Maria (baseline) & 124 & 0.258 & (0.095) & 0.007\\
+Including Maria & 274 & 0.356 & (0.045) & $<$0.001\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Both rows estimate the Stage 2 precision-gain specification of Table \ref{tab:noaa-controls} on hurricane-force ($\geq$ 33 m/s) realizations at the 3-day lead. The baseline row uses the six 2017--2020 continental-US landfalls in the AO denial archive; the second row adds Hurricane Maria back into the panel. The coefficient $\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \citet{DitchekEA2023}). Maria is excluded from the main analysis because it did not make landfall in the continental US. County-clustered standard errors in parentheses.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}

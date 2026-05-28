@@ -1,0 +1,36 @@
+\begin{table}
+
+\caption{The Value of a Wind Speed Forecast Improvement. \label{tab:voi-table}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lccccccc}
+\toprule
+  & (1) & (2) & (3) & (4) & (5) & (6) & (7)\\
+\midrule
+$\beta_2: (e - \mu)^2$ & \num{3.74}*** & \num{3.73}*** & \num{3.25}*** & \num{3.26}*** & \num{3.75}*** & \num{3.65}*** & \\
+ & (\num{1.32}) & (\num{1.32}) & (\num{1.06}) & (\num{1.00}) & (\num{1.34}) & (\num{1.19}) & \\
+$\text{Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & \num{5.03}***\\
+ &  &  &  &  &  &  & (\num{1.76})\\
+$\text{Sub-Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & \num{0.09}\\
+ &  &  &  &  &  &  & (\num{0.33})\\
+ &  &  &  &  &  &  & \\
+Observations & 113,661 & 113,661 & 113,661 & 113,661 & 113,661 & 113,661 & 113,661\\
+ &  &  &  &  &  &  & \\
+Realized Wind/Precip Bins &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+Level Wind/Precip Error &  &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+State-Hurricane FE & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+County FE & \checkmark & \checkmark & \checkmark &  &  &  & \checkmark\\
+County-Month of Year FE &  &  &  & \checkmark &  & \checkmark & \\
+County-Year FE &  &  &  &  & \checkmark & \checkmark & \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 Standard errors are Conley Spatial HAC with a distance radius of 400 km for spatial correlation
+     and arbitrary autocorrelation within counties. $e$ is the county-hurricane-specific forecast error,
+     and $\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds are
+     those $\geq$ 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that threshold.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}
