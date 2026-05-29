@@ -292,11 +292,52 @@ vs_tex <- kbl(surf_disp, format = "latex", booktabs = TRUE, escape = FALSE,
 writeLines(as.character(vs_tex), here("output/paper_value_surface.tex"))
 add_adjust_box(here("output/paper_value_surface.tex"))
 
+# --- Appendix B: full per-cell precision regressions  -> paper_appB_precision_grid
+# The regressions underlying the value surface, in full: one column per
+# lead x intensity cell, with the realized-wind control, FE, and GOF. Supersedes
+# the report's appB_leadtime (delta-by-lead) by adding intensity and full output.
+grid_cell_fit <- function(dat, lead, hf) {
+  d <- dat |> filter(lead_days == lead, !is.na(augmented_obs))
+  d <- if (hf) filter(d, wind_obs > 33) else filter(d, wind_obs <= 33)
+  feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name, data = d, vcov = ~county)
+}
+grid_specs <- list(
+  "HF / 1d"  = grid_cell_fit(forecast_data_lead_times, 1, TRUE),
+  "HF / 2d"  = grid_cell_fit(forecast_data_lead_times, 2, TRUE),
+  "HF / 3d"  = grid_cell_fit(forecast_data_lead_times, 3, TRUE),
+  "Sub / 1d" = grid_cell_fit(forecast_data_lead_times, 1, FALSE),
+  "Sub / 2d" = grid_cell_fit(forecast_data_lead_times, 2, FALSE),
+  "Sub / 3d" = grid_cell_fit(forecast_data_lead_times, 3, FALSE)
+)
+
+grid_rows <- tribble(
+  ~term, ~"HF / 1d", ~"HF / 2d", ~"HF / 3d", ~"Sub / 1d", ~"Sub / 2d", ~"Sub / 3d",
+  "County FE", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark",
+  "Storm FE",  "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark"
+)
+
+msummary(
+  grid_specs,
+  coef_rename = c("augmented_obs" = "$\\delta$: Augmented Observations",
+                  "wind_obs"      = "Realized wind speed (m/s)"),
+  gof_omit  = "AIC|BIC|Log.|RMSE|Std.Errors|FE",
+  fmt       = "%.3f",
+  stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
+  add_rows  = grid_rows,
+  title     = "Per-cell precision regressions across the lead $\\times$ intensity grid. \\label{tab:appB_precision_grid}",
+  notes     = list("Each column estimates $\\\\sigma_{csh}=\\\\delta\\\\,\\\\text{AO}_{csh}+\\\\theta\\\\,x_{csh}+\\\\alpha_c+\\\\gamma_h+\\\\varepsilon_{csh}$ on the indicated lead-time / intensity subset of the 2017--2020 continental-US denial archive (Maria excluded), with county and storm fixed effects and county-clustered standard errors. HF denotes hurricane-force realizations ($\\\\geq$ 33 m/s). These are the regressions summarized as per-county value in Table \\\\ref{tab:value-surface}; the value surface reports $|\\\\hat{\\\\delta}|$ from the parsimonious specification (omitting the realized-wind control), materially identical to the $\\\\delta$ shown here."),
+  threeparttable = TRUE,
+  escape    = FALSE,
+  output    = here("output/paper_appB_precision_grid.tex")
+)
+add_adjust_box(here("output/paper_appB_precision_grid.tex"))
+
 cat("\n[paper_tables] Wrote full tables:\n",
     "  output/paper_table_voi.tex\n",
     "  output/paper_appA_outcomes.tex\n",
     "  output/paper_controls_table.tex\n",
     "  output/paper_value_surface.tex\n",
+    "  output/paper_appB_precision_grid.tex\n",
     "Copy them into 'augmented_observations/figures and tables/' and point the\n",
     "manuscript \\input lines at them to swap the abbreviated report tables for the\n",
     "full paper versions.\n", sep = "")

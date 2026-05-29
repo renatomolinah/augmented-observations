@@ -157,7 +157,7 @@ output/paper_table_voi.tex: data/clean/final_dataset.rds \
 	@echo -e "$(YELLOW)[6/6] Paper tables (full Stage 1 / Stage 2 regressions)...$(NC)"
 	@mkdir -p output
 	@$(R) code/2.0.paper_tables.r
-	@echo -e "$(GREEN)  -> output/{paper_table_voi,paper_appA_outcomes,paper_controls_table,paper_value_surface}.tex$(NC)"
+	@echo -e "$(GREEN)  -> output/{paper_table_voi,paper_appA_outcomes,paper_controls_table,paper_value_surface,paper_appB_precision_grid}.tex$(NC)"
 
 paper_tables: output/paper_table_voi.tex
 
