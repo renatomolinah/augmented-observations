@@ -3,16 +3,16 @@
 %------------------------------------------%
 %                Packages 
 %------------------------------------------%
-\include{latex_extras/packages}
+\input{latex_extras/packages}
 %------------------------------------------%
 %              Custom Commands 
 %------------------------------------------%
-\include{latex_extras/custom_commands}
+\input{latex_extras/custom_commands}
 
 %------------------------------------------%
 %      Matter Related to Table Creation 
 %------------------------------------------%
-\include{latex_extras/dynamic_tables}
+\input{latex_extras/dynamic_tables}
 
 
   \begin{document}
@@ -65,11 +65,11 @@ This study quantifies the socio-economic value of augmented aircraft observation
 \section*{Executive Summary}
 \addcontentsline{toc}{section}{Executive Summary}
 
-This report quantifies the socio-economic value of augmented aircraft observations (AO) used by NOAA to initialize hurricane forecast models. Using one-storm-out data-denial experiments for eight continental-US landfalling hurricanes between 2017 and 2020, linked to a structural model of hurricane costs estimated on a 37-storm panel spanning 2005--2024, we find that AO reduce ex-ante 3-day wind-speed forecast uncertainty by 0.26 m/s and that this precision gain generates approximately \$23.6 million in social value per affected county-storm, totalling \$2.93 billion in retrospective value over the four-year sample.
+This report quantifies the socio-economic value of augmented aircraft observations (AO) used by NOAA to initialize hurricane forecast models. Using one-storm-out data-denial experiments for eight continental-US landfalling hurricanes between 2017 and 2020, linked to a structural model of hurricane costs estimated on a 37-storm panel spanning 2005--2024, we find that AO reduce ex-ante 3-day wind-speed forecast uncertainty by 0.26 m/s and that this precision gain generates approximately \$23.6 million in social value per affected county-storm, totalling \$1.46 billion in retrospective value over the four-year sample.
 
 The framework decomposes the value of AO into three stages. We first estimate the marginal cost of forecast error from the county-level damage panel at hurricane-force wind speeds. We then estimate the precision gain attributable to AO from the denial experiments. Then we combine the two into a per-county valuation summed across the 2017--2020 hurricane-force sample. The estimate is robust to modeling assumptions and sample selection.
 
-Set against the \$1.4 billion total acquisition cost of NOAA's planned C-130J recapitalization \citep{GAO2025HurricaneHunter}, the four-year retrospective benefit is roughly twice the entire fleet investment. The implied annualized rate of \$732 million per year in benefits is roughly 36 times the closest published benchmark of \$20 million per year derived from NOAA's 2016 Analysis of Alternatives. Overall, these provide positive support for the strategic recapitalization of NOAA's hurricane reconnaissance fleet as it generates substantial social value due to improvements in forecast quality.
+Set against the \$1.4 billion total acquisition cost of NOAA's planned C-130J recapitalization \citep{GAO2025HurricaneHunter}, the four-year retrospective benefit is roughly the entire fleet investment. The implied annualized rate of \$366 million per year in benefits is roughly 18 times the closest published benchmark of \$20 million per year derived from NOAA's 2016 Analysis of Alternatives. Overall, these provide positive support for the strategic recapitalization of NOAA's hurricane reconnaissance fleet as it generates substantial social value due to improvements in forecast quality.
 
 \clearpage 
 %------------------------------------------%
@@ -219,7 +219,7 @@ Estimation of $\beta^{w}_{2}$ draws on the county-by-storm panel constructed in 
 
 First, the official National Hurricane Center (NHC) track and intensity forecasts, reconstructed from the contemporaneous operational record and paired with best-track verification, define the ex-ante information available to decision-makers and the ex-post outcomes against which it is evaluated. For each county $c$ and storm $h$, this yields the ex-ante forecast standard deviation $\sigma_{ch}$ and the realized forecast error $e_{ch}$.
 
-Because the ex-ante forecast standard deviation $\sigma_{ch}$ is not observed directly, the panel constructs it by generating a set of 1,000 Monte Carlo synthetic wind and rainfall swaths from parametric wind field and rainfall models for each storm and forecast cycle \citep{lonfat2007parametric, willoughby2006parametric, knaff2007statistical}. These swaths are driven by the official NHC track and intensity forecast, which are then perturbed using the historical NHC forecast-error distribution. The best track record provides the verifying realization against which forecast errors $e_{ch}$ are computed. Across the 31 storms in the panel, this procedure yields a distribution of wind and precipitation swaths, from which county-level forecast and error spreads are then obtained.
+Because the ex-ante forecast standard deviation $\sigma_{ch}$ is not observed directly, the panel constructs it by generating a set of 1,000 Monte Carlo synthetic wind and rainfall swaths from parametric wind field and rainfall models for each storm and forecast cycle \citep{lonfat2007parametric, willoughby2006parametric, knaff2007statistical}. These swaths are driven by the official NHC track and intensity forecast, which are then perturbed using the historical NHC forecast-error distribution. The best track record provides the verifying realization against which forecast errors $e_{ch}$ are computed. Across the storms in the panel, this procedure yields a distribution of wind and precipitation swaths, from which county-level forecast and error spreads are then obtained.
 
 Second, the post-landfall costs. These combine direct economic damages from the Spatial Hazard Events and Losses Database for the United States (SHELDUS) with FEMA Public Assistance obligations, which capture federally reimbursed recovery activity. Both of these economic series are aggregated to the county level to align with the spatial resolution of the forecast grid.
 
@@ -227,13 +227,13 @@ Here, we augment the original panel with 6 additional Category 1 and greater hur
 
 We use this panel to estimate $\beta^{w}_{2}$, the marginal damage of a unit increase in the squared demeaned wind speed forecast error. Table \ref{tab:summary_dmg} reports summary statistics for the 37 hurricanes in the sample. The data display substantial heterogeneity across storms in realized wind speed, precipitation, and forecast errors, with total damages and recovery expenditures summing to \$363.7 billion over the period.
 
-\include{figures and tables/summary_dmg}
+\input{figures and tables/summary_dmg}
 
 \subsection{Data Denial Experiments and Ex-Ante Differentials}
 
 To isolate the contribution of augmented observations, we draw on the data denial experiments of \citet{DitchekEA2023}. The authors rerun forecasts for 92 Atlantic and East Pacific tropical cyclones from the 2017--2020 seasons using the 2020 research-grade, quasi-operational basin-scale configuration of the Hurricane Weather Research and Forecasting (HWRF) model \citep{ZhangEA2016,AlakaEA2022}, with and without the dropsonde observations collected by reconnaissance flights. Forty-one storms had reconnaissance data available; of these, 27 occurred in the Atlantic and eight ultimately made landfall in the continental United States as Category 1 or greater hurricanes (Table \ref{tab:data_denial}). These eight landfalls form our analysis sample for this dataset. Across them, U.S. Air Force and NOAA aircraft collected 49,143 dropsonde measurements, ranging from 184 in Hurricane Hanna to 9,413 in Hurricane Florence.
 
-\include{figures and tables/data_denial}
+\input{figures and tables/data_denial}
 
 This sample is well-suited to our valuation exercise for four reasons: i) the large number of model cycles produced for each storm, ii) the dense dropsonde coverage assimilated into each run, iii) the use of a modern operational-grade forecasting system, and iv) the concentration of high-impact U.S. landfalls within a short window. Following \citet{DitchekEA2023}, we denote the configuration that assimilates all available observations as ``ALL'' and the configuration that omits dropsonde data as ``NO.''
 
@@ -260,7 +260,7 @@ Following the structure outlined in Section \ref{sec:methods}, we present our fi
 
 We begin by analyzing the empirical relationship between forecast ex-post error and hurricane costs. Table \ref{tab:voi-table} reports the coefficient estimates for the squared demeaned wind errors across multiple specifications. Columns (1) through (6) show that the coefficient remains positive and statistically significant across various fixed effect strategies, including county-by-month and county-by-year controls.
 
-\include{figures and tables/table_voi}
+\input{figures and tables/table_voi}
 
 Column (7) presents our preferred specification, which differentiates exposure to hurricane-force ($\geq33$ m/s) and sub-hurricane-force winds. The empirical results show that the cost of forecast error is driven entirely by high-intensity events. For counties experiencing hurricane-force winds, a one-unit increase in the squared demeaned wind speed error increases total costs (damages plus recovery expenditures) by approximately \$5.03 million (SE = 1.76). In contrast, the effect for sub-hurricane force winds is small and statistically indistinguishable from zero ($\beta = 0.09$).
 
@@ -285,21 +285,21 @@ To formalize the visual pattern in Figure \ref{fig:uncertainty_panels}, we estim
 
 While 0.26 m/s is modest in absolute terms, it represents a meaningful share of the forecast noise. Compared against all 3-day forecasts in the panel (pooling all storm intensities, mean $\bar{\sigma}_{\text{ALL}} \approx 2.09$ m/s), $\delta$ represents about a 12\% reduction due to AO. When the comparison is restricted to the hurricane-force subsample that drives the valuation in Stage 3 ($\bar{\sigma}_{\text{ALL}} \approx 8.98$ m/s with AO assimilated), $\delta$ represents a reduction of about 2.9\%.
 
-\include{figures and tables/noaa_report_controls_table}
+\input{figures and tables/noaa_report_controls_table}
 
 \subsection{Stage 3: Projecting Economic Gains}
 
 In the final stage, we project the economic value of the observational improvements. Using the results from Stage 2, we found that augmented observations reduce the forecast standard deviation by approximately $\hat{\delta} = 0.26$ m/s at the 3-day lead time. With an average baseline forecast uncertainty ($\bar{\sigma}_{\text{ALL}}$) of approximately 8.98 m/s for the hurricanes in the sample, the 0.26 m/s physical improvement translates to a reduction in variance of roughly 4.7 (m/s)$^2$.\footnote{Recall that the value of a forecast improvement is proportional to the reduction in error variance: $\sigma_{\text{NO}}^{2} - \sigma_{\text{ALL}}^{2} \approx 2\bar{\sigma}_{\text{ALL}}\hat{\delta}$.} Scaling this variance reduction by the marginal cost parameter ($\hat{\beta}^w_{Hurr} = 5.03$ million) yields an estimated benefit of augmented observations of approximately \$23.6 million per county per storm, for counties predicted to be exposed to hurricane-force winds.
 
-We can now directly derive the total value of augmented observations. We note that for the storms with aircraft reconnaissance between 2017 and 2020, only 124 counties were predicted to experience hurricane-force wind speeds. This implies that the total retrospective social value of the augmented observations in this time period is approximately \$2.93 billion.
+We can now directly derive the total value of augmented observations. We note that for the storms with aircraft reconnaissance between 2017 and 2020, only 62 counties were predicted to experience hurricane-force wind speeds. This implies that the total retrospective social value of the augmented observations in this time period is approximately \$1.46 billion.
 
 \subsection{Cost-Benefit Analysis}
 
 For this exercise, we use published official benchmarks of the social return on NOAA's hurricane research aircraft platform. The main source is the 2016 Analysis of Alternatives (AoA) commissioned by NOAA's Office of Marine and Aviation Operations \citep{ANSER2016ExternalBenefits}. That study quantified four direct benefit channels. Namely, these were the reduction of needless evacuations (\$138.84 million NPV), commercial air traffic disruption (\$134.18M), commercial maritime traffic disruption (\$0.18M), and benefits to atmospheric chemistry research (\$227.65 million). Their calculations indicate a total NPV of \$500.86 million (BY\$2024, $r = 7\%$) over the 25-year operating life of an observation platform. The life-cycle cost of the least-cost alternative considered (two modified Lockheed C-130J aircraft) was \$680 million NPV over the same horizon, yielding a base-case benefit-to-cost ratio of approximately 0.75:1. The authors explicitly noted that this likely understates the total societal return, since the analysis considered only direct over-prediction cost-avoidance, omitted indirect impacts, and adopted uniformly conservative parameter values.
 
-Our framework captures a benefit channel that the 2016 AoA does not address: the social value of \emph{ex ante} variance reduction in the wind-speed forecast, monetized through a cost function estimated from realized hurricane damages \citep{molina2024social}. On the 2017--2020 retrospective denial sample, this single channel yields a social value of approximately \$2.93 billion or roughly 5.8 times the entire 2030--2055 NPV that the AoA estimated, despite covering only four storm seasons and abstracting from precipitation, surge, and energy-sector mechanisms. Annualized over the four years of data-denial experiments, the implied benefit rate is approximately \$732 million per year, against an AoA-implied benefit accrual of \$20 million per year over the replacement platform's forward operating life. The two figures are not strictly comparable, however, as one is a forward NPV of avoided costs from continued operations, while the other is a retrospective valuation of the information content already delivered by past missions. The order-of-magnitude gap nevertheless illustrates that the official benchmark, by construction, omits the largest channel through which this platform generates social value.
+Our framework captures a benefit channel that the 2016 AoA does not address: the social value of \emph{ex ante} variance reduction in the wind-speed forecast, monetized through a cost function estimated from realized hurricane damages \citep{molina2024social}. On the 2017--2020 retrospective denial sample, this single channel yields a social value of approximately \$1.46 billion or roughly 2.9 times the entire 2030--2055 NPV that the AoA estimated, despite covering only four storm seasons and abstracting from precipitation, surge, and energy-sector mechanisms. Annualized over the four years of data-denial experiments, the implied benefit rate is approximately \$366 million per year, against an AoA-implied benefit accrual of \$20 million per year over the replacement platform's forward operating life. The two figures are not strictly comparable, however, as one is a forward NPV of avoided costs from continued operations, while the other is a retrospective valuation of the information content already delivered by past missions. The order-of-magnitude gap nevertheless illustrates that the official benchmark, by construction, omits the largest channel through which this platform generates social value.
 
-The implications for the ongoing recapitalization of the NOAA aircraft fleet are stark. The 2022 NOAA Aircraft Recapitalization Plan \citep{NOAA2022AircraftPlan} initiated the procurement of four C-130J aircraft to replace the aging WP-3D fleet, with a total acquisition cost subsequently estimated at approximately \$1.4 billion \citep{GAO2025HurricaneHunter}, of which roughly \$678 million remained to be funded as of January 2025. The retrospective social value from a single four-year window of operations under our framework (\$2.93 billion) exceeds the entire undiscounted acquisition cost of the replacement fleet by a factor of two, and exceeds the remaining unfunded balance by a factor of four. Even under the AoA's own most-conservative LCC point estimate of \$680M NPV over 25 years, our retrospective valuation alone recovers the full lifecycle cost more than four times over. Importantly, our \$2.93 billion headline figure isolates the \emph{dropsonde-attributable} channel of aircraft reconnaissance. Because other onboard sensors, such as flight-level wind vectors, central-pressure estimates, and tail radar reflectivity, are held constant across both the ALL and NO configurations, our valuation should be interpreted as a conservative lower bound on the aggregate social value delivered by the NOAA aircraft infrastructure.
+The implications for the ongoing recapitalization of the NOAA aircraft fleet are stark. The 2022 NOAA Aircraft Recapitalization Plan \citep{NOAA2022AircraftPlan} initiated the procurement of four C-130J aircraft to replace the aging WP-3D fleet, with a total acquisition cost subsequently estimated at approximately \$1.4 billion \citep{GAO2025HurricaneHunter}, of which roughly \$678 million remained to be funded as of January 2025. The retrospective social value from a single four-year window of operations under our framework (\$1.46 billion) exceeds the entire undiscounted acquisition cost of the replacement fleet, and exceeds the remaining unfunded balance by more than a factor of two. Even under the AoA's own most-conservative LCC point estimate of \$680M NPV over 25 years, our retrospective valuation alone recovers the full lifecycle cost more than twice over. Importantly, our \$1.46 billion headline figure isolates the \emph{dropsonde-attributable} channel of aircraft reconnaissance. Because other onboard sensors, such as flight-level wind vectors, central-pressure estimates, and tail radar reflectivity, are held constant across both the ALL and NO configurations, our valuation should be interpreted as a conservative lower bound on the aggregate social value delivered by the NOAA aircraft infrastructure.
 
 \section{Policy Recommendations} \label{sec:policyrecs}
 
@@ -315,7 +315,7 @@ To bridge the gap between meteorological accuracy and economic preparedness, NOA
 The justification for capital investments, such as the \textit{NOAA Aircraft Recapitalization Plan}, has historically relied on assumption-based scenarios and qualitative ``value chain'' arguments. We recommend a unification of benefit analysis based on the structural methodology presented in this study. By replacing hypothetical scenarios with a loss function tied to observed forecast precision gains, NOAA can provide a mathematically rigorous, evidence-based justification for the acquisition of new platforms, such as the C-130. This approach anchors the ``External Benefits'' in observed historical data rather than projected assumptions.
 
 \paragraph{Dissemination and Routine Reporting.}
-The methodology and results of these economic valuations should be disseminated broadly to stakeholders, including Congress, FEMA, and the broader meteorological community. We recommend the creation of a routine ``Socio-Economic Impact Report'' for the aerial reconnaissance program, updated on a biennial basis. Providing transparent, updated estimates of the per-county and per-storm ROI ensures that program funding remains commensurate with its multi-billion dollar contribution to national economic resilience.
+The methodology and results of these economic valuations should be disseminated broadly to stakeholders, including Congress, FEMA, and the broader meteorological community. We recommend the creation of a routine ``Socio-Economic Impact Report'' for the aerial reconnaissance program, updated on a biennial basis. Providing transparent, updated estimates of the per-county and per-storm ROI ensures that program funding remains commensurate with its billion dollar contribution to national economic resilience.
 
 
 %------------------------------------------%
@@ -328,7 +328,7 @@ This study provides a novel empirical valuation of augmented aircraft observatio
 
 Our analysis proceeds in three stages. First, we establish that the social cost of forecast uncertainty is highly sensitive to intensity, with a marginal cost parameter that is statistically significant only for hurricane-force events. Second, we show that augmented observations reduce forecast standard deviation by approximately 0.26 m/s at the critical 3-day lead time. Finally, we project these physical gains into monetary terms. 
 
-With an average baseline forecast uncertainty of approximately 8.98 m/s for counties predicted to experience hurricane-force winds, the 0.26 m/s prediction gain translates into a benefit of approximately \$23.6 million per county per storm. When scaled against the broader capital requirements of the platform, the cost-benefit implications are stark. Aggregated across the 124 affected counties in our 2017--2020 retrospective denial sample, the total social value reaches \$2.93 billion. This single four-year window of benefits effectively recovers the entire \$1.4 billion acquisition cost of NOAA's planned C-130J fleet recapitalization twice over. Annualizing this return implies that the informational value delivered by these assets offsets their multi-decade procurement cycle in less than two active storm seasons, providing powerful empirical justification for sustained capital modernization.
+With an average baseline forecast uncertainty of approximately 8.98 m/s for counties predicted to experience hurricane-force winds, the 0.26 m/s prediction gain translates into a benefit of approximately \$23.6 million per county per storm. When scaled against the broader capital requirements of the platform, the cost-benefit implications are stark. Aggregated across the 62 affected counties in our 2017--2020 retrospective denial sample, the total social value reaches \$1.46 billion. This single four-year window of benefits effectively recovers the entire \$1.4 billion acquisition cost of NOAA's planned C-130J fleet recapitalization. Annualizing this return implies that the informational value delivered by these assets offsets their multi-decade procurement cycle in four active storm seasons, providing powerful empirical justification for sustained capital modernization.
 
 These results provide a bottom line for the strategic recapitalization of the NOAA aircraft fleet. While the \textit{2022 NOAA Aircraft Plan} identifies significant capital requirements for replacing aging platforms like the WP-3D with newer C-130 aircraft, our findings suggest that these investments are highly cost-effective. The social value generated in just a few active hurricane seasons is likely sufficient to cover the entire cost of fleet replacement. 
 
@@ -372,9 +372,9 @@ We then use each coefficient to compute the implied retrospective social value o
 
 Second, we test sensitivity of our results to individual storms. A one-storm-out jackknife across the eleven largest landfalls in the panel brackets the baseline estimate of \$5.03 million between approximately \$3.50 million (Katrina dropped) and \$6.80 million (Michael dropped), with the sub-hurricane coefficient remaining small and statistically indistinguishable from zero (Table \ref{tab:appA_jackknife}). We take this as evidence that no single storm drives the parameter; Katrina and Michael are the most influential observations, but removing either one leaves the headline coefficient well within an economically meaningful range.
 
-\include{figures and tables/appA_outcomes}
-\include{figures and tables/appA_valuations}
-\include{figures and tables/appA_jackknife}
+\input{figures and tables/appA_outcomes}
+\input{figures and tables/appA_valuations}
+\input{figures and tables/appA_jackknife}
 
 % ============================================================================
 % Appendix B — delta robustness on the denial panel
@@ -391,12 +391,12 @@ Fourth, we consider the inclusion of Hurricane Maria. While Maria is excluded fr
 
 When working with this expanded sample, the precision gain grows monotonically with storm intensity across all four statistically significant category cut-offs (Table \ref{tab:appB_intensity_maria}). Furthermore, the larger sample renders the estimate robust to the exclusion of any single storm, including Irma (Table \ref{tab:appB_jackknife_maria}). We interpret these findings as evidence that the fragility documented in the baseline continental-US sample is a small-sample artifact rather than a weakness of the precision-gain identification itself.
 
-\include{figures and tables/appB_leadtime}
-\include{figures and tables/appB_intensity}
-\include{figures and tables/appB_jackknife}
-\include{figures and tables/appB_maria}
-\include{figures and tables/appB_intensity_maria}
-\include{figures and tables/appB_jackknife_maria}
+\input{figures and tables/appB_leadtime}
+\input{figures and tables/appB_intensity}
+\input{figures and tables/appB_jackknife}
+\input{figures and tables/appB_maria}
+\input{figures and tables/appB_intensity_maria}
+\input{figures and tables/appB_jackknife_maria}
 
 \clearpage
 
@@ -405,15 +405,15 @@ When working with this expanded sample, the precision gain grows monotonically w
 % ============================================================================
 \section{Per-Storm Decomposition of the Retrospective Social Value} \label{app:per-storm}
 
-Here we decompose the \$2.93 billion retrospective social value of augmented observations across the 2017--2020 denial sample by individual storm. Per-county value equals the marginal cost parameter times the variance reduction, $\hat{\beta}^{w}_{Hurr} \times \Delta\sigma^{2} \approx \$23.4$ million summed across the affected hurricane-force / 3-day-lead county observations of each storm (Table \ref{tab:appC_per_storm}). We organize the discussion along three dimensions.
+Here we decompose the \$1.46 billion retrospective social value of augmented observations across the 2017--2020 denial sample by individual storm. Per-county value equals the marginal cost parameter times the variance reduction, $\hat{\beta}^{w}_{Hurr} \times \Delta\sigma^{2} \approx \$23.6$ million summed across the affected hurricane-force / 3-day-lead county observations of each storm (Table \ref{tab:appC_per_storm}). We organize the discussion along three dimensions.
 
 First, the distribution of contributing storms. Six of the eight 2017--2020 landfalling hurricanes with denial experiments in the continental-US archive contribute to the retrospective valuation. Hurricanes Harvey and Hanna do not appear because they did not produce hurricane-force wind realizations at the 3-day lead in the denial sample. The implication is that the headline retrospective figure is identified from storms with substantial hurricane-force exposure at the operational lead time, not from a broad cross-section of weak landfalls.
 
-Second, concentration in the top contributors. Hurricane Michael (2018) generates \$1{,}275 million (43.5\% of the total), and Hurricane Laura (2020) generates \$614 million (21.0\%), reflecting their large hurricane-force footprints at the 3-day lead (54 and 26 affected counties, respectively). The remaining four storms (Irma, Sally, Florence, Isaias) jointly account for the remaining 35\%. The implication is that the headline aggregate is heavily weighted by the two largest landfalls in the sample.
+Second, concentration in the top contributors. Hurricane Michael (2018) generates \$638 million (43.5\% of the total), and Hurricane Laura (2020) generates \$307 million (21.0\%), reflecting their large hurricane-force footprints at the 3-day lead (27 and 13 affected counties, respectively). The remaining four storms (Irma, Sally, Florence, Isaias) jointly account for the remaining 35\%. The implication is that the headline aggregate is heavily weighted by the two largest landfalls in the sample.
 
-Third, the source of the concentration. The dominance of Michael and Laura is partially mechanical. Every affected county-storm in the denial sample contributes the same per-county valuation of \$23.4 million, so a storm's total value scales linearly with its hurricane-force / 3-day-lead county count. Michael's 54 counties and Laura's 26 simply reflect the geographic breadth of their hurricane-force impacts. 
+Third, the source of the concentration. The dominance of Michael and Laura is partially mechanical. Every affected county-storm in the denial sample contributes the same per-county valuation of \$23.6 million, so a storm's total value scales linearly with its hurricane-force / 3-day-lead county count. Michael's 27 counties and Laura's 13 simply reflect the geographic breadth of their hurricane-force impacts. 
 
-\include{figures and tables/appC_per_storm.tex}
+\input{figures and tables/appC_per_storm.tex}
 
 % ============================================================================
 % Appendix D — stakeholder workshop report
@@ -428,11 +428,11 @@ We organize the responses along four dimensions. First, identification and scope
 
 The 0.26 m/s reduction in ex-ante forecast uncertainty was viewed as statistically meaningful, with several respondents noting that even modest precision gains become highly relevant when aggregated across storms, counties, and populations. The workshop did not identify a credible threat to the identification strategy or the choice of lead time, suggesting that the Stage 2 estimate of $\delta$ in Section \ref{sec:results} is robust to the design choices most salient to subject-matter experts.
 
-\include{figures and tables/appD_sample}
+\input{figures and tables/appD_sample}
 
 \begin{landscape}
-\include{figures and tables/appD_likert_part1}
-\include{figures and tables/appD_likert_part2}
+\input{figures and tables/appD_likert_part1}
+\input{figures and tables/appD_likert_part2}
 \end{landscape}
 
 
