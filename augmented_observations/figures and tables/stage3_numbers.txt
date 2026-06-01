@@ -4,5 +4,5 @@ delta (m/s)                            = 0.258
 baseline sigma_All (m/s)               = 8.98
 delta_sigma_sq = (sigma+delta)^2-sigma^2 = 4.69 (m/s)^2
 Value per Affected County ($M)         = 23.61
-Affected hurricane-force counties      = 124
-Total Retrospective Value ($B)         = 2.93
+Affected hurricane-force counties      = 62
+Total Retrospective Value ($B)         = 1.46
