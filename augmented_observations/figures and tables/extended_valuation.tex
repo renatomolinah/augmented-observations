@@ -1,0 +1,22 @@
+\begin{table}
+
+\caption{Extended retrospective social value of augmented observations, full forecast panel. \label{tab:extended_valuation}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lrrrr}
+\toprule
+Sample & Storms & HF County-Storms & Value (\$B) & Annualized (\$M/yr)\\
+\midrule
+Denial sample, 2017--2020 (validation) & 6 & 62 & 1.42 & --\\
+Full panel, 2010--2024 & 20 & 166 & 3.89 & 259\\
+Full panel, 2005--2024 & 27 & 216 & 5.18 & 259\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Each hurricane-force ($\geq$ 33 m/s), 3-day-lead county-storm is priced at its own baseline forecast standard deviation $\sigma_3$, holding the marginal cost parameter $\hat{\beta}^{w}_{Hurr} = 5.03$ and the precision gain $\delta = 0.26$ m/s fixed at their Stage 1 and Stage 2 estimates: $V = \hat{\beta}^{w}_{Hurr}\,[(\sigma_3+\delta)^2 - \sigma_3^2]$. Under storm-specific $\sigma_3$ the 2017--2020 denial sample reproduces 62 county-storms at \$1.42B; the \$1.46B headline in the main text applies the pooled baseline $\bar{\sigma} = 8.98$ m/s uniformly across the same 62 county-storms. Rapidly forming storms with no 3-day-ahead hurricane-force forecast (e.g., Harvey, Hanna) are excluded by construction.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}
