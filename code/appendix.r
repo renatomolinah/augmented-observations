@@ -138,17 +138,22 @@ val <- val |>
     v_pc_M  = b_pc * delta_sigma_sq * population / 1e6
   )
 
+# hf3 carries two rows per county-storm (augmented_obs 0/1, the AO-denied and
+# AO-assimilated denial runs); the delta regression uses both, but the dollar
+# aggregation must sum over DISTINCT county-storms or it double-counts (124 -> 62).
+val_cs <- val |> distinct(county, name, .keep_all = TRUE)
+
 agg <- tibble(
   Outcome = c("Total cost (\\$M)",
               "Cost / county GDP (\\%)",
               "Cost per capita (\\$)"),
   beta    = c(b_tot, b_gdp, b_pc),
-  per_co  = c(mean(val$v_tot_M),
-              mean(val$v_gdp_M),
-              mean(val$v_pc_M)),
-  total_B = c(sum(val$v_tot_M) / 1000,
-              sum(val$v_gdp_M) / 1000,
-              sum(val$v_pc_M)  / 1000)
+  per_co  = c(mean(val_cs$v_tot_M),
+              mean(val_cs$v_gdp_M),
+              mean(val_cs$v_pc_M)),
+  total_B = c(sum(val_cs$v_tot_M) / 1000,
+              sum(val_cs$v_gdp_M) / 1000,
+              sum(val_cs$v_pc_M)  / 1000)
 )
 
 # Build the LaTeX directly so the math note (\Delta, \sigma, \bar, \ref) is not
@@ -177,10 +182,10 @@ Cost per capita (\\$) & %.3f & %.2f & %.2f\\\\
 \\end{adjustbox}
 \\end{table}
 ',
-  b_tot, mean(val$v_tot_M), sum(val$v_tot_M) / 1000,
-  b_gdp, mean(val$v_gdp_M), sum(val$v_gdp_M) / 1000,
-  b_pc,  mean(val$v_pc_M),  sum(val$v_pc_M)  / 1000,
-  delta_sigma_sq, nrow(val)
+  b_tot, mean(val_cs$v_tot_M), sum(val_cs$v_tot_M) / 1000,
+  b_gdp, mean(val_cs$v_gdp_M), sum(val_cs$v_gdp_M) / 1000,
+  b_pc,  mean(val_cs$v_pc_M),  sum(val_cs$v_pc_M)  / 1000,
+  delta_sigma_sq, nrow(val_cs)
 )
 writeLines(val_tex_str, here("output/appA_valuations.tex"))
 
