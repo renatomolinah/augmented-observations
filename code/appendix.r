@@ -513,7 +513,7 @@ value_per_county <- beta_hurr * delta_sigma_sq
 per_storm <- reg_data |>
   group_by(name) |>
   summarise(
-    affected_counties = n(),
+    affected_counties = n_distinct(county),
     .groups = "drop"
   ) |>
   mutate(

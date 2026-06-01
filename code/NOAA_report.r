@@ -425,8 +425,8 @@ value_per_county <- beta_hurr * delta_sigma_sq
 sample_benefits <- reg_data |>
   group_by(name) |>
   summarise(
-    affected_counties = n(),
-    total_benefit_M   = n() * value_per_county
+    affected_counties = n_distinct(county),
+    total_benefit_M   = n_distinct(county) * value_per_county
   ) |>
   arrange(desc(total_benefit_M))
 
@@ -440,7 +440,7 @@ stage3_lines <- c(
   sprintf("baseline sigma_All (m/s)               = %.2f",     baseline_sd),
   sprintf("delta_sigma_sq = (sigma+delta)^2-sigma^2 = %.2f (m/s)^2", delta_sigma_sq),
   sprintf("Value per Affected County ($M)         = %.2f",     value_per_county),
-  sprintf("Affected hurricane-force counties      = %d",       nrow(reg_data)),
+  sprintf("Affected hurricane-force counties      = %d",       sum(sample_benefits$affected_counties)),
   sprintf("Total Retrospective Value ($B)         = %.2f",     total_value_B)
 )
 cat("\n--- Valuation Summary (in-sample, 2017-2020 denial experiments) ---\n")
