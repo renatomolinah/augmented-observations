@@ -1,9 +1,12 @@
 \begin{table}
     \centering
     \begin{threeparttable}
-      \caption{Summary of the cases used.}
+      \caption{Landfalling hurricanes in the data-denial sample, 2017--2020.}
       \label{tab:data_denial}
-      \begin{tabular}{c c c c c c}
+      \small
+      \setlength{\tabcolsep}{22pt}
+      \renewcommand{\arraystretch}{1.25}
+      \begin{tabular}{c c c c}
         \hline
         Year & Storm Name & Landfall Intensity & Landfall Time\\
         \hline
@@ -19,8 +22,7 @@
       \end{tabular}
 \begin{tablenotes}
 \small
-\item \textit{Note: }
-\item The landfall intensity is categorized according to the Saffir-Simpson Hurricane Wind Scale, and the landfall time is rounded to the next-earliest synoptic time (UTC). These eight continental-US landfalling hurricanes constitute the Stage 2 denial archive; the headline $\delta$ regression uses the six storms that contribute hurricane-force, 3-day-lead county-storm observations (Harvey and Hanna contribute none). We draw on the corresponding \citet{DitchekEA2023} data-denial experiments---which assimilate or omit dropsonde profiles while holding all other reconnaissance products constant---to identify the precision gain $\delta$.
+\item \textit{Note:} Landfall intensity follows the Saffir-Simpson Hurricane Wind Scale. Landfall time is the nearest synoptic hour (UTC).
 \end{tablenotes}
 \end{threeparttable}
 \end{table}
