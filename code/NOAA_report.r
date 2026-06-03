@@ -277,7 +277,8 @@ plot_top <- forecast_data_lead_times |>
   ggplot(aes(x = wind_fc_sd, color = factor(lead_days))) +
   geom_density(linewidth = 1.1, alpha = 0.6) +
   scale_color_brewer(palette = "Dark2", name = "Lead days") +
-  labs(x = "Wind speed SD (m/s)", y = "Density") +
+  labs(title = "A: Baseline forecast uncertainty (ALL only)",
+       x = "Wind speed SD (m/s)", y = "Density") +
   facet_wrap(~ intensity_panel, nrow = 1) +
   theme_minimal(base_size = 14) +
   theme(
@@ -298,7 +299,8 @@ plot_bottom <- forecast_data_lead_times |>
     values = c("With Aug Obs" = "#1B9E77", "Without Aug Obs" = "#D95F02"),
     name   = ""
   ) +
-  labs(x = "Wind speed SD (m/s)", y = "Density") +
+  labs(title = "B: Augmented-observation impact at hurricane force (ALL vs. NO)",
+       x = "Wind speed SD (m/s)", y = "Density") +
   facet_wrap(
     ~ factor(lead_days),
     nrow     = 1,
