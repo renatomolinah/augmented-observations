@@ -116,6 +116,7 @@ msummary(
   coef_omit = c(-1, -5, -6),
   gof_omit  = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors",
   fmt       = "%.2f",
+  stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
   add_rows  = rows,
   title     = "The Value of a Wind Speed Forecast Improvement. \\label{tab:voi-table}",
   notes     = list(

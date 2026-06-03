@@ -270,12 +270,12 @@ This finding aligns with the intuition that protective actions and accurate info
 
 In the second stage, we quantify the physical contribution of augmented observations to forecast precision. We utilize the data denial experiments from \citet{DitchekEA2023} to isolate the reduction in forecast noise attributable to the assimilation of dropsondes.
 
-Figure \ref{fig:uncertainty_panels} provides a comprehensive view of the forecast uncertainty environment. The top row characterizes the baseline uncertainty: for hurricane-force events ($\geq33$ m/s), the ex-ante forecast standard deviation ($\sigma$) is significantly higher and grows rapidly as lead time increases (shifting right from 1 to 3 days). This confirms that high-impact storms have a lower signal-to-noise ratio at longer lead times.
+Figure \ref{fig:uncertainty_panels} provides a comprehensive view of the forecast uncertainty environment. The top row characterizes the baseline uncertainty under the operational regime that assimilates augmented observations: for hurricane-force events ($\geq33$ m/s), the ex-ante forecast standard deviation ($\sigma$) is significantly higher and grows rapidly as lead time increases (shifting right from 1 to 3 days), whereas for weak exposures it stays small and nearly flat across leads. This confirms that high-impact storms have a lower signal-to-noise ratio at longer lead times.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{figures and tables/augmented_panel.png}
-    \caption{\textbf{Forecast Uncertainty Dynamics and the Impact of Augmented Observations.} \textit{Top Row:} Kernel density estimates of forecast wind speed ex-ante standard deviation ($\sigma$) by lead time (Red=1 day, Blue=2 days, Green=3 days), stratified by storm intensity. \textit{Bottom Row:} The specific impact on ex-ante standard deviation of augmented observations for hurricane-force winds ($\geq33$ m/s).}
+    \caption{\textbf{Forecast Uncertainty Dynamics and the Impact of Augmented Observations.} \textit{Top row:} Kernel density estimates of the ex-ante forecast wind-speed standard deviation ($\sigma$) for the operational forecasts that assimilate augmented observations (the ALL configuration), by lead time (1 day in teal, 2 days in orange, 3 days in purple) and stratified by realized intensity ($>0$, $\geq17.5$, and $\geq33$ m/s). \textit{Bottom row:} the distribution of $\sigma$ for hurricane-force winds ($\geq33$ m/s) with augmented observations (teal) and without (orange), at the 1, 2, and 3 day leads.}
     \label{fig:uncertainty_panels}
 \end{figure}
 

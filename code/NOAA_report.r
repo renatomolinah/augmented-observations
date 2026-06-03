@@ -271,7 +271,9 @@ plot_top <- forecast_data_lead_times |>
       wind_obs > 0    ~ "> 0 m/s"
     )
   ) |>
-  filter(!is.na(augmented_obs)) |>
+  # Top row characterizes the operational baseline, so keep only the ALL
+  # (with-AO) regime rather than pooling the ALL and NO denial runs.
+  filter(augmented_obs == 1) |>
   ggplot(aes(x = wind_fc_sd, color = factor(lead_days))) +
   geom_density(linewidth = 1.1, alpha = 0.6) +
   scale_color_brewer(palette = "Dark2", name = "Lead days") +

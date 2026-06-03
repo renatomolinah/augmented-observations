@@ -259,14 +259,12 @@ In the final stage, we monetize the precision gains identified in Stage 2 by app
      V^{AO}_{csh} \;=\; \hat{\beta}^w_{Hurr} \,\left(\sigma_{\text{NO},h}^{2} - \sigma_{\text{ALL},h}^{2}\right).
 \end{equation}
 
-Following the linear approximation established in Section \ref{sec:model}, this calculation simplifies to $V^{AO}_{csh} \approx 2\,\hat{\beta}^w_{Hurr}\times\sigma_{\text{ALL},h}\times\hat{\delta}$. This operational form explicitly highlights how the final monetary benefits scale with a storm's baseline uncertainty under the active observation regime ($\sigma_{\text{ALL},h}$). Expression \eqref{eq:value_calc} provides our direct, empirical estimate of the avoided damages and optimized protective expenditures attributable solely to the information provided by the dropsonde network. Because the expectation over forecasts is approximated by the signals we observe, the resulting value is conditional on the sampled storms being representative of the broader distribution of landfalling hurricanes; a small or atypical set of signals approximates the \emph{ex-ante} expectation imprecisely.
+Following the linear approximation established in Section \ref{sec:model}, this calculation simplifies to $V^{AO}_{csh} \approx 2\,\hat{\beta}^w_{Hurr}\times\sigma_{\text{ALL},h}\times\hat{\delta}$. This operational form explicitly highlights how the final monetary benefits scale with a storm's baseline uncertainty under the active observation regime ($\sigma_{\text{ALL},h}$). Expression \eqref{eq:value_calc} provides our direct, empirical estimate of the avoided damages and optimized protective expenditures attributable solely to the information provided by the dropsonde network. 
 
 %------------------------------------------%
 %       Results
 %------------------------------------------%
 \section{Results} \label{sec:results}
-
-Following the structure outlined in Section \ref{sec:methods}, we present our findings in three stages: the estimation of the marginal cost of forecast errors, the quantification of the physical forecast improvements attributable to AO, and the final valuation of those improvements.
 
 \subsection{Stage 1: The Marginal Cost of Forecast Errors}
 
@@ -274,20 +272,22 @@ We begin by analyzing the empirical relationship between forecast ex-post error 
 
 \input{figures and tables/paper_table_voi}
 
-Column (7) presents our preferred specification, which differentiates exposure to hurricane-force ($\geq33$ m/s) and sub-hurricane-force winds. The empirical results show that the cost of forecast error is driven entirely by high-intensity events. For counties experiencing hurricane-force winds, a one-unit increase in the squared demeaned wind speed error increases total costs (damages plus recovery expenditures) by approximately \$5.03 million (SE = 1.76). In contrast, the effect for sub-hurricane force winds is small and statistically indistinguishable from zero ($\beta = 0.09$).
+Column (7) presents our preferred specification, which differentiates exposure to hurricane-force ($\geq33$ m/s) and sub-hurricane-force winds. The empirical results show that the cost of forecast error is driven entirely by high-intensity events. For counties experiencing hurricane-force winds, a one-unit increase in the squared demeaned wind speed error increases total costs (damages plus recovery expenditures) by approximately \$5.03 million. In contrast, the effect for sub-hurricane force winds is small and statistically indistinguishable from zero.
 
-This finding aligns with the intuition that protective actions and accurate information are most critical when the physical threat is catastrophic. Consequently, for the remainder of the analysis (Stages 2 and 3), we utilize the coefficient $\hat{\beta}^w_{Hurr} = 5.03$ million to value forecast improvements for hurricane-force impacts.
+This finding aligns with the intuition that protective actions and accurate information are most critical when the physical threat is catastrophic. Consequently, for the remainder of the analysis (Stages 2 and 3), we utilize the coefficient $\hat{\beta}^w_{Hurr} = 5.03$ million to value forecast improvements for hurricane-force impacts. Appendices \ref{app:beta} and \ref{app:3day} show robustness to alternative cost outcomes, the exclusion of individual storms, and using 3-day-ahead forecasts. 
 
 \subsection{Stage 2: AO and Forecast Precision}
 
-We now report the precision gain that augmented observations deliver, estimated from the data-denial experiments of \citet{DitchekEA2023}.
+For this stage, we begin by describing how forecast uncertainty varies with storm intensity, lead time, and augmented observations. The top row of Figure \ref{fig:uncertainty_panels} plots, for the operational forecasts that assimilate augmented observations, the distribution across counties of the ex-ante forecast wind-speed standard deviation ($\sigma$), colored by lead time and stratified by realized intensity. At low intensities (the $>0$ m/s panel, which is dominated by counties with weak or no wind), $\sigma$ is small, tightly concentrated near zero, and essentially flat across lead times: weak exposures are easy to predict and leave little uncertainty to resolve. 
 
-Figure \ref{fig:uncertainty_panels} provides a comprehensive view of the forecast uncertainty environment. The top row characterizes the baseline uncertainty: for hurricane-force events ($\geq33$ m/s), the ex-ante forecast standard deviation ($\sigma$) is significantly higher and grows rapidly as lead time increases (shifting right from 1 to 3 days). This confirms that high-impact storms have a lower signal-to-noise ratio at longer lead times.
+As the intensity threshold rises the distribution shifts and widens, modestly at tropical-storm force ($\geq17.5$ m/s) and sharply at hurricane force ($\geq33$ m/s), where $\sigma$ is centered at much higher values. The lead-time gradient strengthens in tandem: for hurricane-force events the distribution moves visibly rightward from the 1-day to the 3-day lead, whereas for weak exposures the lead curves are nearly indistinguishable. Forecast uncertainty is therefore concentrated exactly where it is most costly, in high-intensity storms at longer lead times.
+
+Building from this observation, the bottom row isolates the contribution of augmented observations, comparing the $\sigma$ distribution for hurricane-force winds with and without AO at each lead. At the 1-day lead the two distributions almost coincide, leaving little scope for additional information to sharpen the forecast. The gap widens as the lead lengthens, and at the 3-day lead the with-AO distribution is clearly shifted toward lower $\sigma$ than the without-AO distribution. Augmented observations thus deliver their largest precision gains at the longer leads, when baseline uncertainty is greatest, motivating the focus on the 3-day lead in the analysis that follows.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{figures and tables/augmented_panel.png}
-    \caption{\textbf{Forecast Uncertainty Dynamics and the Impact of Augmented Observations.} \textit{Top Row:} Kernel density estimates of forecast wind speed ex-ante standard deviation ($\sigma$) by lead time (Red=1 day, Blue=2 days, Green=3 days), stratified by storm intensity. \textit{Bottom Row:} The specific impact on ex-ante standard deviation of AO for hurricane-force winds ($\geq33$ m/s).}
+    \caption{\textbf{Forecast Uncertainty Dynamics and the Impact of Augmented Observations.} \textit{Top row:} Kernel density estimates of the ex-ante forecast wind-speed standard deviation ($\sigma$) across counties, for the operational forecasts that assimilate augmented observations (the ALL configuration), by lead time (1 day in teal, 2 days in orange, 3 days in purple) and stratified by realized intensity ($>0$, $\geq17.5$, and $\geq33$ m/s). \textit{Bottom row:} the distribution of $\sigma$ for hurricane-force winds ($\geq33$ m/s) with augmented observations (teal) and without (orange), at the 1, 2, and 3 day leads.}
     \label{fig:uncertainty_panels}
 \end{figure}
 
