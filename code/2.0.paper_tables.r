@@ -163,21 +163,20 @@ add_adjust_box(.aoa)
 # Stage 2 - Augmented Observations and Forecast Precision (delta)
 # ==============================================================================
 
-forecast_data_lead_times <- fread(denial_path) |>
-  filter(name != "maria")
+forecast_data_lead_times <- fread(denial_path)
 
 reg_data <- forecast_data_lead_times |>
   filter(!is.na(augmented_obs), lead_days == 3, wind_obs > 33)
 
 regs_delta <- list()
 regs_delta[[1]] <- feols(wind_fc_sd ~ augmented_obs | county,
-                         data = reg_data, vcov = ~county)
+                         data = reg_data, vcov = ~name)
 regs_delta[[2]] <- feols(wind_fc_sd ~ augmented_obs | county + name,
-                         data = reg_data, vcov = ~county)
+                         data = reg_data, vcov = ~name)
 regs_delta[[3]] <- feols(wind_fc_sd ~ augmented_obs + wind_obs | county,
-                         data = reg_data, vcov = ~county)
+                         data = reg_data, vcov = ~name)
 regs_delta[[4]] <- feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name,
-                         data = reg_data, vcov = ~county)
+                         data = reg_data, vcov = ~name)
 
 # Full rendering: show the wind_obs control coefficient (the report hides it) and
 # keep the R2 / within-R2 block.
@@ -202,9 +201,9 @@ msummary(
   title       = "Effect of Augmented Observations on Ex-Ante Uncertainty (full specification). \\label{tab:noaa-controls}",
   notes       = list(
     "Full coefficient table for the Stage 2 precision regressions. Standard errors clustered
-     at the county level. The sample is the 2017--2020 augmented-observations denial archive at
-     the 3-day lead time and hurricane-force realizations ($\\\\geq$ 33 m/s); Hurricane Maria is
-     excluded because of its Puerto Rico landfall. $\\\\delta$ is the average reduction in the
+     at the storm level. The sample is the 2017--2020 augmented-observations denial archive at
+     the 3-day lead time and hurricane-force realizations ($\\\\geq$ 33 m/s) across the ten
+     landfalling hurricanes, Hurricane Maria included. $\\\\delta$ is the average reduction in the
      ex-ante wind-speed forecast standard deviation attributable to dropsonde assimilation (the
      ALL configuration of \\\\citet{DitchekEA2023}); the negative sign reflects that AO assimilation
      lowers ensemble spread relative to the no-dropsonde (NO) counterfactual."
@@ -240,7 +239,7 @@ surface_cell <- function(dat, lead, hf) {
                 delta = NA_real_, se = NA_real_, p = NA_real_, value_M = NA_real_)
   if (nrow(d) < 10 || length(unique(d$augmented_obs)) < 2) return(out)
   m <- tryCatch(feols(wind_fc_sd ~ augmented_obs | county + name,
-                      data = d, vcov = ~county),
+                      data = d, vcov = ~name),
                 error = function(e) NULL)
   if (is.null(m) || !("augmented_obs" %in% names(coef(m)))) return(out)
   dl <- abs(coef(m)[["augmented_obs"]])
@@ -280,8 +279,8 @@ vs_tex <- kbl(surf_disp, format = "latex", booktabs = TRUE, escape = FALSE,
     general = paste(
       "Each cell estimates the precision gain $\\\\hat{\\\\delta}=|\\\\text{coef}(\\\\text{AO})|$ from the Stage 2",
       "specification $\\\\sigma_{csh}=\\\\delta\\\\,\\\\text{AO}_{csh}+\\\\alpha_c+\\\\gamma_h+\\\\varepsilon_{csh}$ on the indicated",
-      "lead-time / intensity subset of the 2017--2020 continental-US denial archive (Maria excluded), with",
-      "county and storm fixed effects and county-clustered standard errors. $\\\\bar{\\\\sigma}_{\\\\text{ALL}}$ is the mean",
+      "lead-time / intensity subset of the 2017--2020 US denial archive (Maria included), with",
+      "county and storm fixed effects and storm-clustered standard errors. $\\\\bar{\\\\sigma}_{\\\\text{ALL}}$ is the mean",
       "ex-ante forecast standard deviation with dropsondes assimilated. Value per county is",
       "$\\\\hat{\\\\beta}_2[(\\\\bar{\\\\sigma}_{\\\\text{ALL}}+\\\\hat{\\\\delta})^2-\\\\bar{\\\\sigma}_{\\\\text{ALL}}^2]$, using the Stage 1 column (7)",
       sprintf("cost parameters $\\\\hat{\\\\beta}_2^{Hurr}=%.2f$ and $\\\\hat{\\\\beta}_2^{Sub}=%.2f$ (\\\\$M per (m/s)$^2$).", beta2_hurr, beta2_sub),
@@ -300,7 +299,7 @@ add_adjust_box(here("output/paper_value_surface.tex"))
 grid_cell_fit <- function(dat, lead, hf) {
   d <- dat |> filter(lead_days == lead, !is.na(augmented_obs))
   d <- if (hf) filter(d, wind_obs > 33) else filter(d, wind_obs <= 33)
-  feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name, data = d, vcov = ~county)
+  feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name, data = d, vcov = ~name)
 }
 grid_specs <- list(
   "HF / 1d"  = grid_cell_fit(forecast_data_lead_times, 1, TRUE),
@@ -326,14 +325,51 @@ msummary(
   stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
   add_rows  = grid_rows,
   title     = "Per-cell precision regressions across the lead $\\times$ intensity grid. \\label{tab:appB_precision_grid}",
-  notes     = list("Each column estimates $\\\\sigma_{csh}=\\\\delta\\\\,\\\\text{AO}_{csh}+\\\\theta\\\\,x_{csh}+\\\\alpha_c+\\\\gamma_h+\\\\varepsilon_{csh}$ on the indicated lead-time / intensity subset of the 2017--2020 continental-US denial archive (Maria excluded), with county and storm fixed effects and county-clustered standard errors. HF denotes hurricane-force realizations ($\\\\geq$ 33 m/s). These are the regressions summarized as per-county value in Table \\\\ref{tab:value-surface}; the value surface reports $|\\\\hat{\\\\delta}|$ from the parsimonious specification (omitting the realized-wind control), materially identical to the $\\\\delta$ shown here."),
+  notes     = list("Each column estimates $\\\\sigma_{csh}=\\\\delta\\\\,\\\\text{AO}_{csh}+\\\\theta\\\\,x_{csh}+\\\\alpha_c+\\\\gamma_h+\\\\varepsilon_{csh}$ on the indicated lead-time / intensity subset of the 2017--2020 US denial archive (Maria included), with county and storm fixed effects and storm-clustered standard errors. HF denotes hurricane-force realizations ($\\\\geq$ 33 m/s). These are the regressions summarized as per-county value in Table \\\\ref{tab:value-surface}; the value surface reports $|\\\\hat{\\\\delta}|$ from the parsimonious specification (omitting the realized-wind control), materially identical to the $\\\\delta$ shown here."),
   threeparttable = TRUE,
   escape    = FALSE,
   output    = here("output/paper_appB_precision_grid.tex")
 )
 add_adjust_box(here("output/paper_appB_precision_grid.tex"))
 
+# --- Full AO x intensity x lead interaction, built progressively (mirrors the VOI
+# table's column-by-column structure) -> paper_interaction_grid. Justifies focusing
+# the valuation on the 3-day hurricane-force cell: the precision gain concentrates
+# there, recovered as the AO x 3-day x HF triple interaction in column (6).
+intr_d <- forecast_data_lead_times |>
+  filter(!is.na(augmented_obs), lead_days %in% c(1, 2, 3)) |>
+  mutate(hf = as.integer(wind_obs > 33))
+intr_m <- list(
+  "(1)" = feols(wind_fc_sd ~ augmented_obs | county, intr_d, vcov = ~name),
+  "(2)" = feols(wind_fc_sd ~ augmented_obs | county + name, intr_d, vcov = ~name),
+  "(3)" = feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name, intr_d, vcov = ~name),
+  "(4)" = feols(wind_fc_sd ~ augmented_obs*factor(lead_days) + wind_obs | county + name, intr_d, vcov = ~name),
+  "(5)" = feols(wind_fc_sd ~ augmented_obs*hf + wind_obs | county + name, intr_d, vcov = ~name),
+  "(6)" = feols(wind_fc_sd ~ augmented_obs*factor(lead_days)*hf + wind_obs | county + name, intr_d, vcov = ~name)
+)
+intr_cm <- c(
+  "augmented_obs"                       = "$\\delta$: Augmented Observations (AO)",
+  "augmented_obs:factor(lead_days)2"    = "$\\delta \\times$ 2-day lead",
+  "augmented_obs:factor(lead_days)3"    = "$\\delta \\times$ 3-day lead",
+  "augmented_obs:hf"                    = "$\\delta \\times$ Hurricane-force",
+  "augmented_obs:factor(lead_days)2:hf" = "$\\delta \\times$ 2-day $\\times$ HF",
+  "augmented_obs:factor(lead_days)3:hf" = "$\\delta \\times$ 3-day $\\times$ HF",
+  "wind_obs"                            = "Realized wind speed (m/s)")
+intr_rows <- tribble(~term, ~"(1)", ~"(2)", ~"(3)", ~"(4)", ~"(5)", ~"(6)",
+  "County FE", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark",
+  "Storm FE", "", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark",
+  "Lead-time main effects", "", "", "", "\\checkmark", "", "\\checkmark",
+  "Intensity main effect", "", "", "", "", "\\checkmark", "\\checkmark")
+msummary(intr_m, coef_map = intr_cm, gof_omit = "AIC|BIC|Log.|RMSE|Std.Errors|FE|R2 Within",
+  fmt = "%.3f", stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01), add_rows = intr_rows,
+  escape = FALSE, threeparttable = TRUE,
+  title = "Augmented observations $\\times$ intensity $\\times$ lead: the precision gain across the full interaction. \\label{tab:interaction-grid}",
+  notes = list("Progressive build of the Stage 2 precision regression on the 2017--2020 US augmented-observations denial archive (all ten landfalling hurricanes, Hurricane Maria included), leads 1--3 days. The outcome is the ex-ante wind-speed forecast standard deviation. Column (1) is the pooled precision gain; (2) adds storm fixed effects; (3) the realized-wind control; (4) the AO $\\\\times$ lead interaction; (5) the AO $\\\\times$ hurricane-force (HF, $\\\\geq$ 33 m/s) interaction; (6) the full AO $\\\\times$ lead $\\\\times$ intensity interaction. The implied precision gain in the headline 3-day hurricane-force cell is the sum of $\\\\delta$ and its 3-day, HF, and 3-day$\\\\times$HF interactions. Storm-clustered standard errors in parentheses."),
+  output = here("output/paper_interaction_grid.tex"))
+add_adjust_box(here("output/paper_interaction_grid.tex"))
+
 cat("\n[paper_tables] Wrote full tables:\n",
+    "  output/paper_interaction_grid.tex\n",
     "  output/paper_table_voi.tex\n",
     "  output/paper_appA_outcomes.tex\n",
     "  output/paper_controls_table.tex\n",

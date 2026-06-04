@@ -1,0 +1,40 @@
+\begin{table}
+
+\caption{Augmented observations $\times$ intensity $\times$ lead: the precision gain across the full interaction. \label{tab:interaction-grid}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & (1) & (2) & (3) & (4) & (5) & (6)\\
+\midrule
+$\delta$: Augmented Observations (AO) & 0.015 & 0.015 & 0.015 & -0.055* & 0.015 & -0.055*\\
+ & (0.024) & (0.024) & (0.024) & (0.029) & (0.024) & (0.029)\\
+$\delta \times$ 2-day lead &  &  &  & 0.146 &  & 0.145\\
+ &  &  &  & (0.108) &  & (0.109)\\
+$\delta \times$ 3-day lead &  &  &  & 0.073 &  & 0.076\\
+ &  &  &  & (0.046) &  & (0.046)\\
+$\delta \times$ Hurricane-force &  &  &  &  & -0.062 & 0.034\\
+ &  &  &  &  & (0.077) & (0.087)\\
+$\delta \times$ 2-day $\times$ HF &  &  &  &  &  & 0.094\\
+ &  &  &  &  &  & (0.179)\\
+$\delta \times$ 3-day $\times$ HF &  &  &  &  &  & -0.410***\\
+ &  &  &  &  &  & (0.076)\\
+Realized wind speed (m/s) &  &  & 0.256*** & 0.254*** & 0.273*** & 0.272***\\
+ &  &  & (0.016) & (0.016) & (0.015) & (0.016)\\
+\midrule
+Num.Obs. & 115482 & 115482 & 115482 & 115482 & 115482 & 115482\\
+R2 & 0.287 & 0.369 & 0.756 & 0.772 & 0.765 & 0.782\\
+R2 Adj. & 0.271 & 0.355 & 0.750 & 0.767 & 0.760 & 0.777\\
+County FE & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+Storm FE &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+Lead-time main effects &  &  &  & \checkmark &  & \checkmark\\
+Intensity main effect &  &  &  &  & \checkmark & \checkmark\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 Progressive build of the Stage 2 precision regression on the 2017--2020 US augmented-observations denial archive (all ten landfalling hurricanes, Hurricane Maria included), leads 1--3 days. The outcome is the ex-ante wind-speed forecast standard deviation. Column (1) is the pooled precision gain; (2) adds storm fixed effects; (3) the realized-wind control; (4) the AO $\times$ lead interaction; (5) the AO $\times$ hurricane-force (HF, $\geq$ 33 m/s) interaction; (6) the full AO $\times$ lead $\times$ intensity interaction. The implied precision gain in the headline 3-day hurricane-force cell is the sum of $\delta$ and its 3-day, HF, and 3-day$\times$HF interactions. Storm-clustered standard errors in parentheses.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}
