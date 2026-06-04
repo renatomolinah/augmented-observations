@@ -102,13 +102,12 @@ add_adjust_box(.aoa_path)
 # 2017--2020 hurricane-force / 3-day-lead county-storm panel as the main
 # Stage 3 valuation in NOAA_report.r.
 
-denial_full <- as_tibble(data.table::fread(denial_path)) |>
-  filter(name != "maria")
+denial_full <- as_tibble(data.table::fread(denial_path))
 hf3 <- denial_full |>
   filter(lead_days == 3, wind_obs > 33, !is.na(augmented_obs))
 
 m_delta_app <- feols(wind_fc_sd ~ augmented_obs | county + name,
-                     data = hf3, vcov = ~county)
+                     data = hf3, vcov = ~name)
 delta_app      <- abs(coef(m_delta_app)["augmented_obs"])
 sigma_bar_app  <- hf3 |>
   filter(augmented_obs == 1) |>
@@ -121,7 +120,12 @@ county_attr <- voi_load() |>
   distinct(county, year, population, gdp)
 val <- hf3 |>
   left_join(county_attr, by = c("county", "year"))
-stopifnot(sum(is.na(val$gdp) | is.na(val$population)) == 0)
+# Hurricane Maria's Puerto Rico counties are absent from the continental VOI damage
+# panel, so they carry the uniform total-cost per-county value (which needs no county
+# attributes) but lack the GDP and population required by the scaled notions. The
+# total-cost aggregate therefore spans all hurricane-force county-storms, matching the
+# Section \ref{sec:results} headline; the cost/GDP and cost-per-capita columns are
+# evaluated on the continental county-storms where economic attributes are observed.
 
 get_hurr <- function(m) {
   ce <- as.matrix(m)
@@ -141,7 +145,10 @@ val <- val |>
 # hf3 carries two rows per county-storm (augmented_obs 0/1, the AO-denied and
 # AO-assimilated denial runs); the delta regression uses both, but the dollar
 # aggregation must sum over DISTINCT county-storms or it double-counts (124 -> 62).
-val_cs <- val |> distinct(county, name, .keep_all = TRUE)
+val_cs   <- val |> distinct(county, name, .keep_all = TRUE)
+val_econ <- val_cs |> filter(!is.na(gdp), !is.na(population))
+n_all  <- nrow(val_cs)
+n_econ <- nrow(val_econ)
 
 agg <- tibble(
   Outcome = c("Total cost (\\$M)",
@@ -149,11 +156,11 @@ agg <- tibble(
               "Cost per capita (\\$)"),
   beta    = c(b_tot, b_gdp, b_pc),
   per_co  = c(mean(val_cs$v_tot_M),
-              mean(val_cs$v_gdp_M),
-              mean(val_cs$v_pc_M)),
+              mean(val_econ$v_gdp_M),
+              mean(val_econ$v_pc_M)),
   total_B = c(sum(val_cs$v_tot_M) / 1000,
-              sum(val_cs$v_gdp_M) / 1000,
-              sum(val_cs$v_pc_M)  / 1000)
+              sum(val_econ$v_gdp_M) / 1000,
+              sum(val_econ$v_pc_M)  / 1000)
 )
 
 # Build the LaTeX directly so the math note (\Delta, \sigma, \bar, \ref) is not
@@ -176,16 +183,16 @@ Cost per capita (\\$) & %.3f & %.2f & %.2f\\\\
 \\end{tabular}
 \\begin{tablenotes}
 \\small
-\\item Per-county value equals the column-(7) Hurricane coefficient times the variance reduction $\\Delta\\sigma^{2}=(\\bar{\\sigma}_{AO}+\\delta)^{2}-\\bar{\\sigma}_{AO}^{2}=%.2f$ (m/s)$^{2}$, evaluated in the 2017--2020 hurricane-force / 3-day-lead sample. $\\bar{\\sigma}_{AO}$ denotes the mean ex-ante forecast SD on the dropsonde-assimilated (AO=1) subset, which is the baseline that would be lost in the counterfactual without dropsondes. For the total-cost specification the per-county value is uniform across counties; for cost/GDP and cost per capita it scales with county GDP and population, respectively, so the table reports the mean per-county value. Aggregate values sum the per-county dollar valuation over the %d county--storm rows in the same denial sample, matching the panel used in Section \\ref{sec:results}.
+\\item Per-county value equals the column-(7) Hurricane coefficient times the variance reduction $\\Delta\\sigma^{2}=(\\bar{\\sigma}_{AO}+\\delta)^{2}-\\bar{\\sigma}_{AO}^{2}=%.2f$ (m/s)$^{2}$, evaluated in the 2017--2020 hurricane-force / 3-day-lead sample. $\\bar{\\sigma}_{AO}$ denotes the mean ex-ante forecast SD on the dropsonde-assimilated (AO=1) subset, which is the baseline that would be lost in the counterfactual without dropsondes. For the total-cost specification the per-county value is uniform across counties; for cost/GDP and cost per capita it scales with county GDP and population, respectively, so the table reports the mean per-county value. The total-cost aggregate sums over all %d hurricane-force county-storms, Hurricane Maria included, matching the headline in Section \\ref{sec:results}; the cost/GDP and cost-per-capita columns sum over the %d continental county-storms with observed GDP and population, since the Puerto Rico counties struck by Maria are absent from the damage panel.
 \\end{tablenotes}
 \\end{threeparttable}
 \\end{adjustbox}
 \\end{table}
 ',
-  b_tot, mean(val_cs$v_tot_M), sum(val_cs$v_tot_M) / 1000,
-  b_gdp, mean(val_cs$v_gdp_M), sum(val_cs$v_gdp_M) / 1000,
-  b_pc,  mean(val_cs$v_pc_M),  sum(val_cs$v_pc_M)  / 1000,
-  delta_sigma_sq, nrow(val_cs)
+  b_tot, mean(val_cs$v_tot_M),   sum(val_cs$v_tot_M)   / 1000,
+  b_gdp, mean(val_econ$v_gdp_M), sum(val_econ$v_gdp_M) / 1000,
+  b_pc,  mean(val_econ$v_pc_M),  sum(val_econ$v_pc_M)  / 1000,
+  delta_sigma_sq, n_all, n_econ
 )
 writeLines(val_tex_str, here("output/appA_valuations.tex"))
 
@@ -261,12 +268,12 @@ denial_with_maria <- fread(denial_path) |>
   as_tibble()
 
 delta_spec <- function(d) {
-  feols(wind_fc_sd ~ augmented_obs | county + name, data = d, vcov = ~county)
+  feols(wind_fc_sd ~ augmented_obs | county + name, data = d, vcov = ~name)
 }
 
-# B.1 — lead-time grid --------------------------------------------------------
+# B.1 — lead-time grid (main sample, Maria included) --------------------------
 B1 <- map_dfr(c(1, 2, 3, 4), function(lt) {
-  d <- denial |> filter(lead_days == lt, wind_obs > 33)
+  d <- denial_with_maria |> filter(lead_days == lt, wind_obs > 33)
   if (nrow(d) < 10) return(NULL)
   m <- delta_spec(d)
   cf <- coef(m)["augmented_obs"]; se <- sqrt(diag(vcov(m)))["augmented_obs"]
@@ -289,7 +296,7 @@ B1_disp <- B1 |>
 B1_tex <- kbl(B1_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. Lead days $>3$ are omitted when the subsample has fewer than 10 observations. \\label{tab:appB_leadtime}",
               align = c("c","r","r","r","r","r"), linesep = "") |>
-  footnote(general = "Each row reports the controls-table specification of Table \\\\ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\\\\geq$ 33 m/s) in the 2017--2020 continental-US AO denial archive (excluding Hurricane Maria). The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the precision gain is reported as $|\\\\hat{\\\\delta}|$, so larger positive values indicate a larger noise reduction from AO. County-clustered standard errors in parentheses.",
+  footnote(general = "Each row reports the controls-table specification of Table \\\\ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\\\\geq$ 33 m/s) in the 2017--2020 US AO denial archive (all ten landfalls, Hurricane Maria included). The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the precision gain is reported as $|\\\\hat{\\\\delta}|$, so larger positive values indicate a larger noise reduction from AO. Storm-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE,
            escape = FALSE)
@@ -337,7 +344,7 @@ B2_tex_str <- paste0(
   "\\bottomrule\n",
   "\\end{tabular}\n",
   "\\begin{tablenotes}\n\\small\n",
-  "\\item Cumulative cut-offs on realized wind speed. County-clustered standard errors in parentheses. Category 4 and above ($\\geq$58 m/s) is omitted because the denial sample contains fewer than 10 such observations; Category 5 ($\\geq$70 m/s) is absent from the sample.\n",
+  "\\item Cumulative cut-offs on realized wind speed. Storm-clustered standard errors in parentheses. Category 4 and above ($\\geq$58 m/s) is omitted because the denial sample contains fewer than 10 such observations; Category 5 ($\\geq$70 m/s) is absent from the sample.\n",
   "\\end{tablenotes}\n",
   "\\end{threeparttable}\n",
   "\\end{table}\n"
@@ -382,7 +389,7 @@ B2m_tex_str <- paste0(
   "\\bottomrule\n",
   "\\end{tabular}\n",
   "\\begin{tablenotes}\n\\small\n",
-  "\\item Sample is the seven 2017--2020 landfalling hurricanes in the denial archive (the six continental-US storms used in Table \\ref{tab:appB_intensity} plus Hurricane Maria). Cumulative cut-offs on realized wind speed. County-clustered standard errors in parentheses. Category 5 ($\\geq$70 m/s) is absent from the sample.\n",
+  "\\item Sample is the seven 2017--2020 landfalling hurricanes in the denial archive (the six continental-US storms used in Table \\ref{tab:appB_intensity} plus Hurricane Maria). Cumulative cut-offs on realized wind speed. Storm-clustered standard errors in parentheses. Category 5 ($\\geq$70 m/s) is absent from the sample.\n",
   "\\end{tablenotes}\n",
   "\\end{threeparttable}\n",
   "\\end{table}\n"
@@ -417,7 +424,7 @@ B3_disp <- B3 |>
 B3_tex <- kbl(B3_disp, format = "latex", booktabs = TRUE, escape = FALSE,
               caption = "One-storm-out jackknife, hurricane-force / 3-day lead sample. \\label{tab:appB_jackknife}",
               align = c("l","r","r","r","r"), linesep = "") |>
-  footnote(general = "Each row reports the Stage 2 precision-gain specification of Table \\\\ref{tab:noaa-controls} re-estimated after dropping the indicated storm from the 2017--2020 continental-US AO denial archive (hurricane-force / 3-day lead, Maria excluded). The baseline row drops no storm. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). County-clustered standard errors in parentheses.",
+  footnote(general = "Each row reports the Stage 2 precision-gain specification of Table \\\\ref{tab:noaa-controls} re-estimated after dropping the indicated storm from the 2017--2020 continental-US AO denial archive (hurricane-force / 3-day lead, Maria excluded). The baseline row drops no storm. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). Storm-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
 writeLines(as.character(B3_tex), here("output/appB_jackknife.tex"))
@@ -427,10 +434,10 @@ mB4_off <- delta_spec(denial             |> filter(lead_days == 3, wind_obs > 33
 mB4_on  <- delta_spec(denial_with_maria  |> filter(lead_days == 3, wind_obs > 33))
 
 B4 <- tibble(
-  sample = c("Excluding Maria (baseline)", "Including Maria"),
-  n = c(mB4_off$nobs, mB4_on$nobs),
-  delta = c(abs(coef(mB4_off)["augmented_obs"]), abs(coef(mB4_on)["augmented_obs"])),
-  se = c(sqrt(diag(vcov(mB4_off)))["augmented_obs"], sqrt(diag(vcov(mB4_on)))["augmented_obs"])
+  sample = c("Including Maria (main sample)", "Excluding Maria (robustness)"),
+  n = c(mB4_on$nobs, mB4_off$nobs),
+  delta = c(abs(coef(mB4_on)["augmented_obs"]), abs(coef(mB4_off)["augmented_obs"])),
+  se = c(sqrt(diag(vcov(mB4_on)))["augmented_obs"], sqrt(diag(vcov(mB4_off)))["augmented_obs"])
 ) |>
   mutate(p = 2*(1 - pnorm(abs(delta)/se)))
 
@@ -444,9 +451,9 @@ B4_disp <- B4 |>
   )
 
 B4_tex <- kbl(B4_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              caption = "Inclusion of Hurricane Maria. \\label{tab:appB_maria}",
+              caption = "Sensitivity to Hurricane Maria. \\label{tab:appB_maria}",
               align = c("l","r","r","r","r"), linesep = "") |>
-  footnote(general = "Both rows estimate the Stage 2 precision-gain specification of Table \\\\ref{tab:noaa-controls} on hurricane-force ($\\\\geq$ 33 m/s) realizations at the 3-day lead. The baseline row uses the six 2017--2020 continental-US landfalls in the AO denial archive; the second row adds Hurricane Maria back into the panel. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). Maria is excluded from the main analysis because it did not make landfall in the continental US. County-clustered standard errors in parentheses.",
+  footnote(general = "Both rows estimate the Stage 2 precision-gain specification of Table \\\\ref{tab:noaa-controls} on hurricane-force ($\\\\geq$ 33 m/s) realizations at the 3-day lead. The main row uses all ten 2017--2020 landfalling hurricanes in the AO denial archive; the robustness row drops Hurricane Maria, leaving the six continental-US landfalls with hurricane-force / 3-day realizations. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). Because Maria contributes a large share of the hurricane-force / 3-day observations, dropping it materially widens the confidence interval, which we disclose as a limitation. Storm-clustered standard errors in parentheses.",
            general_title = "",
            threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
 writeLines(as.character(B4_tex), here("output/appB_maria.tex"))
@@ -488,7 +495,7 @@ B5_tex_str <- paste0(
   "\\bottomrule\n",
   "\\end{tabular}\n",
   "\\begin{tablenotes}\n\\small\n",
-  "\\item Sample is the seven 2017--2020 landfalling hurricanes with hurricane-force / 3-day-lead realizations in the denial archive (the six continental-US storms used in Table \\ref{tab:appB_jackknife} plus Hurricane Maria). County-clustered standard errors in parentheses. The baseline row drops no storm.\n",
+  "\\item Sample is the seven 2017--2020 landfalling hurricanes with hurricane-force / 3-day-lead realizations in the denial archive (the six continental-US storms used in Table \\ref{tab:appB_jackknife} plus Hurricane Maria). Storm-clustered standard errors in parentheses. The baseline row drops no storm.\n",
   "\\end{tablenotes}\n",
   "\\end{threeparttable}\n",
   "\\end{table}\n"
@@ -505,10 +512,10 @@ writeLines(B5_tex_str, here("output/appB_jackknife_maria.tex"))
 m_beta <- run_conley(spec_col7("total_cost"), voi_load())
 beta_hurr <- unname(coef(m_beta)[grep("categoryHurricane", names(coef(m_beta)))])
 
-# Delta and baseline sigma from main report's Stage 2 sample
-reg_data <- denial |> filter(lead_days == 3, wind_obs > 33)
+# Delta and baseline sigma from main report's Stage 2 sample (Maria included)
+reg_data <- denial_with_maria |> filter(lead_days == 3, wind_obs > 33)
 m_delta  <- feols(wind_fc_sd ~ augmented_obs | county + name,
-                  data = reg_data, vcov = ~county)
+                  data = reg_data, vcov = ~name)
 delta <- abs(coef(m_delta)["augmented_obs"])
 sigma_bar <- reg_data |> filter(augmented_obs == 1) |>
   summarise(s = mean(wind_fc_sd, na.rm = TRUE)) |> pull(s)

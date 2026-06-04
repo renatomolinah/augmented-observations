@@ -1,21 +1,21 @@
 \begin{table}
 
-\caption{Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. \label{tab:appB_leadtime}}
+\caption{Lead-time sensitivity of the augmented-observations precision gain, hurricane-force realizations. Lead days $>3$ are omitted when the subsample has fewer than 10 observations. \label{tab:appB_leadtime}}
 \centering
 \begin{adjustbox}{max width = \textwidth}
 \begin{threeparttable}
 \begin{tabular}[t]{crrrrr}
 \toprule
-Lead (days) & Obs. & $\bar{\sigma}$ (m/s) & $\delta$ (m/s) & SE & p\\
+Lead (days) & Obs. & $\bar{\sigma}_{\text{pool}}$ (m/s) & $\delta$ (m/s) & SE & p\\
 \midrule
-1 & 144 & 7.18 & 0.063 & (0.071) & 0.373\\
-2 & 140 & 7.96 & 0.144 & (0.048) & 0.003\\
-3 & 124 & 9.11 & 0.258 & (0.095) & 0.007\\
+1 & 294 & 8.77 & 0.021 & (0.119) & 0.858\\
+2 & 290 & 9.02 & 0.218 & (0.129) & 0.090\\
+3 & 274 & 10.31 & 0.356 & (0.180) & 0.048\\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Each row reports the controls-table specification of Table \ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\geq$ 33 m/s) in the 2017--2020 continental-US AO denial archive (excluding Hurricane Maria). The coefficient $\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \citet{DitchekEA2023}); the precision gain is reported as $|\hat{\delta}|$, so larger positive values indicate a larger noise reduction from AO. County-clustered standard errors in parentheses.
+\item Each row reports the controls-table specification of Table \ref{tab:noaa-controls} estimated on the indicated lead-time subset of hurricane-force observations (wind $\geq$ 33 m/s) in the 2017--2020 US AO denial archive (all ten landfalls, Hurricane Maria included). The coefficient $\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \citet{DitchekEA2023}); the precision gain is reported as $|\hat{\delta}|$, so larger positive values indicate a larger noise reduction from AO. Storm-clustered standard errors in parentheses.
 \end{tablenotes}
 \end{threeparttable}
 \end{adjustbox}

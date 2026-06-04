@@ -3,8 +3,9 @@
 # PURPOSE: Extend the retrospective AO valuation beyond the 8-storm denial archive
 #          to every hurricane-force, 3-day-lead county-storm in the 2005-2024
 #          forecast panel. Augmented observations are flown for essentially every
-#          hurricane threatening the continental US, so the denial-sample headline
-#          ($1.46B, 6 storms) captures only a fraction of the realized value.
+#          hurricane threatening the continental US, so the continental denial
+#          subsample (6 storms, 62 county-storms) captures only a fraction of the
+#          realized value.
 #
 # METHOD:  Each county-storm is priced at its OWN 3-day baseline forecast
 #          uncertainty sigma_3 (NHC operational forecast SD, from the raw
@@ -46,7 +47,7 @@ hf <- cs[is.finite(wind_obs) & wind_obs > 33 & is.finite(sigma3)]
 hf[, value_M := beta * ((sigma3 + delta)^2 - sigma3^2)]
 
 # uniform per-county value at the denial-sample baseline (robustness)
-sigma_bar <- 8.98
+sigma_bar <- 10.13
 vbar <- beta * ((sigma_bar + delta)^2 - sigma_bar^2)
 
 summ <- function(d) list(storms = uniqueN(d$name), cs = nrow(d),
@@ -54,13 +55,13 @@ summ <- function(d) list(storms = uniqueN(d$name), cs = nrow(d),
 all10 <- summ(hf[year >= 2010]); allyr <- summ(hf)
 yrs10 <- 2024 - 2010 + 1; yrsall <- 2024 - 2005 + 1
 
-# validation: the six denial storms should reproduce 62 county-storms / ~$1.46B
+# validation: the six continental denial storms reproduce 62 county-storms
 den <- hf[name %in% c("irma", "michael", "florence", "laura", "sally", "isaias")]
 
 out <- c(
   sprintf("beta_Hurr ($M per (m/s)^2)            = %.3f", beta),
   sprintf("delta (m/s)                           = %.3f", delta),
-  sprintf("VALIDATION: denial-6 storms           = %d county-storms, $%.3fB (cf. headline $1.46B)",
+  sprintf("VALIDATION: continental denial-6 storms = %d county-storms, $%.3fB (own-sigma)",
           nrow(den), sum(den$value_M) / 1000),
   "",
   sprintf("HEADLINE -- since 2010: %d storms, %d hurricane-force county-storms", all10$storms, all10$cs),
@@ -99,7 +100,7 @@ tex <- c(
   "\\end{tabular}",
   "\\begin{tablenotes}",
   "\\small",
-  sprintf("\\item Each hurricane-force ($\\geq$ 33 m/s), 3-day-lead county-storm is priced at its own baseline forecast standard deviation $\\sigma_3$, holding the marginal cost parameter $\\hat{\\beta}^{w}_{Hurr} = %.2f$ and the precision gain $\\delta = %.2f$ m/s fixed at their Stage 1 and Stage 2 estimates: $V = \\hat{\\beta}^{w}_{Hurr}\\,[(\\sigma_3+\\delta)^2 - \\sigma_3^2]$. Under storm-specific $\\sigma_3$ the 2017--2020 denial sample reproduces 62 county-storms at \\$%.2fB; the \\$1.46B headline in the main text applies the pooled baseline $\\bar{\\sigma} = %.2f$ m/s uniformly across the same 62 county-storms. Rapidly forming storms with no 3-day-ahead hurricane-force forecast (e.g., Harvey, Hanna) are excluded by construction.", beta, delta, denrow$B, sigma_bar),
+  sprintf("\\item Each hurricane-force ($\\geq$ 33 m/s), 3-day-lead county-storm is priced at its own baseline forecast standard deviation $\\sigma_3$, holding the marginal cost parameter $\\hat{\\beta}^{w}_{Hurr} = %.2f$ and the precision gain $\\delta = %.2f$ m/s fixed at their Stage 1 and Stage 2 estimates: $V = \\hat{\\beta}^{w}_{Hurr}\\,[(\\sigma_3+\\delta)^2 - \\sigma_3^2]$. Under storm-specific $\\sigma_3$ the six continental 2017--2020 denial storms reproduce 62 county-storms at \\$%.2fB; applying the pooled baseline $\\bar{\\sigma} = %.2f$ m/s uniformly across the same 62 county-storms gives the continental-subsample figure. The main-text headline additionally includes Hurricane Maria. Rapidly forming storms with no 3-day-ahead hurricane-force forecast (e.g., Harvey, Hanna) are excluded by construction.", beta, delta, denrow$B, sigma_bar),
   "\\end{tablenotes}",
   "\\end{threeparttable}",
   "\\end{adjustbox}",
