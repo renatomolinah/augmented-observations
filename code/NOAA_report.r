@@ -247,10 +247,11 @@ msummary(
   add_rows  = rows,
   title     = "The Value of a Wind Speed Forecast Improvement. \\label{tab:voi-table}",
   notes     = list(
-    "Standard errors are Conley Spatial HAC with a distance radius of 400 km for spatial correlation
-     and arbitrary autocorrelation within counties. $e$ is the county-hurricane-specific forecast error,
+    "$e$ is the county-hurricane-specific forecast error,
      and $\\\\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds are
-     those $\\\\geq$ 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that threshold."
+     those $\\\\geq$ 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that threshold.
+     Standard errors are Conley Spatial HAC with a distance radius of 400 km for spatial correlation
+     and arbitrary autocorrelation within counties."
   ),
   threeparttable = TRUE,
   escape = FALSE,

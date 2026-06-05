@@ -107,9 +107,10 @@ rows <- tribble(
 )
 
 msummary(
-  list("Damages + Recovery Expenditures (million $)"           = regs,
-       "(Damages + Recovery Expenditures) / GDP (%)"           = regs_pgdp,
-       "Damages + Recovery Expenditures Per Capita ($/person)" = regs_pc),
+  # Main text shows only the headline dollar-cost outcome; the cost/GDP and
+  # cost-per-capita normalizations are reported as outcome robustness in
+  # Appendix A (tab:appA_outcomes and tab:appA_valuations).
+  list("Damages + Recovery Expenditures (million $)" = regs),
   coef_rename = c("$\\beta_2: (e - \\mu)^2$",
                   "$\\text{Hurricane } \\beta_2: (e - \\mu)^2$",
                   "$\\text{Sub-Hurricane } \\beta_2: (e - \\mu)^2$"),
@@ -120,11 +121,11 @@ msummary(
   add_rows  = rows,
   title     = "The Value of a Wind Speed Forecast Improvement. \\label{tab:voi-table}",
   notes     = list(
-    "Standard errors are Conley Spatial HAC with a distance radius of 400 km for spatial correlation
-     and arbitrary autocorrelation within counties. $e$ is the county-hurricane-specific forecast
-     error, and $\\\\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind
-     speeds are those greater than 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that
-     threshold."
+    "$e$ is the county-hurricane-specific forecast error, and $\\\\mu$ is the
+     hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds are
+     those greater than 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that
+     threshold. Standard errors are Conley Spatial HAC with a distance radius of 400 km
+     for spatial correlation and arbitrary autocorrelation within counties."
   ),
   threeparttable = TRUE,
   shape = "rbind",
@@ -165,55 +166,12 @@ add_adjust_box(.aoa)
 
 forecast_data_lead_times <- fread(denial_path)
 
-reg_data <- forecast_data_lead_times |>
-  filter(!is.na(augmented_obs), lead_days == 3, wind_obs > 33)
-
-regs_delta <- list()
-regs_delta[[1]] <- feols(wind_fc_sd ~ augmented_obs | county,
-                         data = reg_data, vcov = ~name)
-regs_delta[[2]] <- feols(wind_fc_sd ~ augmented_obs | county + name,
-                         data = reg_data, vcov = ~name)
-regs_delta[[3]] <- feols(wind_fc_sd ~ augmented_obs + wind_obs | county,
-                         data = reg_data, vcov = ~name)
-regs_delta[[4]] <- feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name,
-                         data = reg_data, vcov = ~name)
-
-# Full rendering: show the wind_obs control coefficient (the report hides it) and
-# keep the R2 / within-R2 block.
-delta_coef_rename <- c(
-  "augmented_obs" = "$\\delta$: Augmented Observations",
-  "wind_obs"      = "Realized wind speed (m/s)"
-)
-
-rows_delta <- tribble(
-  ~term, ~"(1)", ~"(2)", ~"(3)", ~"(4)",
-  "County FE",    "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark",
-  "Hurricane FE", "", "\\checkmark", "", "\\checkmark"
-)
-
-msummary(
-  regs_delta,
-  coef_rename = delta_coef_rename,
-  gof_omit    = "AIC|BIC|Log.|RMSE|Std.Errors|FE",
-  fmt         = "%.3f",
-  stars       = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
-  add_rows    = rows_delta,
-  title       = "Effect of Augmented Observations on Ex-Ante Uncertainty (full specification). \\label{tab:noaa-controls}",
-  notes       = list(
-    "Full coefficient table for the Stage 2 precision regressions. Standard errors clustered
-     at the storm level. The sample is the 2017--2020 augmented-observations denial archive at
-     the 3-day lead time and hurricane-force realizations ($\\\\geq$ 33 m/s) across the ten
-     landfalling hurricanes, Hurricane Maria included. $\\\\delta$ is the average reduction in the
-     ex-ante wind-speed forecast standard deviation attributable to dropsonde assimilation (the
-     ALL configuration of \\\\citet{DitchekEA2023}); the negative sign reflects that AO assimilation
-     lowers ensemble spread relative to the no-dropsonde (NO) counterfactual."
-  ),
-  threeparttable = TRUE,
-  escape      = FALSE,
-  output      = here("output/paper_controls_table.tex")
-)
-
-add_adjust_box(here("output/paper_controls_table.tex"))
+# --- Controls table (tab:noaa-controls) --------------------------------------
+# Generated SEPARATELY by code/2.3.interaction_bootstrap.r: like the interaction
+# grid, its significance must come from a restricted wild cluster bootstrap (too
+# few storm clusters for analytical cluster-robust p-values), so it is rendered
+# there alongside the other bootstrap tables. (forecast_data_lead_times is still
+# loaded above for the value surface below.)
 
 # ==============================================================================
 # Lead x strength value surface  ->  output/paper_value_surface.tex
@@ -332,41 +290,15 @@ msummary(
 )
 add_adjust_box(here("output/paper_appB_precision_grid.tex"))
 
-# --- Full AO x intensity x lead interaction, built progressively (mirrors the VOI
-# table's column-by-column structure) -> paper_interaction_grid. Justifies focusing
-# the valuation on the 3-day hurricane-force cell: the precision gain concentrates
-# there, recovered as the AO x 3-day x HF triple interaction in column (6).
-intr_d <- forecast_data_lead_times |>
-  filter(!is.na(augmented_obs), lead_days %in% c(1, 2, 3)) |>
-  mutate(hf = as.integer(wind_obs > 33))
-intr_m <- list(
-  "(1)" = feols(wind_fc_sd ~ augmented_obs | county, intr_d, vcov = ~name),
-  "(2)" = feols(wind_fc_sd ~ augmented_obs | county + name, intr_d, vcov = ~name),
-  "(3)" = feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name, intr_d, vcov = ~name),
-  "(4)" = feols(wind_fc_sd ~ augmented_obs*factor(lead_days) + wind_obs | county + name, intr_d, vcov = ~name),
-  "(5)" = feols(wind_fc_sd ~ augmented_obs*hf + wind_obs | county + name, intr_d, vcov = ~name),
-  "(6)" = feols(wind_fc_sd ~ augmented_obs*factor(lead_days)*hf + wind_obs | county + name, intr_d, vcov = ~name)
-)
-intr_cm <- c(
-  "augmented_obs"                       = "$\\delta$: Augmented Observations (AO)",
-  "augmented_obs:factor(lead_days)2"    = "$\\delta \\times$ 2-day lead",
-  "augmented_obs:factor(lead_days)3"    = "$\\delta \\times$ 3-day lead",
-  "augmented_obs:hf"                    = "$\\delta \\times$ Hurricane-force",
-  "augmented_obs:factor(lead_days)2:hf" = "$\\delta \\times$ 2-day $\\times$ HF",
-  "augmented_obs:factor(lead_days)3:hf" = "$\\delta \\times$ 3-day $\\times$ HF",
-  "wind_obs"                            = "Realized wind speed (m/s)")
-intr_rows <- tribble(~term, ~"(1)", ~"(2)", ~"(3)", ~"(4)", ~"(5)", ~"(6)",
-  "County FE", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark",
-  "Storm FE", "", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark",
-  "Lead-time main effects", "", "", "", "\\checkmark", "", "\\checkmark",
-  "Intensity main effect", "", "", "", "", "\\checkmark", "\\checkmark")
-msummary(intr_m, coef_map = intr_cm, gof_omit = "AIC|BIC|Log.|RMSE|Std.Errors|FE|R2 Within",
-  fmt = "%.3f", stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01), add_rows = intr_rows,
-  escape = FALSE, threeparttable = TRUE,
-  title = "Augmented observations $\\times$ intensity $\\times$ lead: the precision gain across the full interaction. \\label{tab:interaction-grid}",
-  notes = list("Progressive build of the Stage 2 precision regression on the 2017--2020 US augmented-observations denial archive (all ten landfalling hurricanes, Hurricane Maria included), leads 1--3 days. The outcome is the ex-ante wind-speed forecast standard deviation. Column (1) is the pooled precision gain; (2) adds storm fixed effects; (3) the realized-wind control; (4) the AO $\\\\times$ lead interaction; (5) the AO $\\\\times$ hurricane-force (HF, $\\\\geq$ 33 m/s) interaction; (6) the full AO $\\\\times$ lead $\\\\times$ intensity interaction. The implied precision gain in the headline 3-day hurricane-force cell is the sum of $\\\\delta$ and its 3-day, HF, and 3-day$\\\\times$HF interactions. Storm-clustered standard errors in parentheses."),
-  output = here("output/paper_interaction_grid.tex"))
-add_adjust_box(here("output/paper_interaction_grid.tex"))
+# --- Full AO x intensity x lead interaction (tab:interaction-grid) ------------
+# The progressive build of eq. 7 is generated SEPARATELY by
+# code/2.3.interaction_bootstrap.r, because with only ten storm clusters its
+# significance stars must come from a restricted wild cluster bootstrap (Webb
+# weights), not analytical cluster-robust p-values (which over-reject badly: the
+# 3-day x HF triple interaction is p=0.0004 analytically vs ~0.03 bootstrapped).
+# That script writes output/paper_interaction_grid.tex and the cached p-values
+# output/interaction_wcb_pvalues.csv. Run it after this script (or via the Make
+# target) so the table reflects bootstrap inference.
 
 cat("\n[paper_tables] Wrote full tables:\n",
     "  output/paper_interaction_grid.tex\n",
