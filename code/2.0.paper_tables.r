@@ -109,17 +109,20 @@ rows <- tribble(
 msummary(
   # Main text shows only the headline dollar-cost outcome; the cost/GDP and
   # cost-per-capita normalizations are reported as outcome robustness in
-  # Appendix A (tab:appA_outcomes and tab:appA_valuations).
-  list("Damages + Recovery Expenditures (million $)" = regs),
-  coef_rename = c("$\\beta_2: (e - \\mu)^2$",
-                  "$\\text{Hurricane } \\beta_2: (e - \\mu)^2$",
-                  "$\\text{Sub-Hurricane } \\beta_2: (e - \\mu)^2$"),
-  coef_omit = c(-1, -5, -6),
+  # Appendix A (tab:appA_outcomes and tab:appA_valuations). coef_map keeps only
+  # the wind squared-error coefficient (pooled in cols 1-6, hurricane/sub split
+  # in col 7); precipitation and level errors are omitted (precip is reported in
+  # tab:appA_voi_precip).
+  regs,
+  coef_map = c(
+    "squared_error"                        = "$\\beta_2: (e - \\mu)^2$",
+    "squared_error:categoryHurricane"      = "$\\text{Hurricane } \\beta_2: (e - \\mu)^2$",
+    "squared_error:categoryTropical Storm" = "$\\text{Sub-Hurricane } \\beta_2: (e - \\mu)^2$"),
   gof_omit  = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors",
   fmt       = "%.2f",
   stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
   add_rows  = rows,
-  title     = "The Value of a Wind Speed Forecast Improvement. \\label{tab:voi-table}",
+  title     = "The Value of a Wind Speed Forecast Improvement (damages plus recovery expenditures, \\$ millions). \\label{tab:voi-table}",
   notes     = list(
     "$e$ is the county-hurricane-specific forecast error, and $\\\\mu$ is the
      hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds are
@@ -128,12 +131,42 @@ msummary(
      for spatial correlation and arbitrary autocorrelation within counties."
   ),
   threeparttable = TRUE,
-  shape = "rbind",
   escape = FALSE,
   output = here("output/paper_table_voi.tex")
 )
 
 add_adjust_box(here("output/paper_table_voi.tex"))
+
+# --- Appendix A: full VOI table reporting the precipitation coefficient -------
+# Same seven total-cost specifications as the main table (reuse `regs`), but the
+# coef_map keeps BOTH squared-error coefficients so the precipitation parameter
+# beta^p_2 is shown. Motivates focusing the valuation on wind: beta^p_2 is tiny
+# and statistically indistinguishable from zero across specifications.
+msummary(
+  regs,
+  coef_map = c(
+    "squared_error"                        = "Wind, $\\beta^w_2: (e^w - \\mu^w)^2$",
+    "squared_error:categoryHurricane"      = "Wind, Hurricane $\\beta^w_2$",
+    "squared_error:categoryTropical Storm" = "Wind, Sub-Hurricane $\\beta^w_2$",
+    "squared_error_precip"                 = "Precipitation, $\\beta^p_2: (e^p - \\mu^p)^2$"),
+  gof_omit  = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors",
+  fmt       = "%.3f",
+  stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
+  add_rows  = rows,
+  title     = "Wind and Precipitation Forecast-Error Costs. \\label{tab:appA_voi_precip}",
+  notes     = list(
+    "Full coefficient table for the Stage 1 value-of-information regressions, reporting both the
+     wind ($\\\\beta^w_2$) and precipitation ($\\\\beta^p_2$) squared demeaned forecast-error
+     coefficients; the main table omits precipitation. $e$ is the county-hurricane-specific forecast
+     error and $\\\\mu$ the hurricane-intensity bin-specific mean forecast error. Hurricane wind
+     speeds exceed 33 m/s (74 mph); Sub-Hurricane wind speeds fall below that threshold. Standard
+     errors are Conley Spatial HAC with a 400 km distance radius."
+  ),
+  threeparttable = TRUE,
+  escape = FALSE,
+  output = here("output/paper_appA_voi_precip.tex")
+)
+add_adjust_box(here("output/paper_appA_voi_precip.tex"))
 
 # --- Appendix A: outcome robustness (col-7 spec), paper format ----------------
 # Reuses the column (7) fits already estimated above (no new regressions). Same
