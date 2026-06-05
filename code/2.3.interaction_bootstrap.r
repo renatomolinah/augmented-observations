@@ -26,7 +26,7 @@ N_CORES <- 6
 webb    <- c(-sqrt(1.5), -1, -sqrt(.5), sqrt(.5), 1, sqrt(1.5))
 RNGkind("L'Ecuyer-CMRG"); set.seed(2024)
 STARS   <- c("*" = 0.1, "**" = 0.05, "***" = 0.01)
-STAT    <- c("({std.error})", "[{p.value}]")   # clustered SE (), bootstrap p []
+STAT    <- "[{p.value}]"   # show only the wild bootstrap p-value (SE uninformative)
 
 # ---- data: explicit dummies so a single interaction column can be dropped -----
 d <- fread(here("data/clean_denial/forecast_denial_data_with_lead_times.csv"))
@@ -107,13 +107,18 @@ gm <- list(
 # ==============================================================================
 # Interaction grid (full denial panel, leads 1-3)
 # ==============================================================================
+# Columns (5) and (6) are the full triple interaction WITHOUT and WITH the
+# realized-wind control -- the with/without-wind robustness on the full panel
+# (replacing the old restricted-sample controls table).
+full_triple <- c("AO", "l2", "l3", "hf", "AO_l2", "AO_l3", "AO_hf",
+                 "l2_hf", "l3_hf", "AO_l2_hf", "AO_l3_hf")
 cols <- list(
-  "(1)" = list(regs = c("AO"),                                                fe = "county"),
-  "(2)" = list(regs = c("AO"),                                                fe = "county+name"),
-  "(3)" = list(regs = c("AO", "wind_obs"),                                    fe = "county+name"),
-  "(4)" = list(regs = c("AO", "l2", "l3", "AO_l2", "AO_l3", "wind_obs"),      fe = "county+name"),
-  "(5)" = list(regs = c("AO", "l2", "l3", "hf", "AO_l2", "AO_l3", "AO_hf",
-                        "l2_hf", "l3_hf", "AO_l2_hf", "AO_l3_hf", "wind_obs"), fe = "county+name")
+  "(1)" = list(regs = c("AO"),                                           fe = "county"),
+  "(2)" = list(regs = c("AO"),                                           fe = "county+name"),
+  "(3)" = list(regs = c("AO", "wind_obs"),                               fe = "county+name"),
+  "(4)" = list(regs = c("AO", "l2", "l3", "AO_l2", "AO_l3", "wind_obs"), fe = "county+name"),
+  "(5)" = list(regs = full_triple,                                       fe = "county+name"),
+  "(6)" = list(regs = c(full_triple, "wind_obs"),                        fe = "county+name")
 )
 cat(sprintf("[2.3] interaction grid: bootstrap (B=%d, %d cores)\n", B, N_CORES))
 fam <- run_family(cols, d)
@@ -136,11 +141,12 @@ intr_rows <- data.frame(
   "(3)" = c("\\checkmark", "\\checkmark", "", ""),
   "(4)" = c("\\checkmark", "\\checkmark", "\\checkmark", ""),
   "(5)" = c("\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark"),
+  "(6)" = c("\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark"),
   check.names = FALSE)
 
 # NOTE: modelsummary strips one backslash level in the notes pass, so LaTeX
 # macros need FOUR backslashes here to survive as \geq \delta \times.
-boot_note <- "Clustered (storm) standard errors in parentheses; wild cluster bootstrap $p$-values (Webb weights, B = 1{,}999, resampled over the storms) in brackets. Stars denote significance from the bootstrap $p$-value."
+boot_note <- "Wild cluster bootstrap $p$-values (Webb weights, B = 1{,}999, clustered and resampled over the ten storms) in square brackets; stars denote significance from these $p$-values. Standard errors are omitted because, with so few clusters, the analytical cluster-robust standard error is uninformative for inference. Columns (5) and (6) report the full interaction without and with the realized-wind control."
 
 modelsummary(
   mods, coef_map = intr_cm, gof_map = gm, add_rows = intr_rows,
@@ -157,10 +163,11 @@ intr_cm_full <- c(intr_cm[1:6],
   "l2_hf" = "2-day lead $\\times$ HF", "l3_hf" = "3-day lead $\\times$ HF",
   "wind_obs" = "Realized wind speed (m/s)")
 intr_rows_full <- data.frame(
-  term = c("County FE", "Storm FE"),
-  "(1)" = c("\\checkmark", ""), "(2)" = c("\\checkmark", "\\checkmark"),
-  "(3)" = c("\\checkmark", "\\checkmark"), "(4)" = c("\\checkmark", "\\checkmark"),
-  "(5)" = c("\\checkmark", "\\checkmark"), check.names = FALSE)
+  term = c("County FE", "Storm FE", "Realized wind control"),
+  "(1)" = c("\\checkmark", "", ""), "(2)" = c("\\checkmark", "\\checkmark", ""),
+  "(3)" = c("\\checkmark", "\\checkmark", "\\checkmark"), "(4)" = c("\\checkmark", "\\checkmark", "\\checkmark"),
+  "(5)" = c("\\checkmark", "\\checkmark", ""), "(6)" = c("\\checkmark", "\\checkmark", "\\checkmark"),
+  check.names = FALSE)
 modelsummary(
   mods, coef_map = intr_cm_full, gof_map = gm, add_rows = intr_rows_full,
   fmt = "%.3f", statistic = STAT, stars = STARS,
@@ -171,38 +178,8 @@ modelsummary(
 add_adjust_box(here("output/paper_appB_interaction_full.tex"))
 cat("[2.3] wrote output/paper_appB_interaction_full.tex\n")
 
-# ==============================================================================
-# Controls table (Table 5): restricted hurricane-force / 3-day sample
-# ==============================================================================
-d_ctrl <- d[lead_days == 3 & wind_obs > 33]
-ctrl_cols <- list(
-  "(1)" = list(regs = c("AO"),             fe = "county"),
-  "(2)" = list(regs = c("AO"),             fe = "county+name"),
-  "(3)" = list(regs = c("AO", "wind_obs"), fe = "county"),
-  "(4)" = list(regs = c("AO", "wind_obs"), fe = "county+name")
-)
-cat(sprintf("[2.3] controls table: bootstrap on %d HF/3-day obs, %d storms\n",
-            nrow(d_ctrl), length(unique(d_ctrl$name))))
-fam_c <- run_family(ctrl_cols, d_ctrl)
-mods_c <- make_mods(fam_c$res, ctrl_cols)
-
-# Realized wind is a nuisance control, degenerate in the 274-obs restricted sample
-# (its within-county SE collapses), so we mark it as included rather than display
-# its unstable coefficient; the focus is delta's stability across specifications.
-delta_cm <- c("AO" = "$\\delta$: Augmented Observations")
-rows_delta <- data.frame(
-  term = c("Realized wind control", "County FE", "Hurricane FE"),
-  "(1)" = c("", "\\checkmark", ""), "(2)" = c("", "\\checkmark", "\\checkmark"),
-  "(3)" = c("\\checkmark", "\\checkmark", ""), "(4)" = c("\\checkmark", "\\checkmark", "\\checkmark"),
-  check.names = FALSE)
-modelsummary(
-  mods_c, coef_map = delta_cm, gof_map = gm, add_rows = rows_delta,
-  fmt = "%.3f", statistic = STAT, stars = STARS,
-  escape = FALSE, threeparttable = TRUE,
-  title = "Effect of Augmented Observations on Ex-Ante Uncertainty (full specification). \\label{tab:noaa-controls}",
-  notes = list(paste0("Full coefficient table for the Stage 2 precision regressions on the 2017--2020 augmented-observations denial archive at the 3-day lead and hurricane-force realizations ($\\\\geq$ 33 m/s) across the ten landfalling hurricanes, Hurricane Maria included. $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to dropsonde assimilation (the ALL configuration of \\\\citet{DitchekEA2023}); the negative sign reflects that AO assimilation lowers ensemble spread relative to the no-dropsonde (NO) counterfactual. ", boot_note)),
-  output = here("output/paper_controls_table.tex"))
-add_adjust_box(here("output/paper_controls_table.tex"))
-cat("[2.3] wrote output/paper_controls_table.tex\n")
+# NOTE: the restricted hurricane-force / 3-day controls table (tab:noaa-controls)
+# was removed from the paper -- it used only the restricted cell, its four delta
+# estimates were identical and unstarred, and the with/without-wind robustness it
+# provided is now columns (5)-(6) of the interaction grid on the FULL panel.
 print(res[, .(col, term, estimate = round(estimate, 3), se = round(std.error, 3), p = round(p.value, 3))])
-print(fam_c$res[, .(col, term, estimate = round(estimate, 3), se = round(std.error, 3), p = round(p.value, 3))])
