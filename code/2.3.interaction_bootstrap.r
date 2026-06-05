@@ -146,14 +146,14 @@ intr_rows <- data.frame(
 
 # NOTE: modelsummary strips one backslash level in the notes pass, so LaTeX
 # macros need FOUR backslashes here to survive as \geq \delta \times.
-boot_note <- "Wild cluster bootstrap $p$-values (Webb weights, B = 1{,}999, clustered and resampled over the ten storms) in square brackets; stars denote significance from these $p$-values. Standard errors are omitted because, with so few clusters, the analytical cluster-robust standard error is uninformative for inference. Columns (5) and (6) report the full interaction without and with the realized-wind control."
+boot_note <- "Square brackets report wild cluster bootstrap $p$-values with Webb weights, on which the stars are based."
 
 modelsummary(
   mods, coef_map = intr_cm, gof_map = gm, add_rows = intr_rows,
   fmt = "%.3f", statistic = STAT, stars = STARS,
   escape = FALSE, threeparttable = TRUE,
   title = "Precision Gained due to Augmented Observations. \\label{tab:interaction-grid}",
-  notes = list(paste0("The outcome is the ex-ante wind-speed forecast standard deviation, estimated on the 2017--2020 US augmented-observations denial archive (all ten landfalling hurricanes) at leads of 1--3 days. HF denotes hurricane-force realizations ($\\\\geq$ 33 m/s). ``Lead-time main effects'' are the 2- and 3-day lead indicators and ``Intensity main effect'' is the hurricane-force indicator. The reference category is 1-day-lead, sub-hurricane-force forecasts. The implied precision gain in the 3-day hurricane-force cell is the sum of $\\\\delta$ and its 3-day, HF, and 3-day $\\\\times$ HF interactions. ", boot_note)),
+  notes = list(paste0("HF denotes hurricane-force realizations, wind $\\\\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ``Lead-time main effects'' are the 2- and 3-day lead indicators and ``Intensity main effect'' the hurricane-force indicator. ", boot_note)),
   output = here("output/paper_interaction_grid.tex"))
 add_adjust_box(here("output/paper_interaction_grid.tex"))
 cat("[2.3] wrote output/paper_interaction_grid.tex\n")
@@ -173,7 +173,7 @@ modelsummary(
   fmt = "%.3f", statistic = STAT, stars = STARS,
   escape = FALSE, threeparttable = TRUE,
   title = "Augmented-observations precision regression: full coefficient estimates. \\label{tab:appB_interaction_full}",
-  notes = list(paste0("Full set of estimated coefficients for the progressive precision regression reported in the main text, of which only the augmented-observation terms are shown there. The outcome is the ex-ante wind-speed forecast standard deviation; the sample is the 2017--2020 US augmented-observations denial archive (all ten landfalling hurricanes) at leads of 1--3 days. HF denotes hurricane-force realizations ($\\\\geq$ 33 m/s). The reference category is 1-day-lead, sub-hurricane-force forecasts. ", boot_note)),
+  notes = list(paste0("All estimated coefficients for the precision regression; the main text reports only the augmented-observation terms. HF denotes hurricane-force realizations, wind $\\\\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ", boot_note)),
   output = here("output/paper_appB_interaction_full.tex"))
 add_adjust_box(here("output/paper_appB_interaction_full.tex"))
 cat("[2.3] wrote output/paper_appB_interaction_full.tex\n")
