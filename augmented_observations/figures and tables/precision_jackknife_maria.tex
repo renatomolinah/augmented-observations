@@ -1,26 +1,30 @@
 \begin{table}
 
-\caption{One-storm-out jackknife with Hurricane Maria included, hurricane-force / 3-day lead sample. \label{tab:precision_jackknife_maria}}
+\caption{One-storm-out jackknife of the augmented-observation $\times$ 3-day $\times$ hurricane-force interaction. \label{tab:precision_jackknife_maria}}
 \centering
+\begin{adjustbox}{max width = \textwidth}
 \begin{threeparttable}
-\begin{tabular}[t]{lrrrr}
+\begin{tabular}[t]{lrrr}
 \toprule
-Dropped & Obs. & $\delta$ (m/s) & SE & p\\
+Dropped & Obs. & $\delta_{3,\text{HF}}$ (m/s) & Bootstrap $p$\\
 \midrule
-(None) & 274 & 0.356 & (0.180) & 0.048\\
-Florence & 266 & 0.364 & (0.188) & 0.053\\
-Irma & 256 & 0.270 & (0.184) & 0.141\\
-Isaias & 266 & 0.356 & (0.190) & 0.061\\
-Laura & 248 & 0.430 & (0.151) & 0.004\\
-Maria & 124 & 0.258 & (0.359) & 0.473\\
-Michael & 220 & 0.380 & (0.216) & 0.079\\
-Sally & 264 & 0.385 & (0.178) & 0.031\\
+(None) & 115,482 & -0.410** & 0.033\\
+Dorian & 101,106 & -0.426** & 0.023\\
+Florence & 101,106 & -0.425** & 0.027\\
+Hanna & 110,690 & -0.432** & 0.016\\
+Harvey & 105,898 & -0.397** & 0.037\\
+Irma & 101,106 & -0.347* & 0.059\\
+Isaias & 101,106 & -0.426** & 0.030\\
+Laura & 101,106 & -0.426* & 0.051\\
+Maria & 115,008 & -0.397 & 0.104\\
+Michael & 101,106 & -0.416* & 0.088\\
+Sally & 101,106 & -0.398** & 0.034\\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Sample is the seven 2017--2020 landfalling hurricanes with hurricane-force / 3-day-lead realizations in the denial archive (the six continental-US storms used in Table \ref{tab:precision_jackknife} plus Hurricane Maria). Storm-clustered standard errors in parentheses. The baseline row drops no storm.
+\item Each row re-estimates the full lead $\times$ intensity interaction (Table \ref{tab:precision_full}) on the 2017--2020 denial panel after dropping the indicated storm, and reports the triple-interaction coefficient $\delta_{3,\text{HF}}$, the additional precision gain in the 3-day hurricane-force cell. Significance is from a restricted wild cluster bootstrap with Webb weights (B = 1999, clustered on storm). The baseline row drops no storm.
 \end{tablenotes}
 \end{threeparttable}
+\end{adjustbox}
 \end{table}
-

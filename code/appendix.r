@@ -5,8 +5,7 @@
 #    - Three outcomes (total_cost, per_GDP, per_capita) in the preferred spec
 #    - One-storm-out jackknife on the preferred-spec Hurricane beta
 # B. Delta robustness on the denial panel:
-#    - Saffir-Simpson category sensitivity (continental, and with Maria)
-#    - One-storm-out jackknife on delta (continental, and with Maria)
+#    - One-storm-out jackknife on delta (continental and full sample)
 #    - Maria-in vs Maria-out
 # C. Storm-level decomposition of the retrospective valuation.
 # ==============================================================================
@@ -235,132 +234,17 @@ writeLines(as.character(jack_tex), here("output/cost_jackknife.tex"))
 add_adjust_box(here("output/cost_jackknife.tex"))
 
 # ==============================================================================
-# Appendix B — delta robustness (denial panel)
+# Stage-2 robustness tables use wild cluster bootstrap inference and are generated
+# elsewhere: tab:precision_full by 2.3.interaction_bootstrap.r;
+# tab:precision_jackknife_maria (jackknife of the triple) and tab:precision_maria
+# (Maria in/out on the triple) by 2.4.delta_robustness_bootstrap.r. The denial
+# panel is loaded here only for the Appendix C per-storm decomposition below.
 # ==============================================================================
-
-denial <- fread(denial_path) |>
-  filter(name != "maria", !is.na(augmented_obs)) |>
-  as_tibble()
 
 denial_with_maria <- fread(denial_path) |>
   filter(!is.na(augmented_obs)) |>
   as_tibble()
 
-delta_spec <- function(d) {
-  feols(wind_fc_sd ~ augmented_obs | county + name, data = d, vcov = ~name)
-}
-
-# NOTE: the intensity dependence of the precision gain is carried by the
-# lead-time x intensity interaction in the main-text grid and the full-coefficient
-# table tab:precision_full (code/2.3.interaction_bootstrap.r). The separate
-# Saffir-Simpson intensity tables were dropped from the manuscript.
-
-
-# B.1 — one-storm-out jackknife on delta --------------------------------------
-hf3_storms <- denial |>
-  filter(lead_days == 3, wind_obs > 33) |>
-  distinct(name) |> pull(name)
-
-B3 <- map_dfr(c("(none)", hf3_storms), function(s) {
-  d <- if (s == "(none)") denial else denial |> filter(name != s)
-  d <- d |> filter(lead_days == 3, wind_obs > 33)
-  if (nrow(d) < 10) return(NULL)
-  m <- delta_spec(d)
-  cf <- coef(m)["augmented_obs"]; se <- sqrt(diag(vcov(m)))["augmented_obs"]
-  tibble(dropped = s, n = nrow(d),
-         delta = abs(cf), se = se,
-         p = 2*(1 - pnorm(abs(cf)/se)))
-}) |> arrange(if_else(dropped == "(none)", -1L, 0L))
-
-B3_disp <- B3 |>
-  transmute(
-    `Dropped` = str_to_title(dropped),
-    `Obs.` = format(n, big.mark = ","),
-    `$\\delta$ (m/s)` = sprintf("%.3f", delta),
-    `SE` = sprintf("(%.3f)", se),
-    `p` = ifelse(p < 0.001, "$<$0.001", sprintf("%.3f", p))
-  )
-
-B3_tex <- kbl(B3_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              caption = "One-storm-out jackknife, hurricane-force / 3-day lead sample. \\label{tab:precision_jackknife}",
-              align = c("l","r","r","r","r"), linesep = "") |>
-  footnote(general = "Each row reports the Stage 2 precision-gain specification re-estimated after dropping the indicated storm from the 2017--2020 continental-US AO denial archive (hurricane-force / 3-day lead, Maria excluded). The baseline row drops no storm. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). Storm-clustered standard errors in parentheses.",
-           general_title = "",
-           threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
-writeLines(as.character(B3_tex), here("output/precision_jackknife.tex"))
-
-# B.2 — Maria-in vs Maria-out -------------------------------------------------
-mB4_off <- delta_spec(denial             |> filter(lead_days == 3, wind_obs > 33))
-mB4_on  <- delta_spec(denial_with_maria  |> filter(lead_days == 3, wind_obs > 33))
-
-B4 <- tibble(
-  sample = c("Including Maria (main sample)", "Excluding Maria (robustness)"),
-  n = c(mB4_on$nobs, mB4_off$nobs),
-  delta = c(abs(coef(mB4_on)["augmented_obs"]), abs(coef(mB4_off)["augmented_obs"])),
-  se = c(sqrt(diag(vcov(mB4_on)))["augmented_obs"], sqrt(diag(vcov(mB4_off)))["augmented_obs"])
-) |>
-  mutate(p = 2*(1 - pnorm(abs(delta)/se)))
-
-B4_disp <- B4 |>
-  transmute(
-    `Sample` = sample,
-    `Obs.` = format(n, big.mark = ","),
-    `$\\delta$ (m/s)` = sprintf("%.3f", delta),
-    `SE` = sprintf("(%.3f)", se),
-    `p` = ifelse(p < 0.001, "$<$0.001", sprintf("%.3f", p))
-  )
-
-B4_tex <- kbl(B4_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              caption = "Sensitivity to Hurricane Maria. \\label{tab:precision_maria}",
-              align = c("l","r","r","r","r"), linesep = "") |>
-  footnote(general = "Both rows estimate the Stage 2 precision-gain specification on hurricane-force ($\\\\geq$ 33 m/s) realizations at the 3-day lead. The main row uses all ten 2017--2020 landfalling hurricanes in the AO denial archive; the robustness row drops Hurricane Maria, leaving the six continental-US landfalls with hurricane-force / 3-day realizations. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}). Because Maria contributes a large share of the hurricane-force / 3-day observations, dropping it materially widens the confidence interval, which we disclose as a limitation. Storm-clustered standard errors in parentheses.",
-           general_title = "",
-           threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE)
-writeLines(as.character(B4_tex), here("output/precision_maria.tex"))
-add_adjust_box(here("output/precision_maria.tex"))
-
-# B.3 — one-storm-out jackknife with Maria included --------------------------
-# Same design as B.3 but on the broader denial archive including Maria.
-hf3_maria <- denial_with_maria |>
-  filter(lead_days == 3, wind_obs > 33)
-storms_maria <- hf3_maria |> distinct(name) |> pull(name) |> sort()
-
-B5 <- map_dfr(c("(none)", storms_maria), function(s) {
-  d <- if (s == "(none)") hf3_maria else hf3_maria |> filter(name != s)
-  if (nrow(d) < 10) return(NULL)
-  m <- delta_spec(d)
-  cf <- coef(m)["augmented_obs"]
-  se <- sqrt(diag(vcov(m)))["augmented_obs"]
-  tibble(dropped = s, n = nrow(d),
-         delta = abs(cf), se = se,
-         p = 2*(1 - pnorm(abs(cf)/se)))
-}) |> arrange(if_else(dropped == "(none)", -1L, 0L))
-
-# Build LaTeX directly so the \ref{} cross-reference in the footnote survives.
-B5_rows <- paste(sapply(seq_len(nrow(B5)), function(i) with(B5[i, ], sprintf(
-  "%s & %s & %.3f & (%.3f) & %s\\\\",
-  str_to_title(dropped), format(n, big.mark = ","), delta, se,
-  ifelse(p < 0.001, "$<$0.001", sprintf("%.3f", p))
-))), collapse = "\n")
-B5_tex_str <- paste0(
-  "\\begin{table}\n\n",
-  "\\caption{One-storm-out jackknife with Hurricane Maria included, hurricane-force / 3-day lead sample. \\label{tab:precision_jackknife_maria}}\n",
-  "\\centering\n",
-  "\\begin{threeparttable}\n",
-  "\\begin{tabular}[t]{lrrrr}\n",
-  "\\toprule\n",
-  "Dropped & Obs. & $\\delta$ (m/s) & SE & p\\\\\n",
-  "\\midrule\n",
-  B5_rows, "\n",
-  "\\bottomrule\n",
-  "\\end{tabular}\n",
-  "\\begin{tablenotes}\n\\small\n",
-  "\\item Sample is the seven 2017--2020 landfalling hurricanes with hurricane-force / 3-day-lead realizations in the denial archive (the six continental-US storms used in Table \\ref{tab:precision_jackknife} plus Hurricane Maria). Storm-clustered standard errors in parentheses. The baseline row drops no storm.\n",
-  "\\end{tablenotes}\n",
-  "\\end{threeparttable}\n",
-  "\\end{table}\n"
-)
-writeLines(B5_tex_str, here("output/precision_jackknife_maria.tex"))
 
 # ==============================================================================
 # Appendix C — per-storm decomposition of the retrospective total

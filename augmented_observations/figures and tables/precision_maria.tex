@@ -1,20 +1,20 @@
 \begin{table}
 
-\caption{Sensitivity to Hurricane Maria. \label{tab:precision_maria}}
+\caption{Sensitivity of the triple interaction to Hurricane Maria. \label{tab:precision_maria}}
 \centering
 \begin{adjustbox}{max width = \textwidth}
 \begin{threeparttable}
-\begin{tabular}[t]{lrrrr}
+\begin{tabular}[t]{lrrr}
 \toprule
-Sample & Obs. & $\delta$ (m/s) & SE & p\\
+Sample & Obs. & $\delta_{3,\text{HF}}$ (m/s) & Bootstrap $p$\\
 \midrule
-Including Maria (main sample) & 274 & 0.356 & (0.180) & 0.048\\
-Excluding Maria (robustness) & 124 & 0.258 & (0.359) & 0.473\\
+Including Maria (main sample) & 115,482 & -0.410** & 0.029\\
+Excluding Maria (robustness) & 115,008 & -0.397 & 0.104\\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Both rows estimate the Stage 2 precision-gain specification on hurricane-force ($\geq$ 33 m/s) realizations at the 3-day lead. The main row uses all ten 2017--2020 landfalling hurricanes in the AO denial archive; the robustness row drops Hurricane Maria, leaving the six continental-US landfalls with hurricane-force / 3-day realizations. The coefficient $\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \citet{DitchekEA2023}). Because Maria contributes a large share of the hurricane-force / 3-day observations, dropping it materially widens the confidence interval, which we disclose as a limitation. Storm-clustered standard errors in parentheses.
+\item The triple-interaction coefficient $\delta_{3,\text{HF}}$ from the full lead $\times$ intensity interaction estimated on all ten 2017--2020 landfalls versus the six continental landfalls (Maria dropped). Significance is from a restricted wild cluster bootstrap with Webb weights (B = 1999, clustered on storm).
 \end{tablenotes}
 \end{threeparttable}
 \end{adjustbox}

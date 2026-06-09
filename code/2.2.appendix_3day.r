@@ -96,7 +96,6 @@ rows <- tribble(
   ~term, ~"(1)", ~"(2)",
   "", "", "",
   "Observations", obs_base, obs_3day,
-  "Forecast lead", "1--3 day avg.", "3 day only",
   "Realized Wind/Precip Bins", "\\checkmark", "\\checkmark",
   "State-Hurricane FE", "\\checkmark", "\\checkmark",
   "County FE", "\\checkmark", "\\checkmark"
