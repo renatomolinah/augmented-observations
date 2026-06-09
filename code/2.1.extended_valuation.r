@@ -53,7 +53,8 @@ vbar <- beta * ((sigma_bar + delta)^2 - sigma_bar^2)
 summ <- function(d) list(storms = uniqueN(d$name), cs = nrow(d),
                          B = sum(d$value_M) / 1000, Bunif = nrow(d) * vbar / 1000)
 all10 <- summ(hf[year >= 2010]); allyr <- summ(hf)
-yrs10 <- 2024 - 2010 + 1; yrsall <- 2024 - 2005 + 1
+hwrf  <- summ(hf[year >= 2007])   # back-of-envelope: since HWRF went operational (2007)
+yrs10 <- 2024 - 2010 + 1; yrsall <- 2024 - 2005 + 1; yrshwrf <- 2024 - 2007 + 1
 
 # validation: the six continental denial storms reproduce 62 county-storms
 den <- hf[name %in% c("irma", "michael", "florence", "laura", "sally", "isaias")]
@@ -69,6 +70,8 @@ out <- c(
           all10$B, all10$B * 1000 / yrs10, yrs10),
   sprintf("  uniform (sigma_bar=%.2f, $%.2fM/cs) = $%.2fB  (robustness)", sigma_bar, vbar, all10$Bunif),
   "",
+  sprintf("BOTE since HWRF (2007-2024): %d storms, %d county-storms, $%.2fB ($%.0fM/yr over %d yr)",
+          hwrf$storms, hwrf$cs, hwrf$B, hwrf$B * 1000 / yrshwrf, yrshwrf),
   sprintf("ALL 2005-2024: %d storms, %d county-storms, $%.2fB ($%.0fM/yr over %d yr)",
           allyr$storms, allyr$cs, allyr$B, allyr$B * 1000 / yrsall, yrsall)
 )
@@ -83,6 +86,7 @@ denrow <- list(storms = uniqueN(den$name), cs = nrow(den),
                B = sum(den$value_M) / 1000, ann = "--")
 all10$ann  <- sprintf("%.0f", all10$B  * 1000 / yrs10)
 allyr$ann  <- sprintf("%.0f", allyr$B  * 1000 / yrsall)
+hwrf$ann   <- sprintf("%.0f", hwrf$B   * 1000 / yrshwrf)
 tex <- c(
   "\\begin{table}", "",
   "\\caption{Extended retrospective social value of augmented observations, full forecast panel. \\label{tab:extended_valuation}}",
@@ -94,6 +98,7 @@ tex <- c(
   "Sample & Storms & HF County-Storms & Value (\\$B) & Annualized (\\$M/yr)\\\\",
   "\\midrule",
   fmtrow("Denial sample, 2017--2020 (validation)", denrow),
+  fmtrow("Since HWRF, 2007--2024", hwrf),
   fmtrow("Full panel, 2010--2024", all10),
   fmtrow("Full panel, 2005--2024", allyr),
   "\\bottomrule",

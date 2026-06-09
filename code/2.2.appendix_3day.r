@@ -9,7 +9,7 @@
 # precip_cut), fixed effects, costs, and coordinates are taken from the panel and
 # held fixed; only the forecast-error terms change, isolating the lead choice.
 #
-# Output: figures and tables/appB_3day_robustness.tex  (label tab:appB_3day)
+# Output: figures and tables/cost_3day_robustness.tex  (label tab:cost_3day)
 # Run:    Rscript --vanilla code/2.2.appendix_3day.r   (requires the Box data symlink)
 # ==============================================================================
 
@@ -112,15 +112,20 @@ msummary(
   fmt = "%.2f",
   stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
   add_rows = rows,
-  title = "Stage 1 robustness: marginal cost of forecast error using 3-day-ahead forecasts only. \\label{tab:appB_3day}",
-  notes = list("Both columns estimate the column (7) specification of Table @REF{tab:voi-table} on total cost (damages plus recovery expenditures, million USD), with county and state-by-hurricane fixed effects and realized wind and precipitation bins. Column (1) uses the forecast error averaged over the 1--3 day lead window; column (2) uses the 3-day-ahead forecast error only, rebuilt from the raw per-lead forecasts and demeaned within the same realized-wind bins. Standard errors are Conley spatial HAC with a 400 km distance cutoff."),
+  title = "Marginal cost of forecast error using 3-day-ahead forecasts only. \\label{tab:cost_3day}",
+  notes = list("Both columns estimate our preferred specification (Table @REF{tab:voi-table}) on total cost (damages plus recovery expenditures, million USD), with county and state-by-hurricane fixed effects and realized wind and precipitation bins. Column (1) uses the forecast error averaged over the 1--3 day lead window; column (2) uses the 3-day-ahead forecast error only, rebuilt from the raw per-lead forecasts and demeaned within the same realized-wind bins. Standard errors are Conley spatial HAC with a 400 km distance cutoff."),
   align = "lcc",
   threeparttable = TRUE,
   escape = FALSE,
-  output = here("augmented_observations/figures and tables/appB_3day_robustness.tex")
+  output = here("augmented_observations/figures and tables/cost_3day_robustness.tex")
 )
-.f <- here("augmented_observations/figures and tables/appB_3day_robustness.tex")
+.f <- here("augmented_observations/figures and tables/cost_3day_robustness.tex")
 # modelsummary strips backslashes in the notes pass; restore the \ref cross-ref.
 writeLines(gsub("@REF\\{", "\\\\ref{", readLines(.f)), .f)
 add_adjust_box(.f)
+# widen inter-column spacing for this narrow two-column table
+.lines <- readLines(.f)
+.ci <- grep("\\\\centering", .lines)[1]
+.lines <- append(.lines, "\\setlength{\\tabcolsep}{26pt}", after = .ci)
+writeLines(.lines, .f)
 cat("\nWrote", .f, "\n")

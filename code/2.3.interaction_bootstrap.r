@@ -10,7 +10,7 @@
 # inference that sets the stars is explicit rather than implied by the SE.
 #
 #   output/paper_interaction_grid.tex    tab:interaction-grid  (main, AO terms)
-#   output/paper_appB_interaction_full.tex  tab:appB_interaction_full (all coefs)
+#   output/paper_precision_full.tex  tab:precision_full (all coefs)
 #   output/paper_controls_table.tex      tab:noaa-controls     (restricted HF/3d)
 #
 # Run:  Rscript --vanilla code/2.3.interaction_bootstrap.r
@@ -158,10 +158,20 @@ modelsummary(
 add_adjust_box(here("output/paper_interaction_grid.tex"))
 cat("[2.3] wrote output/paper_interaction_grid.tex\n")
 
-intr_cm_full <- c(intr_cm[1:6],
-  "l2" = "2-day lead", "l3" = "3-day lead", "hf" = "Hurricane-force (HF)",
-  "l2_hf" = "2-day lead $\\times$ HF", "l3_hf" = "3-day lead $\\times$ HF",
-  "wind_obs" = "Realized wind speed (m/s)")
+# Order: main effects, then two-way interactions, then the full triple last.
+intr_cm_full <- c(
+  "AO"       = "$\\delta$: Augmented Observations (AO)",
+  "l2"       = "2-day lead",
+  "l3"       = "3-day lead",
+  "hf"       = "Hurricane-force (HF)",
+  "wind_obs" = "Realized wind speed (m/s)",
+  "AO_l2"    = "$\\delta \\times$ 2-day lead",
+  "AO_l3"    = "$\\delta \\times$ 3-day lead",
+  "AO_hf"    = "$\\delta \\times$ Hurricane-force",
+  "l2_hf"    = "2-day lead $\\times$ HF",
+  "l3_hf"    = "3-day lead $\\times$ HF",
+  "AO_l2_hf" = "$\\delta \\times$ 2-day $\\times$ HF",
+  "AO_l3_hf" = "$\\delta \\times$ 3-day $\\times$ HF")
 intr_rows_full <- data.frame(
   term = c("County FE", "Storm FE", "Realized wind control"),
   "(1)" = c("\\checkmark", "", ""), "(2)" = c("\\checkmark", "\\checkmark", ""),
@@ -172,11 +182,11 @@ modelsummary(
   mods, coef_map = intr_cm_full, gof_map = gm, add_rows = intr_rows_full,
   fmt = "%.3f", statistic = STAT, stars = STARS,
   escape = FALSE, threeparttable = TRUE,
-  title = "Augmented-observations precision regression: full coefficient estimates. \\label{tab:appB_interaction_full}",
+  title = "Full coefficient estimates for the augmented-observations precision regression. \\label{tab:precision_full}",
   notes = list(paste0("All estimated coefficients for the precision regression; the main text reports only the augmented-observation terms. HF denotes hurricane-force realizations, wind $\\\\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ", boot_note)),
-  output = here("output/paper_appB_interaction_full.tex"))
-add_adjust_box(here("output/paper_appB_interaction_full.tex"))
-cat("[2.3] wrote output/paper_appB_interaction_full.tex\n")
+  output = here("output/paper_precision_full.tex"))
+add_adjust_box(here("output/paper_precision_full.tex"))
+cat("[2.3] wrote output/paper_precision_full.tex\n")
 
 # NOTE: the restricted hurricane-force / 3-day controls table (tab:noaa-controls)
 # was removed from the paper -- it used only the restricted cell, its four delta

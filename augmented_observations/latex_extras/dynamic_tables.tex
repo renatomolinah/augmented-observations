@@ -112,3 +112,7 @@
 \ExplSyntaxOff
 
 \doublespacing
+
+% Keep tables (body and notes) single-spaced despite the document's double spacing
+\usepackage{etoolbox}
+\AtBeginEnvironment{table}{\singlespacing}

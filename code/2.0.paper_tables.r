@@ -109,10 +109,10 @@ rows <- tribble(
 msummary(
   # Main text shows only the headline dollar-cost outcome; the cost/GDP and
   # cost-per-capita normalizations are reported as outcome robustness in
-  # Appendix A (tab:appA_outcomes and tab:appA_valuations). coef_map keeps only
+  # Appendix A (tab:cost_outcomes and tab:implied_value). coef_map keeps only
   # the wind squared-error coefficient (pooled in cols 1-6, hurricane/sub split
   # in col 7); precipitation and level errors are omitted (precip is reported in
-  # tab:appA_voi_precip).
+  # tab:precip_costs).
   regs,
   coef_map = c(
     "squared_error"                        = "$\\beta_2: (e - \\mu)^2$",
@@ -153,7 +153,7 @@ msummary(
   fmt       = "%.3f",
   stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
   add_rows  = rows,
-  title     = "Wind and Precipitation Forecast-Error Costs. \\label{tab:appA_voi_precip}",
+  title     = "Wind and Precipitation Forecast-Error Costs. \\label{tab:precip_costs}",
   notes     = list(
     "Full coefficient table for the Stage 1 value-of-information regressions, reporting both the
      wind ($\\\\beta^w_2$) and precipitation ($\\\\beta^p_2$) squared demeaned forecast-error
@@ -164,11 +164,11 @@ msummary(
   ),
   threeparttable = TRUE,
   escape = FALSE,
-  output = here("output/paper_appA_voi_precip.tex")
+  output = here("output/paper_precip_costs.tex")
 )
-add_adjust_box(here("output/paper_appA_voi_precip.tex"))
+add_adjust_box(here("output/paper_precip_costs.tex"))
 
-# --- Appendix A: outcome robustness (col-7 spec), paper format ----------------
+# --- Appendix A: outcome robustness (preferred spec), paper format -----------
 # Reuses the column (7) fits already estimated above (no new regressions). Same
 # beta2 labelling as the main table; controls/FE identical to column (7).
 msummary(
@@ -181,15 +181,15 @@ msummary(
   gof_omit  = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors|Num.Obs.",
   fmt       = "%.2f",
   stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
-  title     = "Outcome robustness for the column (7) specification (2005--2024 panel). \\label{tab:appA_outcomes}",
-  notes     = list("All specifications match column (7) of Table @REF{tab:voi-table} with county and state-by-hurricane fixed effects plus realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400 km distance cutoff."),
+  title     = "Outcome robustness for the preferred specification (2005--2024 panel). \\label{tab:cost_outcomes}",
+  notes     = list("All specifications match our preferred specification (Table @REF{tab:voi-table}), with county and state-by-hurricane fixed effects and realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400 km distance cutoff."),
   align     = "lccc",
   threeparttable = TRUE,
   escape    = FALSE,
-  output    = here("output/paper_appA_outcomes.tex")
+  output    = here("output/paper_cost_outcomes.tex")
 )
 # modelsummary strips backslashes in the notes pass; restore the cross-ref.
-.aoa <- here("output/paper_appA_outcomes.tex")
+.aoa <- here("output/paper_cost_outcomes.tex")
 writeLines(gsub("@REF\\{", "\\\\ref{", readLines(.aoa)), .aoa)
 add_adjust_box(.aoa)
 
@@ -197,131 +197,12 @@ add_adjust_box(.aoa)
 # Stage 2 - Augmented Observations and Forecast Precision (delta)
 # ==============================================================================
 
-forecast_data_lead_times <- fread(denial_path)
-
 # --- Controls table (tab:noaa-controls) --------------------------------------
 # Generated SEPARATELY by code/2.3.interaction_bootstrap.r: like the interaction
 # grid, its significance must come from a restricted wild cluster bootstrap (too
 # few storm clusters for analytical cluster-robust p-values), so it is rendered
-# there alongside the other bootstrap tables. (forecast_data_lead_times is still
-# loaded above for the value surface below.)
+# there alongside the other bootstrap tables.
 
-# ==============================================================================
-# Lead x strength value surface  ->  output/paper_value_surface.tex
-# ------------------------------------------------------------------------------
-# Regression-based justification for the (3-day, hurricane-force) headline cell.
-# For each lead x intensity cell we estimate the precision gain delta (county +
-# storm FE, county-clustered SE) and map it into the implied per-county social
-# value  V = beta2 * ((sigma_ALL + delta)^2 - sigma_ALL^2), using the Stage 1
-# column (7) cost parameters: beta2_hurr for hurricane-force cells, beta2_sub for
-# sub-hurricane cells. Value is large only where BOTH delta is identified (longer
-# lead) AND beta2 != 0 (hurricane-force), so the headline cell falls out of the
-# estimates rather than out of a figure.
-# ==============================================================================
-b7         <- coef(regs[[7]])
-beta2_hurr <- unname(b7[grep("categoryHurricane", names(b7))])
-beta2_sub  <- unname(b7[grep("category(Tropical|Sub)", names(b7))])
-
-surface_cell <- function(dat, lead, hf) {
-  d <- dat |> filter(lead_days == lead, !is.na(augmented_obs))
-  d <- if (hf) filter(d, wind_obs > 33) else filter(d, wind_obs <= 33)
-  out <- tibble(strength = if (hf) "Hurricane-force" else "Sub-hurricane",
-                lead = lead, n = nrow(d), sigma_all = NA_real_,
-                delta = NA_real_, se = NA_real_, p = NA_real_, value_M = NA_real_)
-  if (nrow(d) < 10 || length(unique(d$augmented_obs)) < 2) return(out)
-  m <- tryCatch(feols(wind_fc_sd ~ augmented_obs | county + name,
-                      data = d, vcov = ~name),
-                error = function(e) NULL)
-  if (is.null(m) || !("augmented_obs" %in% names(coef(m)))) return(out)
-  dl <- abs(coef(m)[["augmented_obs"]])
-  se <- sqrt(diag(vcov(m)))[["augmented_obs"]]
-  s  <- mean(d$wind_fc_sd[d$augmented_obs == 1], na.rm = TRUE)
-  b2 <- if (hf) beta2_hurr else beta2_sub
-  out$sigma_all <- s
-  out$delta     <- dl
-  out$se        <- se
-  out$p         <- 2 * (1 - pnorm(dl / se))
-  out$value_M   <- b2 * ((s + dl)^2 - s^2)
-  out
-}
-
-surface <- bind_rows(
-  lapply(1:3, function(l) surface_cell(forecast_data_lead_times, l, TRUE)),
-  lapply(1:3, function(l) surface_cell(forecast_data_lead_times, l, FALSE))
-)
-
-fmt_or_dash <- function(x, d) ifelse(is.na(x), "---", sprintf(paste0("%.", d, "f"), x))
-surf_disp <- tibble(
-  `Lead (days)`                          = surface$lead,
-  `Obs.`                                 = surface$n,
-  `$\\bar{\\sigma}_{\\text{ALL}}$ (m/s)` = fmt_or_dash(surface$sigma_all, 2),
-  `$\\hat{\\delta}$ (m/s)`               = fmt_or_dash(surface$delta, 3),
-  `SE`                                   = ifelse(is.na(surface$se), "", sprintf("(%.3f)", surface$se)),
-  `$p$`                                  = fmt_or_dash(surface$p, 3),
-  `Value/county (\\$M)`                  = fmt_or_dash(surface$value_M, 2)
-)
-
-vs_tex <- kbl(surf_disp, format = "latex", booktabs = TRUE, escape = FALSE,
-              align = "ccccccc", linesep = "",
-              caption = "Lead time $\\times$ intensity value surface for augmented observations. \\label{tab:value-surface}") |>
-  pack_rows("Hurricane-force ($\\geq$ 33 m/s)", 1, 3, escape = FALSE) |>
-  pack_rows("Sub-hurricane ($<$ 33 m/s)", 4, 6, escape = FALSE) |>
-  footnote(
-    general = paste(
-      "Each cell estimates the precision gain $\\\\hat{\\\\delta}=|\\\\text{coef}(\\\\text{AO})|$ from the Stage 2",
-      "specification $\\\\sigma_{csh}=\\\\delta\\\\,\\\\text{AO}_{csh}+\\\\alpha_c+\\\\gamma_h+\\\\varepsilon_{csh}$ on the indicated",
-      "lead-time / intensity subset of the 2017--2020 US denial archive (Maria included), with",
-      "county and storm fixed effects and storm-clustered standard errors. $\\\\bar{\\\\sigma}_{\\\\text{ALL}}$ is the mean",
-      "ex-ante forecast standard deviation with dropsondes assimilated. Value per county is",
-      "$\\\\hat{\\\\beta}_2[(\\\\bar{\\\\sigma}_{\\\\text{ALL}}+\\\\hat{\\\\delta})^2-\\\\bar{\\\\sigma}_{\\\\text{ALL}}^2]$, using the Stage 1 column (7)",
-      sprintf("cost parameters $\\\\hat{\\\\beta}_2^{Hurr}=%.2f$ and $\\\\hat{\\\\beta}_2^{Sub}=%.2f$ (\\\\$M per (m/s)$^2$).", beta2_hurr, beta2_sub),
-      "The social value is identified and maximized in the 3-day hurricane-force cell; sub-hurricane value is",
-      "near zero because $\\\\hat{\\\\beta}_2^{Sub}\\\\approx0$."
-    ),
-    threeparttable = TRUE, escape = FALSE, general_title = ""
-  )
-writeLines(as.character(vs_tex), here("output/paper_value_surface.tex"))
-add_adjust_box(here("output/paper_value_surface.tex"))
-
-# --- Appendix B: full per-cell precision regressions  -> paper_appB_precision_grid
-# The regressions underlying the value surface, in full: one column per
-# lead x intensity cell, with the realized-wind control, FE, and GOF. Supersedes
-# the report's appB_leadtime (delta-by-lead) by adding intensity and full output.
-grid_cell_fit <- function(dat, lead, hf) {
-  d <- dat |> filter(lead_days == lead, !is.na(augmented_obs))
-  d <- if (hf) filter(d, wind_obs > 33) else filter(d, wind_obs <= 33)
-  feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name, data = d, vcov = ~name)
-}
-grid_specs <- list(
-  "HF / 1d"  = grid_cell_fit(forecast_data_lead_times, 1, TRUE),
-  "HF / 2d"  = grid_cell_fit(forecast_data_lead_times, 2, TRUE),
-  "HF / 3d"  = grid_cell_fit(forecast_data_lead_times, 3, TRUE),
-  "Sub / 1d" = grid_cell_fit(forecast_data_lead_times, 1, FALSE),
-  "Sub / 2d" = grid_cell_fit(forecast_data_lead_times, 2, FALSE),
-  "Sub / 3d" = grid_cell_fit(forecast_data_lead_times, 3, FALSE)
-)
-
-grid_rows <- tribble(
-  ~term, ~"HF / 1d", ~"HF / 2d", ~"HF / 3d", ~"Sub / 1d", ~"Sub / 2d", ~"Sub / 3d",
-  "County FE", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark",
-  "Storm FE",  "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark"
-)
-
-msummary(
-  grid_specs,
-  coef_rename = c("augmented_obs" = "$\\delta$: Augmented Observations",
-                  "wind_obs"      = "Realized wind speed (m/s)"),
-  gof_omit  = "AIC|BIC|Log.|RMSE|Std.Errors|FE",
-  fmt       = "%.3f",
-  stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
-  add_rows  = grid_rows,
-  title     = "Per-cell precision regressions across the lead $\\times$ intensity grid. \\label{tab:appB_precision_grid}",
-  notes     = list("Each column estimates $\\\\sigma_{csh}=\\\\delta\\\\,\\\\text{AO}_{csh}+\\\\theta\\\\,x_{csh}+\\\\alpha_c+\\\\gamma_h+\\\\varepsilon_{csh}$ on the indicated lead-time / intensity subset of the 2017--2020 US denial archive (Maria included), with county and storm fixed effects and storm-clustered standard errors. HF denotes hurricane-force realizations ($\\\\geq$ 33 m/s). These are the regressions summarized as per-county value in Table \\\\ref{tab:value-surface}; the value surface reports $|\\\\hat{\\\\delta}|$ from the parsimonious specification (omitting the realized-wind control), materially identical to the $\\\\delta$ shown here."),
-  threeparttable = TRUE,
-  escape    = FALSE,
-  output    = here("output/paper_appB_precision_grid.tex")
-)
-add_adjust_box(here("output/paper_appB_precision_grid.tex"))
 
 # --- Full AO x intensity x lead interaction (tab:interaction-grid) ------------
 # The progressive build of eq. 7 is generated SEPARATELY by
@@ -336,10 +217,8 @@ add_adjust_box(here("output/paper_appB_precision_grid.tex"))
 cat("\n[paper_tables] Wrote full tables:\n",
     "  output/paper_interaction_grid.tex\n",
     "  output/paper_table_voi.tex\n",
-    "  output/paper_appA_outcomes.tex\n",
+    "  output/paper_cost_outcomes.tex\n",
     "  output/paper_controls_table.tex\n",
-    "  output/paper_value_surface.tex\n",
-    "  output/paper_appB_precision_grid.tex\n",
     "Copy them into 'augmented_observations/figures and tables/' and point the\n",
     "manuscript \\input lines at them to swap the abbreviated report tables for the\n",
     "full paper versions.\n", sep = "")
