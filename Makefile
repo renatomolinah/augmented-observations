@@ -8,10 +8,10 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial report appendix workshop stage1_tables clean help
+.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial data cost precision valuation costbenefit clean help
 
 ## Default
-all: raw_check report appendix workshop stage1_tables
+all: raw_check data cost precision valuation costbenefit
 	@echo -e "$(GREEN)Pipeline complete.$(NC)"
 
 ## Help
@@ -33,10 +33,11 @@ help:
 	@echo "  external_run_denial_case generate one storm's denial raw products (set STORM=..., optional EXPERIMENT=NO|ALL)"
 	@echo "  clean_voi    run code/cleaning_voi/* -> data/clean/final_dataset.rds"
 	@echo "  clean_denial run code/cleaning_denial/* -> data/clean_denial/*"
-	@echo "  report       run code/NOAA_report.r -> output/{table_voi,summary_dmg,data_denial,noaa_report_controls_table}.tex + output/augmented_panel.png"
-	@echo "  appendix     run code/appendix.r -> output/app{A,B}_*.tex (incl. appA_valuations) + output/appC_per_storm.tex"
-	@echo "  workshop     run code/workshop_responses.r -> output/appD_*.tex"
-	@echo "  stage1_tables run code/2.0.stage1_tables.r -> output/{paper_table_voi,paper_precip_costs,paper_cost_outcomes}.tex"
+	@echo "  data         run code/0.data.r -> output/{summary_dmg,data_denial}.tex + denial_tracks_map.png"
+	@echo "  cost         run code/1.cost.r -> Stage 1 tables + stage1_numbers.txt"
+	@echo "  precision    run code/2.precision.r -> Stage 2 tables + stage2_numbers.txt"
+	@echo "  valuation    run code/3.valuation.r -> Stage 3 tables + stage3_numbers.txt"
+	@echo "  costbenefit  run code/4.costbenefit.r -> platform_comparison.tex + stage4_costbenefit_numbers.txt"
 	@echo "  clean        remove output/ (preserves data/raw/ and data/clean/*)"
 	@echo
 	@echo "Prereqs: R packages restored via renv (renv::restore()) and"
@@ -112,54 +113,54 @@ data/clean_denial/forecast_denial_data_with_lead_times.csv: data/clean/final_dat
 
 clean_denial: data/clean_denial/forecast_denial_data_with_lead_times.csv
 
-## Step 3 - NOAA report (depends on both panels)
-output/table_voi.tex: data/clean/final_dataset.rds \
-                     data/clean_denial/forecast_denial_data_with_lead_times.csv \
-                     code/NOAA_report.r \
-                     code/functions_table.r
-	@echo -e "$(YELLOW)[3/3] NOAA report...$(NC)"
+## Step 3 - Data section (summary statistics, denial sample, track map)
+output/summary_dmg.tex: data/clean/final_dataset.rds data/clean/track_actual.rds \
+                        code/0.data.r code/functions_table.r
+	@echo -e "$(YELLOW)[3/7] Data section...$(NC)"
 	@mkdir -p output
-	@$(R) code/NOAA_report.r
-	@echo -e "$(GREEN)  -> output/{table_voi,summary_dmg,data_denial,noaa_report_controls_table}.tex$(NC)"
-	@echo -e "$(GREEN)  -> output/augmented_panel.png$(NC)"
+	@$(R) code/0.data.r
+	@echo -e "$(GREEN)  -> output/{summary_dmg,data_denial}.tex, denial_tracks_map.png$(NC)"
 
-report: output/table_voi.tex
+data: output/summary_dmg.tex
 
-## Step 4 - Appendix (robustness + per-storm decomposition)
-output/appA_jackknife.tex: data/clean/final_dataset.rds \
-                          data/clean_denial/forecast_denial_data_with_lead_times.csv \
-                          code/appendix.r \
-                          code/functions_table.r
-	@echo -e "$(YELLOW)[4/4] Appendix (A: β robustness, B: δ robustness, C: per-storm)...$(NC)"
+## Step 4 - Stage 1: marginal cost of forecast error (beta)
+output/stage1_numbers.txt: data/clean/final_dataset.rds code/1.cost.r code/functions_table.r
+	@echo -e "$(YELLOW)[4/7] Stage 1: marginal cost (beta)...$(NC)"
 	@mkdir -p output
-	@$(R) code/appendix.r
-	@echo -e "$(GREEN)  -> output/app{A,B}_*.tex$(NC)"
-	@echo -e "$(GREEN)  -> output/appC_per_storm.tex$(NC)"
+	@$(R) code/1.cost.r
+	@echo -e "$(GREEN)  -> Stage 1 tables + output/stage1_numbers.txt$(NC)"
 
-appendix: output/appA_jackknife.tex
+cost: output/stage1_numbers.txt
 
-## Step 5 - Workshop response tabulation (Appendix D)
-output/appD_sample.tex: code/workshop_responses.r \
-                       data/workshop/Part\ 1.csv \
-                       data/workshop/Part\ 2.csv
-	@echo -e "$(YELLOW)[5/5] Workshop responses (Appendix D)...$(NC)"
+## Step 5 - Stage 2: precision gain (delta), wild cluster bootstrap
+output/stage2_numbers.txt: data/clean_denial/forecast_denial_data_with_lead_times.csv \
+                           code/2.precision.r code/functions_table.r
+	@echo -e "$(YELLOW)[5/7] Stage 2: precision gain (delta)...$(NC)"
 	@mkdir -p output
-	@$(R) code/workshop_responses.r
-	@echo -e "$(GREEN)  -> output/appD_{sample,likert_part1,likert_part2,quotes_part1,quotes_part2}.tex$(NC)"
+	@$(R) code/2.precision.r
+	@echo -e "$(GREEN)  -> Stage 2 tables + output/stage2_numbers.txt$(NC)"
 
-workshop: output/appD_sample.tex
+precision: output/stage2_numbers.txt
 
-## Step 6 - Paper tables (full, non-abbreviated versions of the report regressions)
-output/paper_table_voi.tex: data/clean/final_dataset.rds \
-                            data/clean_denial/forecast_denial_data_with_lead_times.csv \
-                            code/2.0.stage1_tables.r \
-                            code/functions_table.r
-	@echo -e "$(YELLOW)[6/6] Paper tables (full Stage 1 / Stage 2 regressions)...$(NC)"
+## Step 6 - Stage 3: valuation (reads the Stage 1 and Stage 2 numbers)
+output/stage3_numbers.txt: output/stage1_numbers.txt output/stage2_numbers.txt \
+                           data/clean_denial/forecast_denial_data_with_lead_times.csv \
+                           data/clean/final_dataset.rds code/3.valuation.r code/functions_table.r
+	@echo -e "$(YELLOW)[6/7] Stage 3: valuation...$(NC)"
 	@mkdir -p output
-	@$(R) code/2.0.stage1_tables.r
-	@echo -e "$(GREEN)  -> output/{paper_table_voi,paper_precip_costs,paper_cost_outcomes}.tex$(NC)"
+	@$(R) code/3.valuation.r
+	@echo -e "$(GREEN)  -> Stage 3 tables + output/{stage3_numbers,extended_valuation_numbers}.txt$(NC)"
 
-stage1_tables: output/paper_table_voi.tex
+valuation: output/stage3_numbers.txt
+
+## Step 7 - Stage 4: cost-benefit (reads the Stage 3 numbers)
+output/stage4_costbenefit_numbers.txt: output/stage3_numbers.txt code/4.costbenefit.r
+	@echo -e "$(YELLOW)[7/7] Stage 4: cost-benefit...$(NC)"
+	@mkdir -p output
+	@$(R) code/4.costbenefit.r
+	@echo -e "$(GREEN)  -> output/platform_comparison.tex + stage4_costbenefit_numbers.txt$(NC)"
+
+costbenefit: output/stage4_costbenefit_numbers.txt
 
 ## Cleanup
 clean:
