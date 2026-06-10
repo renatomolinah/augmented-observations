@@ -1,0 +1,31 @@
+\begin{table}
+
+\caption{One-storm-out jackknife of the marginal cost of forecast error. \label{tab:cost_jackknife}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lrrr}
+\toprule
+Dropped & Obs. & $\beta_2$: Hurricane & $\beta_2$: Sub-Hurr.\\
+\midrule
+(none) & 113,661 & 5.031 (1.760) & 0.095 (0.330)\\
+Katrina & 110,588 & 3.504 (0.870) & 0.036 (0.306)\\
+Harvey & 110,588 & 4.841 (1.853) & -0.193 (0.227)\\
+Sandy & 110,588 & 4.978 (1.742) & 0.072 (0.328)\\
+Ian & 110,588 & 4.772 (1.829) & 0.237 (0.334)\\
+Ida & 110,588 & 5.320 (2.049) & 0.103 (0.343)\\
+Michael & 110,588 & 6.795 (2.153) & 0.192 (0.330)\\
+Laura & 110,588 & 5.188 (2.078) & 0.119 (0.342)\\
+Irma & 110,588 & 5.045 (1.770) & 0.095 (0.331)\\
+Wilma & 110,588 & 4.707 (1.691) & 0.044 (0.328)\\
+Rita & 110,588 & 4.958 (1.793) & 0.056 (0.334)\\
+Helene & 110,596 & 5.034 (1.807) & -0.016 (0.425)\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Preferred-specification estimate after dropping each storm, with Conley spatial HAC standard errors (400 km cutoff) in parentheses.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}

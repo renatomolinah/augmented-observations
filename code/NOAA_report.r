@@ -27,7 +27,7 @@ stopifnot(file.exists(denial_path))
 # Stage 0 - Manuscript Data-section tables
 # ==============================================================================
 
-# --- summary_dmg.tex: per-hurricane summary stats (panel-driven) -------------
+# --- summary_dmg.tex: per-hurricane summary stats -----------------------------
 voi_full <- readRDS(voi_path) |>
   as_tibble() |>
   drop_na(lat, lon, total_cost_pc, total_cost_per_gdp)
@@ -111,8 +111,10 @@ denial_summary <- tribble(
   ~Year, ~Storm,      ~Intensity,    ~Landfall,
   2017,  "Harvey",    "Category 4",  "26 Aug 0000",
   2017,  "Irma",      "Category 4",  "10 Sep 1200",
+  2017,  "Maria",     "Category 4",  "20 Sep 0600",
   2018,  "Florence",  "Category 1",  "14 Sep 0600",
   2018,  "Michael",   "Category 5",  "10 Oct 1200",
+  2019,  "Dorian",    "Category 1",  " 6 Sep 1200",
   2020,  "Hanna",     "Category 1",  "25 Jul 1800",
   2020,  "Isaias",    "Category 1",  " 4 Aug 0000",
   2020,  "Laura",     "Category 4",  "27 Aug 0600",
@@ -123,8 +125,11 @@ denial_tex <- c(
   "\\begin{table}",
   "    \\centering",
   "    \\begin{threeparttable}",
-  "      \\caption{Summary of the cases used.}",
+  "      \\caption{Landfalling hurricanes in the data-denial sample, 2017--2020.}",
   "      \\label{tab:data_denial}",
+  "      \\small",
+  "      \\setlength{\\tabcolsep}{22pt}",
+  "      \\renewcommand{\\arraystretch}{1.25}",
   "      \\begin{tabular}{c c c c}",
   "        \\hline",
   "        Year & Storm Name & Landfall Intensity & Landfall Time\\\\",
@@ -135,8 +140,7 @@ denial_tex <- c(
   "      \\end{tabular}",
   "\\begin{tablenotes}",
   "\\small",
-  "\\item \\textit{Note: }",
-  "\\item The landfall intensity is categorized according to the Saffir-Simpson Hurricane Wind Scale, and the landfall time is rounded to the next-earliest synoptic time (UTC). These eight continental-US landfalling hurricanes constitute the Stage 2 denial archive; the headline $\\delta$ regression uses the six storms that contribute hurricane-force, 3-day-lead county-storm observations (Harvey and Hanna contribute none). We draw on the corresponding \\citet{DitchekEA2023} data-denial experiments---which assimilate or omit dropsonde profiles while holding all other reconnaissance products constant---to identify the precision gain $\\delta$.",
+  "\\item \\textit{Note:} Landfall intensity follows the Saffir-Simpson Hurricane Wind Scale. Landfall time is the nearest synoptic hour (UTC). Maria made landfall in Puerto Rico; the remaining storms in the continental United States.",
   "\\end{tablenotes}",
   "\\end{threeparttable}",
   "\\end{table}"
@@ -243,10 +247,11 @@ msummary(
   add_rows  = rows,
   title     = "The Value of a Wind Speed Forecast Improvement. \\label{tab:voi-table}",
   notes     = list(
-    "Standard errors are Conley Spatial HAC with a distance radius of 400 km for spatial correlation
-     and arbitrary autocorrelation within counties. $e$ is the county-hurricane-specific forecast error,
+    "$e$ is the county-hurricane-specific forecast error,
      and $\\\\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds are
-     those $\\\\geq$ 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that threshold."
+     those $\\\\geq$ 33 m/s (74 mph), while Sub-Hurricane wind speeds fall below that threshold.
+     Standard errors are Conley Spatial HAC with a distance radius of 400 km for spatial correlation
+     and arbitrary autocorrelation within counties."
   ),
   threeparttable = TRUE,
   escape = FALSE,
@@ -259,8 +264,7 @@ add_adjust_box(here("output/table_voi.tex"))
 # Stage 2 - Augmented Observations and Forecast Precision (delta)
 # ==============================================================================
 
-forecast_data_lead_times <- fread(denial_path) |>
-  filter(name != "maria")
+forecast_data_lead_times <- fread(denial_path)
 
 # Augmented panel figure ----------------------------------------------------
 plot_top <- forecast_data_lead_times |>
@@ -271,11 +275,14 @@ plot_top <- forecast_data_lead_times |>
       wind_obs > 0    ~ "> 0 m/s"
     )
   ) |>
-  filter(!is.na(augmented_obs)) |>
+  # Top row characterizes the operational baseline, so keep only the ALL
+  # (with-AO) regime rather than pooling the ALL and NO denial runs.
+  filter(augmented_obs == 1) |>
   ggplot(aes(x = wind_fc_sd, color = factor(lead_days))) +
   geom_density(linewidth = 1.1, alpha = 0.6) +
   scale_color_brewer(palette = "Dark2", name = "Lead days") +
-  labs(x = "Wind speed SD (m/s)", y = "Density") +
+  labs(title = "A: Baseline forecast uncertainty (ALL only)",
+       x = "Wind speed SD (m/s)", y = "Density") +
   facet_wrap(~ intensity_panel, nrow = 1) +
   theme_minimal(base_size = 14) +
   theme(
@@ -296,7 +303,8 @@ plot_bottom <- forecast_data_lead_times |>
     values = c("With Aug Obs" = "#1B9E77", "Without Aug Obs" = "#D95F02"),
     name   = ""
   ) +
-  labs(x = "Wind speed SD (m/s)", y = "Density") +
+  labs(title = "B: Augmented-observation impact at hurricane force (ALL vs. NO)",
+       x = "Wind speed SD (m/s)", y = "Density") +
   facet_wrap(
     ~ factor(lead_days),
     nrow     = 1,
@@ -324,19 +332,19 @@ ggsave(
 reg_data <- forecast_data_lead_times |>
   filter(!is.na(augmented_obs), lead_days == 3, wind_obs > 33)
 
-mod_precision <- feols(wind_fc_sd ~ augmented_obs | county + name, data = reg_data)
+mod_precision <- feols(wind_fc_sd ~ augmented_obs | county + name, data = reg_data, vcov = ~name)
 delta <- abs(coef(mod_precision)["augmented_obs"])
 
 # Controls table ------------------------------------------------------------
 regs_delta <- list()
 regs_delta[[1]] <- feols(wind_fc_sd ~ augmented_obs | county,
-                         data = reg_data, vcov = ~county)
+                         data = reg_data, vcov = ~name)
 regs_delta[[2]] <- feols(wind_fc_sd ~ augmented_obs | county + name,
-                         data = reg_data, vcov = ~county)
+                         data = reg_data, vcov = ~name)
 regs_delta[[3]] <- feols(wind_fc_sd ~ augmented_obs + wind_obs | county,
-                         data = reg_data, vcov = ~county)
+                         data = reg_data, vcov = ~name)
 regs_delta[[4]] <- feols(wind_fc_sd ~ augmented_obs + wind_obs | county + name,
-                         data = reg_data, vcov = ~county)
+                         data = reg_data, vcov = ~name)
 
 obs_delta <- regs_delta[[1]]$nobs |> format(big.mark = ",")
 
@@ -360,7 +368,7 @@ msummary(
   add_rows    = rows_delta,
   title       = "Regression Analysis of the Effect of Augmented Observations in Ex-Ante Uncertainty \\label{tab:noaa-controls}",
   notes       = list(
-    "Standard errors clustered at the county level. The sample is restricted to the 2017--2020 augmented-observations denial archive at the 3-day lead time and hurricane-force realizations ($\\\\geq$ 33 m/s); Hurricane Maria is excluded because of its Puerto Rico landfall. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the negative sign reflects that AO assimilation lowers ensemble spread relative to the no-dropsonde (NO) counterfactual. Wind Controls includes the realized wind speed (m/s) as a continuous covariate."
+    "Standard errors are clustered at the storm level. The sample is the 2017--2020 augmented-observations denial archive at the 3-day lead time and hurricane-force realizations ($\\\\geq$ 33 m/s), across all US landfalls including Hurricane Maria. The coefficient $\\\\delta$ is the average reduction in the ex-ante wind-speed forecast standard deviation attributable to the assimilation of dropsonde profiles (the ALL configuration of \\\\citet{DitchekEA2023}); the negative sign reflects that AO assimilation lowers ensemble spread relative to the no-dropsonde (NO) counterfactual. Wind Controls includes the realized wind speed (m/s) as a continuous covariate."
   ),
   threeparttable = TRUE,
   escape      = FALSE,

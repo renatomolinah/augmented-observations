@@ -1,0 +1,23 @@
+-- ANSER (2016) External Benefits AoA, NPV BY$2024 @ 7%, 2030-2055 --
+  Evacuation avoided NPV ($M)             = 138.84
+  Air traffic disruption NPV ($M)         = 134.18
+  Maritime traffic disruption NPV ($M)    = 0.18
+  Air chemistry research NPV ($M)         = 227.65
+  TOTAL benefit NPV ($M)                  = 500.86
+  LCC Alt 2 (C-130J) NPV ($M)             = 680.00
+  Base-case BCR                           = 0.75
+
+-- Our retrospective valuation (2017-2020) --
+  Total retrospective value ($M)          = 5052.38
+  Active years covered                    = 4
+  Annualized rate ($M/yr)                 = 1263.10
+
+-- Comparisons --
+  Our 2017-2020 value / ANSER 25-yr NPV   = 10.09x
+  Our annualized / ANSER annualized       = 63.05x
+  Our 2017-2020 value / ANSER Alt 2 LCC   = 7.43x
+  Our 2017-2020 value / NOAA total acq    = 3.61x
+
+-- NOAA Aircraft Recapitalization (NOAA 2022 / GAO 2025) --
+  Total acquisition, 4x C-130J ($B)       = 1.40
+  Remaining to fund (Jan 2025, $B)        = 0.68

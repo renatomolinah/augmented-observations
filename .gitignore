@@ -1,5 +1,4 @@
 data
-output
 
 Hurricanes_output
 Hurricane_data
@@ -41,18 +40,31 @@ Thumbs.db
 __pycache__/
 *.pyc
 
-# Data and output directories
+# Data directories (Box mount); output/ is tracked as a generated-artifacts reference
 data/
-output/
 code/external_models/assets/
 
-# Manuscript directory (lives on Overleaf, not git)
-augmented_observations/
+# Manuscript directory: source is tracked (paper-draft branch).
+# NOAA_report.tex etc. are still primarily maintained on Overleaf;
+# only LaTeX build artifacts are ignored (see below).
 
 # Output and temporary files
 *.log
 *.tmp
 *~
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.out
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+augmented_observations/*.pdf
 
 # Julia/Quarto files
 

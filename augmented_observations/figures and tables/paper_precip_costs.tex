@@ -1,0 +1,35 @@
+\begin{table}
+
+\caption{Wind and Precipitation Forecast-Error Costs. \label{tab:precip_costs}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lccccccc}
+\toprule
+  & (1) & (2) & (3) & (4) & (5) & (6) & (7)\\
+\midrule
+Wind, $\beta^w_2: (e^w - \mu^w)^2$ & 3.741*** & 3.731*** & 3.248*** & 3.261*** & 3.748*** & 3.646*** & \\
+ & (1.316) & (1.323) & (1.059) & (1.001) & (1.338) & (1.195) & \\
+Wind, Hurricane $\beta^w_2$ &  &  &  &  &  &  & 5.031***\\
+ &  &  &  &  &  &  & (1.760)\\
+Wind, Sub-Hurricane $\beta^w_2$ &  &  &  &  &  &  & 0.095\\
+ &  &  &  &  &  &  & (0.330)\\
+Precipitation, $\beta^p_2: (e^p - \mu^p)^2$ & 0.003 & 0.001 & 0.003 & 0.004 & 0.003 & 0.006* & 0.003\\
+ & (0.005) & (0.005) & (0.003) & (0.003) & (0.003) & (0.003) & (0.003)\\
+ &  &  &  &  &  &  & \\
+Observations & 113,661 & 113,661 & 113,661 & 113,661 & 113,661 & 113,661 & 113,661\\
+ &  &  &  &  &  &  & \\
+Realized Wind/Precip Bins &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+Level Wind/Precip Error &  &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+State-Hurricane FE & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+County FE & \checkmark & \checkmark & \checkmark &  &  &  & \checkmark\\
+County-Month of Year FE &  &  &  & \checkmark &  & \checkmark & \\
+County-Year FE &  &  &  &  & \checkmark & \checkmark & \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01. Full Stage 1 specification reporting both the wind ($\beta^w_2$) and precipitation ($\beta^p_2$) squared demeaned forecast-error coefficients, the latter omitted from the main table. Conley spatial HAC standard errors with a 400 km cutoff.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}

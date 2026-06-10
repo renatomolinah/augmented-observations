@@ -1,0 +1,27 @@
+\begin{table}
+
+\caption{Per-storm decomposition of the \$5.05B retrospective social value. \label{tab:per_storm}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lrrrr}
+\toprule
+Storm & HF Counties Affected & $\bar{\sigma}_{\text{ALL},h}$ (m/s) & Value (\$M) & Share of Total\\
+\midrule
+Maria & 75 & 11.08 & 3,020.9 & 59.8\%\\
+Michael & 27 & 9.04 & 890.1 & 17.6\%\\
+Laura & 13 & 9.95 & 471.2 & 9.3\%\\
+Irma & 9 & 9.20 & 302.0 & 6.0\%\\
+Florence & 4 & 9.56 & 139.4 & 2.8\%\\
+Isaias & 4 & 8.15 & 119.1 & 2.4\%\\
+Sally & 5 & 5.96 & 109.8 & 2.2\%\\
+\textbf{Total} & 137 &  & \textbf{5,052.6} & \textbf{100.0\%}\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Each storm's value is its hurricane-force / 3-day-lead county count times $\hat{\beta}^w_{Hurr}\,[(\bar{\sigma}_{\text{ALL},h}+\hat{\delta})^2-\bar{\sigma}_{\text{ALL},h}^2]$, with $\hat{\beta}^w_{Hurr}=5.03$ and $\hat{\delta}=0.356$ m/s. The total is invariant to using storm-specific or pooled $\sigma$ because value is linear in $\sigma$.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}
