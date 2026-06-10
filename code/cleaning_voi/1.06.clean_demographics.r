@@ -1,12 +1,19 @@
 # ==============================================================================
+# Build county-level controls: BEA per-capita income and GDP, coastline flags,
+# and ACS population (re-downloaded only with a Census API key).
+# Inputs:  data/raw/bea/{CAINC1,CAGDP1}*.csv, census-bea-crosswalk.xlsx;
+#          data/raw/census/{coastline-counties-list.xlsx, county_demographics.csv}
+# Outputs: data/clean/{income_gdp.csv, coastline_counties.csv, county_demographics.csv}
+# Run:     sourced by code/cleaning_voi/run_all.r
+# ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.06.clean_demographics.r\n")
 cat("PURPOSE: Clean demographic data - creates county_demographics.csv\n")
 cat("================================================================================\n")
 
-#=============================
+# ==============================================================================
 # 1. Clean BEA income and GDP
-#=============================
+# ==============================================================================
 
 # Locate the latest BEA vintage automatically. Filenames look like
 # CAINC1__ALL_AREAS_1969_<YYYY>.csv and CAGDP1__ALL_AREAS_2001_<YYYY>.csv;
@@ -58,35 +65,29 @@ income_gdp = inner_join(income, gdp, by = c("county_fips", "year")) |>
 
 fwrite(income_gdp, "data/clean/income_gdp.csv")
 
-#=============================
-# 2. Clean Coastline Counties List
-#=============================
+# ==============================================================================
+# 2. Clean coastline counties list
+# ==============================================================================
 
-# Read in coastline counties list
 coastline_counties <- readxl::read_xlsx("data/raw/census/coastline-counties-list.xlsx", skip = 2) |>
-  # Clean and standardize the data
   janitor::clean_names() |>
-  # Ensure FIPS codes are properly formatted as 5-digit strings
   mutate(
     fips = as.character(state_county_fips),
     fips = str_pad(fips, 5, "left", pad = "0")
   ) |>
-  # Select relevant columns
   select(
     county_fips = fips
   ) |>
   mutate(coastal = TRUE)
 
-# Save the cleaned data
 fwrite(coastline_counties, "data/clean/coastline_counties.csv")
 
-#=============================
+# ==============================================================================
 # 3. Clean ACS population
-#=============================
+# ==============================================================================
 
-# Unified Census processing controls:
-# - HF_CENSUS_OVERRIDE: auto | process | skip
-# Precedence: explicit skip, then key-based processing, otherwise skip.
+# HF_CENSUS_OVERRIDE controls re-downloading ACS: auto | process | skip.
+# Precedence: explicit skip, then process if a Census key is set, else skip.
 census_key <- trimws(Sys.getenv("CENSUS_API_KEY", unset = ""))
 has_census_key <- nzchar(census_key)
 

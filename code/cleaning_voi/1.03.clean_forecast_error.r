@@ -1,16 +1,20 @@
 # ==============================================================================
+# Combine wind and precipitation forecast-error CSVs, attach county identifiers,
+# average over lead times, and build a county shapefile for maps.
+# Inputs:  data/raw/{wind_error,precip_error}/*.csv;
+#          data/raw/census/{counties_tigris.rds, va_acs.rds}
+# Outputs: data/clean/{forecast_data.csv, weather_error_sf.rds}
+# Run:     sourced by code/cleaning_voi/run_all.r
+# ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.03.clean_forecast_error.r\n")
 cat("PURPOSE: Clean weather forecast errors - creates forecast_data.csv, weather_error_sf.rds\n")
 cat("================================================================================\n")
 
-
-#=============================
+# ==============================================================================
 # 1. Load wind and rain forecasts
-#=============================
-
-# These CSVs are generated upstream by the archived workflows in
-# code/external_models/stormwindmodel and code/external_models/prain.
+# ==============================================================================
+# CSVs are produced upstream by code/external_models/{stormwindmodel,prain}.
 
 # Read and tag wind files
 wind_file_names <- list.files(
@@ -47,15 +51,13 @@ rain_list <- lapply(rain_file_names, function(file) {
 rain <- rbindlist(rain_list) |>
   select(-V1)
 
-#=============================
+# ==============================================================================
 # 2. Combine forecast files
-#=============================
-
-# 2. Combine hurricane files
+# ==============================================================================
 
 weather = left_join(
-  wind, 
-  rain,  # FYI: rain has data for extra counties
+  wind,
+  rain,  # rain covers some counties not in wind
   by = c("pred_date" = "pred_date", "lead_days" = "lead_days", "lead_hours" = "lead_hrs", "gridid" = "gridid", "hurricane" = "hurricane")
 ) |>
   mutate(
@@ -64,16 +66,16 @@ weather = left_join(
   ) |>
   select(-glon.x, -glon.y, -glat.x, -glat.y) 
 
-#=============================
+# ==============================================================================
 # 3. Create county variables
-#=============================
+# ==============================================================================
 
 counties_map = readRDS("data/raw/census/counties_tigris.rds")
 st_crs(counties_map) = st_crs(counties_map)
 
-#=============================
-# 4. Merge
-#=============================
+# ==============================================================================
+# 4. Merge and average over lead times
+# ==============================================================================
 
 weather <- weather |> 
   mutate(
@@ -106,9 +108,9 @@ weather = weather |>
 # Save weather data
 fwrite(weather, "data/clean/forecast_data.csv")
 
-#=============================
-# 5. Create file for maps
-#=============================
+# ==============================================================================
+# 5. Build county shapefile for maps
+# ==============================================================================
 
 data_counties = st_as_sf(maps::map("county", plot = FALSE, fill = TRUE)) |>
   mutate(state = sub("\\,.*", "", ID)) |>
@@ -124,16 +126,8 @@ data_counties = st_as_sf(maps::map("county", plot = FALSE, fill = TRUE)) |>
   summarise(geom = st_union(geom), ID = first(ID), state = first(state)) |>
   ungroup()
 
-#   df <- get_acs(
-#   geography = "county",
-#   state     = "VA",
-#   variables = "B01003_001",
-#   survey    = "acs5",
-#   year      = 2009,
-#   geometry  = TRUE
-# )
-# saveRDS(df, "data/raw/census/va_acs.rds")
-
+# va_acs.rds is a saved tidycensus::get_acs() pull for Virginia counties
+# (B01003_001, ACS5, 2009, with geometry); used to supply VA county polygons.
 data_va = readRDS("data/raw/census/va_acs.rds") |>
   select(-moe) |>
   spread(variable, estimate) |>

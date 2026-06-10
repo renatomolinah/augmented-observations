@@ -1,7 +1,15 @@
-# Load packages
+# ==============================================================================
+# Compute per-storm wind-error summaries (county by lead time) from observed
+# best-track swaths and Monte Carlo lead simulations, for each NO/ALL file type.
+# Inputs:  data/raw_denial/<storm>/wind/ (bdeck_BEST*.csv, mc.*_{NO,ALL}.tar.gz)
+# Outputs: data/raw_denial/wind_error_{NO,ALL}/<storm>_wind_errors_<type>.csv
+# Run:     Rscript --vanilla code/cleaning_denial/clean_wind_errors_denial.r
+# Env:     AO_STORM_LIST, AO_DENIAL_FILE_TYPES (comma-separated overrides)
+# ==============================================================================
+
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
-  data.table, janitor, magrittr, fixest, 
+  data.table, janitor, magrittr, fixest,
   broom, tidyverse, tidylog, here, data.table, progress
 )
 options("tidylog.display" = NULL)
@@ -18,16 +26,12 @@ parse_env_list <- function(var_name, default) {
   values[values != ""]
 }
 
-# =============================
-# Clean wind errors
-# =============================
+# ==============================================================================
+# Clean wind errors  (precip errors come directly from the model output files)
+# ==============================================================================
 
-# NOTE: precipitation errors come directly from the model output files
-
-# =============================
-# Updated `get_errors` Function
-# =============================
-
+# Summarize wind errors for one storm and file type: merge predictions with the
+# observed swath, take differences, and aggregate by county and lead time.
 get_errors <- function(name, file_type = c("NO", "ALL"), progress = T) {
   file_type <- match.arg(file_type)  # Ensure valid file_type
   
@@ -150,9 +154,9 @@ get_errors <- function(name, file_type = c("NO", "ALL"), progress = T) {
   return(out)
 }
 
-# =============================
-# Updated `wrapper_function`
-# =============================
+# ==============================================================================
+# Run get_errors over all storms for one file type and write the CSV outputs
+# ==============================================================================
 
 wrapper_function <- function(storm_names, file_type = c("NO", "ALL")) {
   file_type <- match.arg(file_type)  # Ensure valid file_type

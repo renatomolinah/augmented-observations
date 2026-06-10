@@ -1,12 +1,23 @@
 # ==============================================================================
+# Merge all cleaned sources into the county-by-storm analysis panel: forecast
+# errors, SHELDUS damages, FEMA spending, demographics, GDP, and track errors.
+# Builds cost outcomes, error/forecast bins, and normalized-error datasets.
+# Inputs:  data/clean/{forecast_data.csv, data_sheldus.csv, fema_spending.csv,
+#          income_gdp.csv, coastline_counties.csv, county_direction.csv,
+#          county_demographics.csv, track_errors_all_cutoffs.rds}
+# Outputs: data/clean/{final_dataset.rds, ncei_compare.rds,
+#          pooled_track_errors_all_cutoffs.rds,
+#          normalized_dataset.rds, normalized_dataset_global.rds}
+# Run:     sourced by code/cleaning_voi/run_all.r
+# ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.07.merge_data.r\n")
 cat("PURPOSE: Merge all data sources - creates final_dataset.rds/csv\n")
 cat("================================================================================\n")
 
-#=============================
-# 1. load county/state data
-#=============================
+# ==============================================================================
+# 1. Load county/state data
+# ==============================================================================
 
 counties_map = get_urbn_map("counties", sf = TRUE) |>
   st_set_crs(4326)
@@ -18,17 +29,17 @@ counties_sf <- get_urbn_map("counties", sf = FALSE) |>
 county_lat_lon = housingData::geoCounty |> 
   select(county = fips, lon, lat)
   
-#=============================
-# 2. load county demographics inputs
-#=============================
+# ==============================================================================
+# 2. Load county demographics
+# ==============================================================================
 
 county_demos = fread("data/clean/county_demographics.csv") |>
   as_tibble() |>
   mutate(county = str_pad(county, 5, 'left', '0'))
 
-#=============================
-# 3. load cleaned data
-#=============================
+# ==============================================================================
+# 3. Load cleaned data
+# ==============================================================================
 
 weather = fread("data/clean/forecast_data.csv") |>
   mutate(date = as.Date(date)) |>
@@ -65,9 +76,9 @@ county_direction = fread("data/clean/county_direction.csv") |>
   as_tibble() |>
   mutate(county_id = str_pad(county_id, 5, 'left', '0'))
 
-#=============================
-# 4. prepare forecast data
-#=============================
+# ==============================================================================
+# 4. Prepare forecast data
+# ==============================================================================
 
 # Counties with forecast records
 data_weather = weather |>
@@ -116,9 +127,9 @@ data_unaffected_counties = anti_join(
 data_weather_final = rbind(data_weather, data_unaffected_counties) |>
   arrange(date, county_fips)
 
-#=============================
-# 5. Merge datasets
-#=============================
+# ==============================================================================
+# 5. Merge datasets and build outcomes
+# ==============================================================================
 
 # Catch SHELDUS hurricane names that have no forecast counterpart.
 # Without this, such rows survive the full_join with NA weather columns,
@@ -377,9 +388,9 @@ final_dataset = final_dataset |>
 
 saveRDS(final_dataset, "data/clean/final_dataset.rds")
 
-#=============================
-# 6. create track dataset
-#=============================
+# ==============================================================================
+# 6. Create track-error dataset
+# ==============================================================================
 
 df_track_errors <- readRDS("data/clean/track_errors_all_cutoffs.rds") |>
   inner_join(final_dataset, by = c("county", "hurricane")) |>
@@ -393,9 +404,9 @@ df_track_errors <- readRDS("data/clean/track_errors_all_cutoffs.rds") |>
 
 saveRDS(df_track_errors, "data/clean/pooled_track_errors_all_cutoffs.rds")
 
-#=============================
+# ==============================================================================
 # 7. Create normalized datasets
-#=============================
+# ==============================================================================
 
 df_normalized <- final_dataset |>
   group_by(hurricane) |>
@@ -433,7 +444,7 @@ df_norm_global <- final_dataset |>
 
 saveRDS(df_norm_global, "data/clean/normalized_dataset_global.rds")
 
-#=============================
+# ==============================================================================
 # 8. Cleanup intermediate files not used by 2.* scripts
-#=============================
+# ==============================================================================
 

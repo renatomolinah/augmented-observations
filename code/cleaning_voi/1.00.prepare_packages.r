@@ -1,23 +1,20 @@
-#=============================
-# Package Setup for VOI Data Cleaning (sourced by run_all.r)
-#=============================
+# ==============================================================================
+# Load packages and set global options for the VOI cleaning scripts.
+# Run:     sourced by code/cleaning_voi/run_all.r
+# ==============================================================================
 
-# This script sets up packages and environment for data cleaning scripts
-# Run this before executing any 1.x scripts
+# ==============================================================================
+# 1. Environment setup
+# ==============================================================================
 
-#=============================
-# 1. Environment Setup
-#=============================
-
-# Suppress verbose output
 suppressPackageStartupMessages(library(tidyverse))
 options(dplyr.summarise.inform = FALSE)
 options(conleyreg.verbose = FALSE)
 options(verbose = FALSE)
 
-#=============================
-# 2. Load Required Packages  
-#=============================
+# ==============================================================================
+# 2. Load required packages
+# ==============================================================================
 
 library(stormwindmodel)
 library(weathermetrics)
@@ -39,19 +36,15 @@ library(parallel)
 library(tidycensus)
 library(housingData)
 
-# Load custom functions
 source("code/cleaning_voi/functions.r")
 
-#=============================
-# 3. Global Settings and Variables
-#=============================
+# ==============================================================================
+# 3. Global settings and variables
+# ==============================================================================
 
-# Fix for sf package
 sf_use_s2(FALSE)
-
-# Useful shortcut operator
 "%notin%" = Negate("%in%")
 
-# Define cutoffs for robustness checks
+# Track-error cutoffs (km) for robustness checks
 cutoffs <- c(400, 500, 600, 700, 800)
 reference_cutoff <- 400

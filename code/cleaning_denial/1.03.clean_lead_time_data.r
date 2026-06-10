@@ -1,11 +1,18 @@
+# ==============================================================================
+# Standardize lead-time forecast column names, recompute errors as obs - pred,
+# and add the lagged ex-post error (last_error) per county and lead time.
+# Inputs:  data/clean_denial/forecast_denial_data_with_lead_times.csv
+# Outputs: data/clean_denial/forecast_denial_data_with_lead_times{.csv,.rds,_clean.rds}
+# Run:     sourced by code/cleaning_denial/run_all.r
+# ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.03.clean_lead_time_data.r\n")
 cat("PURPOSE: Reshape forecasts by lead time to forecast_denial_data_with_lead_times.csv\n")
 cat("================================================================================\n")
 
-#=============================
+# ==============================================================================
 # 1. Load packages and data
-#=============================
+# ==============================================================================
 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, tidyverse, here, lubridate)
@@ -14,11 +21,10 @@ pacman::p_load(data.table, tidyverse, here, lubridate)
 forecast_lead_times <- fread("data/clean_denial/forecast_denial_data_with_lead_times.csv") |>
   mutate(date = as.Date(date))
 
-# Check what columns we have
 print("Columns in original data:")
 print(names(forecast_lead_times))
 
-# Check if data is already cleaned (has wind_obs) or needs cleaning (has vmax_sust_obs)
+# Decide whether columns still use the raw vmax_* names or are already cleaned
 needs_cleaning <- "vmax_sust_obs" %in% names(forecast_lead_times)
 already_cleaned <- "wind_obs" %in% names(forecast_lead_times)
 
@@ -30,23 +36,18 @@ if (needs_cleaning && !already_cleaned) {
   print("WARNING: Neither old nor new column names found!")
 }
 
-#=============================
+# ==============================================================================
 # 2. Apply cleaned column names
-#=============================
-
-# Rename columns to the cleaned-name convention used downstream.
-# Errors are negated so wind_error = obs - pred (matches final_dataset.rds convention).
+# ==============================================================================
+# Errors are negated so wind_error = obs - pred, matching final_dataset.rds.
 negate_errors <- TRUE  # Set to FALSE to keep errors as (pred - obs)
 
 if (needs_cleaning && !already_cleaned) {
-  # Data needs renaming - apply transformations
   forecast_lead_times_clean <- forecast_lead_times |>
     mutate(
-      # Extract year and month from date
       year = year(date),
       month = month(date),
-      # Extract state FIPS from county FIPS (first 2 digits of 5-digit county code)
-      # Convert county to character, pad to 5 digits, then extract first 2 digits
+      # State FIPS = first 2 digits of zero-padded 5-digit county FIPS
       state = str_pad(as.character(county), 5, 'left', '0') |> str_sub(1, 2),
       # Rename wind variables
       wind_obs = vmax_sust_obs,
@@ -70,17 +71,15 @@ if (needs_cleaning && !already_cleaned) {
       precip_fc_sd = prec_pred_sd
     )
 } else {
-  # Data already cleaned - recalculate errors and add state/year/month if missing
+  # Already cleaned: recompute errors as obs - pred, add state/year/month if absent
   forecast_lead_times_clean <- forecast_lead_times |>
     mutate(
-      # Recalculate errors from obs - fc (obs - pred convention)
-      # This ensures errors are correct even if they were incorrectly calculated before
       wind_error = wind_obs - wind_fc,
       gust_error = gust_obs - gust_fc,
       dur_error = dur_obs - dur_fc,
       precip_error = precip_obs - precip_fc
     )
-  
+
   # Add year/month if missing
   if (!"year" %in% names(forecast_lead_times_clean)) {
     forecast_lead_times_clean <- forecast_lead_times_clean |>
@@ -99,25 +98,23 @@ if (needs_cleaning && !already_cleaned) {
 }
 
 forecast_lead_times_clean <- forecast_lead_times_clean |>
-  # Handle missing precipitation values (set to -999 to match final_dataset convention)
+  # Missing precipitation -> -999 to match final_dataset convention
   replace_na(replace = list(
-    precip_obs = -999, 
-    precip_fc = -999, 
-    precip_error = -999, 
+    precip_obs = -999,
+    precip_fc = -999,
+    precip_error = -999,
     precip_fc_sd = -999
   )) |>
-  # Calculate ex post error (last_error) - must be done AFTER renaming
-  # Group by augmented_obs, county, lead_days to match errors by lead time
+  # Ex-post error: previous-period forecast error for the SAME lead time.
+  # Uses pred - obs (final_dataset convention); grouped by lead_days.
   arrange(augmented_obs, county, lead_days, date) |>
   group_by(augmented_obs, county, lead_days) |>
   mutate(
-    # Ex post error: lagged forecast error from previous period for the SAME lead time
-    # Note: Using wind_fc - wind_obs (pred - obs) to match final_dataset convention
     last_error = lag(wind_fc - wind_obs)
   ) |>
   ungroup()
 
-# Select and reorder columns - keep all useful columns
+# Keep ID, wind, gust, duration, precip, and original columns that exist
 cols_to_keep <- c(
   # ID columns
   "hurricane", "date", "year", "month", "augmented_obs",
@@ -135,21 +132,18 @@ cols_to_keep <- c(
   "gridid", "glon", "glat", "name"
 )
 
-# Only select columns that actually exist
 cols_to_keep <- cols_to_keep[cols_to_keep %in% names(forecast_lead_times_clean)]
 
 forecast_lead_times_clean <- forecast_lead_times_clean |>
   select(all_of(cols_to_keep))
 
-#=============================
+# ==============================================================================
 # 3. Save cleaned lead time data
-#=============================
+# ==============================================================================
 
-# Save cleaned version (rds only; the un-suffixed CSV below is what 1.03
-# downstream reads).
 saveRDS(forecast_lead_times_clean, "data/clean_denial/forecast_denial_data_with_lead_times_clean.rds")
 
-# Also overwrite the original file with consistent column names
+# Overwrite the un-suffixed files (read by downstream scripts) with clean names
 fwrite(forecast_lead_times_clean, "data/clean_denial/forecast_denial_data_with_lead_times.csv")
 saveRDS(forecast_lead_times_clean, "data/clean_denial/forecast_denial_data_with_lead_times.rds")
 

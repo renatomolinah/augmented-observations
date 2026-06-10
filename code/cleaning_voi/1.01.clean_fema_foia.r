@@ -1,12 +1,19 @@
 # ==============================================================================
+# Clean FEMA Public Assistance spending: map disaster numbers to hurricanes,
+# deflate to 2019$, aggregate to county-storm, split ex-ante vs ex-post.
+# Inputs:  data/raw/fema/PublicAssistanceFundedProjectsDetails_2024.csv;
+#          code/external_models/config/storm_manifest.csv
+# Outputs: data/clean/fema_spending.csv
+# Run:     sourced by code/cleaning_voi/run_all.r
+# ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.01.clean_fema_foia.r\n")
 cat("PURPOSE: Clean FEMA disaster spending data and create fema_spending.csv\n")
 cat("================================================================================\n")
 
-#=============================
+# ==============================================================================
 # 1. Load raw data
-#=============================
+# ==============================================================================
 
 # https://www.fema.gov/openfema-data-page/public-assistance-funded-projects-details-v1
 fema_df = fread("data/raw/fema/PublicAssistanceFundedProjectsDetails_2024.csv") |> 
@@ -33,10 +40,10 @@ fema_df = fema_df[, .(
   by = .(disaster_number, declaration_date, state_number_code, county, county_code, ex_ante_spending)
   ]
 
-#=============================
+# ==============================================================================
 # 2. Disaster numbers by hurricane
-#=============================
-# https://www.fema.gov/disaster/declarations
+# ==============================================================================
+# Source: https://www.fema.gov/disaster/declarations
 
 # 2024
 milton_num = c(3622, 3623, 4834, 4844)
@@ -110,22 +117,18 @@ katrina_num = c(3262, 3263, 3258, 3255, 3256, 3257, 3251, 3244, 3252, 3245, 3253
 dennis_num = c(1593, 1594, 1595)
 rita_num = c(1606, 1607, 3260, 3261, 3259)
 cindy_num = c(1601)
-    
-# Step 1: List all objects in the environment
+
+# Collect every *_num vector defined above into one set of disaster numbers
 all_objects <- ls()
-
-# Step 2: Filter out objects ending with "_num"
 num_objects <- all_objects[grep("_num$", all_objects)]
-
-# Step 3: Retrieve each object and concatenate them
 disaster_numbers <- NULL
 for (obj_name in num_objects) {
   disaster_numbers <- c(disaster_numbers, get(obj_name))
 }
 
-#=============================
+# ==============================================================================
 # 3. Process FEMA data
-#=============================
+# ==============================================================================
 
 # Keep only hurricanes in the analysis sample
 fema_df = fema_df[disaster_number %in% disaster_numbers]
@@ -240,13 +243,11 @@ setnames(
 fema_df_county[is.na(fema_df_county)] = 0
 fema_df_county$pdd = TRUE
 
-#=============================
+# ==============================================================================
 # 4. Save FEMA data
-#=============================
+# ==============================================================================
 
-# Print per-storm row counts so a missing storm is visible at a glance.
-# If a storm was added to the project but its *_num list and case_when
-# clause above were not updated, it appears here with zero (or absent).
+# Print per-storm spending so a missing or misassigned storm is visible.
 cat("FEMA storms in fema_spending.csv (project_amount sum, millions $):\n")
 print(
   fema_df_county |>
