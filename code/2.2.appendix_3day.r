@@ -1,16 +1,7 @@
 # ==============================================================================
-# 2.2 Appendix robustness - Stage 1 using ONLY 3-day-ahead forecasts
-# ------------------------------------------------------------------------------
-# The headline Stage 1 panel (data/clean/final_dataset.rds) uses the forecast
-# error averaged over the 1-3 day lead window (Molina & Rudik convention). This
-# robustness check re-estimates the preferred column (7) specification using the
-# forecast error at the 3-day lead ONLY, rebuilt from the raw per-lead files in
-# data/raw/{wind,precip}_error. The realized-intensity bins (wind_cut, category,
-# precip_cut), fixed effects, costs, and coordinates are taken from the panel and
-# held fixed; only the forecast-error terms change, isolating the lead choice.
-#
-# Output: figures and tables/cost_3day_robustness.tex  (label tab:cost_3day)
-# Run:    Rscript --vanilla code/2.2.appendix_3day.r   (requires the Box data symlink)
+# 2.2 Stage 1 robustness using only 3-day-ahead forecast errors (vs the headline
+# 1-3 day average), rebuilt from the raw per-lead files and re-demeaned in the same
+# bins. Output: figures and tables/cost_3day_robustness.tex. Needs the Box mount.
 # ==============================================================================
 
 if (!require("pacman")) install.packages("pacman")

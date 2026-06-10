@@ -1,25 +1,8 @@
 # ==============================================================================
-# 2.1.extended_valuation.r
-# PURPOSE: Extend the retrospective AO valuation beyond the 8-storm denial archive
-#          to every hurricane-force, 3-day-lead county-storm in the 2005-2024
-#          forecast panel. Augmented observations are flown for essentially every
-#          hurricane threatening the continental US, so the continental denial
-#          subsample (6 storms, 62 county-storms) captures only a fraction of the
-#          realized value.
-#
-# METHOD:  Each county-storm is priced at its OWN 3-day baseline forecast
-#          uncertainty sigma_3 (NHC operational forecast SD, from the raw
-#          wind_error files), holding the AO precision gain delta fixed at its
-#          Stage 2 estimate:   V = beta_Hurr * [ (sigma_3 + delta)^2 - sigma_3^2 ].
-#          beta_Hurr (Stage 1) and delta (Stage 2) are read from the headline
-#          pipeline output so this script stays in sync with the main results.
-#
-# CRITERION: lead_days == 3 & realized wind > 33 m/s. This automatically excludes
-#          rapidly forming storms with no 3-day-ahead hurricane-force forecast
-#          (e.g., Harvey, Hanna), exactly as in the denial sample.
-#
-# OUTPUT:  output/extended_valuation_numbers.txt  (citable figures; not a table).
-# DEPENDS: data/raw/wind_error/*_errors.csv (Box mount) and output/stage3_numbers.txt.
+# 2.1 Extend the retrospective AO valuation to every hurricane-force, 3-day-lead
+# county-storm in the 2005-2024 panel, each priced at its own baseline sigma_3:
+# V = beta_Hurr * [(sigma_3+delta)^2 - sigma_3^2], beta/delta read from the pipeline.
+# Output: output/extended_valuation_numbers.txt (figures only). Needs the Box mount.
 # ==============================================================================
 suppressMessages({library(data.table); library(here)})
 

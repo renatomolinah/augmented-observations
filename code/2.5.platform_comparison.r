@@ -1,10 +1,7 @@
 # ==============================================================================
-# 2.5 Appendix C: social value of AO vs the AoA replacement-platform alternatives.
-# Life-cycle costs (NPV, BY$2024) for the three costed alternatives and the
-# external-benefits NPV are from the 2016 AoA External Benefits Report
-# (ANSER2016ExternalBenefits; Fig. 33, Total NPV of Costs). The denial-sample
-# social value is the Stage 3 headline. Writes platform_comparison.tex
-# (tab:platform_comparison). No Box data needed; figures are from the report.
+# 2.5 Appendix C Table C2: AO social value vs the AoA replacement-platform
+# alternatives. Costs and benefits are from the 2016 AoA report (ANSER2016,
+# Fig. 33); the value is the Stage 3 headline. Writes platform_comparison.tex.
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(here)

@@ -1,23 +1,7 @@
 # ==============================================================================
-# 2.0 Paper Tables - Full (non-abbreviated) regression tables for the manuscript
-# ------------------------------------------------------------------------------
-# The NOAA *report* (code/NOAA_report.r) renders compact placeholder tables. For
-# the *paper* we want the publication versions:
-#   - output/paper_table_voi.tex (Stage 1, label tab:voi-table) mirrors Table 2 of
-#     Molina & Rudik ("The Social Value of Hurricane Forecasts"): three stacked
-#     outcome panels -- total cost, cost / county GDP, cost per capita -- across
-#     the seven specifications, reporting beta2 / Hurricane beta2 / Sub-Hurricane
-#     beta2 with controls and fixed effects shown as a shared checkmark block
-#     (shape = "rbind", coef_omit = c(-1, -5, -6)).
-#   - output/paper_controls_table.tex (Stage 2, label tab:noaa-controls) reports
-#     the full delta regressions: every coefficient (including the wind control)
-#     plus the N / R2 / within-R2 block.
-# The estimation code matches NOAA_report.r so the numbers are identical; only the
-# table outcomes/rendering differ. Labels match the report's so the manuscript
-# \ref{}s keep resolving when its \input lines point at these files.
-#
-# Run:  Rscript --vanilla code/2.0.paper_tables.r   (requires the Box data symlink)
-# Make: make paper_tables
+# 2.0 Paper tables: publication versions of the Stage 1 VOI table and the full
+# delta regressions. Estimation matches NOAA_report.r and labels are shared so the
+# manuscript \ref{}s resolve. Run: Rscript --vanilla code/2.0.paper_tables.r
 # ==============================================================================
 
 if (!require("pacman")) install.packages("pacman")
@@ -64,11 +48,7 @@ run_reg <- function(formula) {
   )
 }
 
-# Three outcomes (total cost, cost / county GDP, cost per capita) x seven
-# specifications, mirroring Table 2 of Molina & Rudik (Hurricane Forecast repo,
-# code/2.01.main_results.r): stacked outcome panels via shape = "rbind", showing
-# only beta2 / Hurricane beta2 / Sub-Hurricane beta2, with controls and fixed
-# effects collapsed into a single shared checkmark block.
+# Three cost outcomes x seven specifications, stacked outcome panels (shape = "rbind").
 voi_rhs <- c(
   "squared_error + squared_error_precip | county + state^hurricane",
   "squared_error + squared_error_precip | county + state^hurricane + wind_cut + precip_cut",
@@ -107,12 +87,8 @@ rows <- tribble(
 )
 
 msummary(
-  # Main text shows only the headline dollar-cost outcome; the cost/GDP and
-  # cost-per-capita normalizations are reported as outcome robustness in
-  # Appendix A (tab:cost_outcomes and tab:implied_value). coef_map keeps only
-  # the wind squared-error coefficient (pooled in cols 1-6, hurricane/sub split
-  # in col 7); precipitation and level errors are omitted (precip is reported in
-  # tab:precip_costs).
+  # Headline dollar-cost outcome only; coef_map keeps the wind squared-error
+  # coefficient (pooled in cols 1-6, hurricane/sub split in col 7).
   regs,
   coef_map = c(
     "squared_error"                        = "$\\beta_2: (e - \\mu)^2$",

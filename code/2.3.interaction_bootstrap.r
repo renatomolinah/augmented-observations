@@ -1,19 +1,9 @@
 # ==============================================================================
-# 2.3 Stage-2 precision tables with WILD CLUSTER BOOTSTRAP inference
-# ------------------------------------------------------------------------------
-# Generates the Stage 2 regression tables whose significance must come from a
-# RESTRICTED wild cluster bootstrap (Webb 6-point weights, clustered on storm),
-# because with so few storm clusters analytical cluster-robust p-values badly
-# over-reject (e.g. the 3-day x HF triple interaction is p=0.0004 analytically
-# but ~0.03 under the bootstrap). We display the clustered SE in parentheses AND
-# the bootstrap p-value in brackets; stars come from the bootstrap p, so the
-# inference that sets the stars is explicit rather than implied by the SE.
-#
-#   output/paper_interaction_grid.tex    tab:interaction-grid  (main, AO terms)
-#   output/paper_precision_full.tex  tab:precision_full (all coefs)
-#   output/paper_controls_table.tex      tab:noaa-controls     (restricted HF/3d)
-#
-# Run:  Rscript --vanilla code/2.3.interaction_bootstrap.r
+# 2.3 Stage-2 precision tables with restricted wild cluster bootstrap inference
+# (Webb weights, clustered on storm), since few storm clusters make analytical
+# p-values over-reject; stars come from the bootstrap p. Outputs the interaction
+# grid (tab:interaction-grid) and the full coefficient table (tab:precision_full).
+# Run: Rscript --vanilla code/2.3.interaction_bootstrap.r
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, fixest, here, modelsummary, parallel)
@@ -107,9 +97,7 @@ gm <- list(
 # ==============================================================================
 # Interaction grid (full denial panel, leads 1-3)
 # ==============================================================================
-# Columns (5) and (6) are the full triple interaction WITHOUT and WITH the
-# realized-wind control -- the with/without-wind robustness on the full panel
-# (replacing the old restricted-sample controls table).
+# Columns (5) and (6): full triple interaction without and with the realized-wind control.
 full_triple <- c("AO", "l2", "l3", "hf", "AO_l2", "AO_l3", "AO_hf",
                  "l2_hf", "l3_hf", "AO_l2_hf", "AO_l3_hf")
 cols <- list(
@@ -188,8 +176,4 @@ modelsummary(
 add_adjust_box(here("output/paper_precision_full.tex"))
 cat("[2.3] wrote output/paper_precision_full.tex\n")
 
-# NOTE: the restricted hurricane-force / 3-day controls table (tab:noaa-controls)
-# was removed from the paper -- it used only the restricted cell, its four delta
-# estimates were identical and unstarred, and the with/without-wind robustness it
-# provided is now columns (5)-(6) of the interaction grid on the FULL panel.
 print(res[, .(col, term, estimate = round(estimate, 3), se = round(std.error, 3), p = round(p.value, 3))])
