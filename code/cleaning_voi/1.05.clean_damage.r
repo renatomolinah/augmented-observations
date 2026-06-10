@@ -1,12 +1,18 @@
 # ==============================================================================
+# Combine per-hurricane SHELDUS damage files, standardize columns and FIPS,
+# and attach county/state names.
+# Inputs:  data/raw/sheldus/damages_*.csv
+# Outputs: data/clean/data_sheldus.csv
+# Run:     sourced by code/cleaning_voi/run_all.r
+# ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.05.clean_damage.r\n")
 cat("PURPOSE: Clean SHELDUS damage data - creates sheldus_clean.csv\n")
 cat("================================================================================\n")
 
-#=============================
-# 1. load per-hurricane SHELDUS files
-#=============================
+# ==============================================================================
+# 1. Load per-hurricane SHELDUS files
+# ==============================================================================
 
 # Each file is damages_YEAR_NAME.csv with hurricane-specific damage records
 damage_files = Sys.glob("data/raw/sheldus/damages_*.csv")
@@ -63,9 +69,9 @@ data_sheldus = as_tibble(data_sheldus) |>
 cat("Loaded", n_distinct(data_sheldus$hurricane), "hurricanes from",
     length(damage_files), "files\n")
 
-#=============================
-# 2. load county data
-#=============================
+# ==============================================================================
+# 2. Load county data
+# ==============================================================================
 
 counties_sf = get_urbn_map("counties", sf = TRUE) |>
   st_transform(4326)
@@ -77,11 +83,11 @@ counties_sf = counties_sf |>
   mutate(std_state = str_to_lower(std_state),
          std_county = str_to_lower(std_county))
 
-#=============================
-# 3. combine data
-#=============================
+# ==============================================================================
+# 3. Combine data
+# ==============================================================================
 
-# Event Names
+# Attach standardized county/state names by FIPS; drop Puerto Rico (FIPS 72)
 data_sheldus = left_join(
                      data_sheldus |> select(-state, -county),
                      counties_sf,
@@ -95,8 +101,8 @@ data_sheldus = left_join(
 cat("Total property damage (2019 $B):", sum(data_sheldus$property_damage_2019) / 1e9, "\n")
 cat("Total deaths:", sum(data_sheldus$deaths), "\n")
 
-#=============================
-# 4. save SHELDUS data
-#=============================
-  
+# ==============================================================================
+# 4. Save SHELDUS data
+# ==============================================================================
+
 fwrite(data_sheldus, "data/clean/data_sheldus.csv")

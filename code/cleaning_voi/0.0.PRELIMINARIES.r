@@ -1,13 +1,12 @@
-#=============================
-# Package Reproducibility Setup
-#=============================
+# ==============================================================================
+# One-time reproducibility setup: write .Rprofile options, install vendored
+# packages, and restore the renv environment. Run once before any other script.
+# Run:     Rscript --vanilla code/cleaning_voi/0.0.PRELIMINARIES.r
+# ==============================================================================
 
-# This script ensures reproducible package versions for the replication package
-# Run this before executing any other scripts
-
-#=============================
+# ==============================================================================
 # 0. Environment setup
-#=============================
+# ==============================================================================
 
 rprofile_lines <- c(
   "options(download.file.method = \"libcurl\")",
@@ -17,22 +16,18 @@ rprofile_lines <- c(
   "Sys.setenv(DOWNLOAD_STATIC_LIBV8 = 1)"
 )
 
-# Read any existing content (silently ignore if the file doesn't exist yet)
+# Append only the .Rprofile lines not already present.
 rprofile_lines_existing <- if (file.exists(".Rprofile")) readLines(".Rprofile", warn = FALSE) else character()
-
-# Add only the lines that aren't already present
 new <- setdiff(rprofile_lines, rprofile_lines_existing)
 
 if (length(new)) {
   write(new, ".Rprofile", sep = "\n", append = TRUE)
 } else {
 }
-# ---------------------------------------
 
-
-#=============================
-# 1. Initialize renv for reproducible package environment
-#=============================
+# ==============================================================================
+# 1. Initialize renv and install vendored packages
+# ==============================================================================
 
 
 install.packages("./local_packages/renv_1.1.4.tar.gz", repos = NULL, type = "source")
@@ -66,17 +61,10 @@ if (!requireNamespace("urbnmapr", quietly = TRUE)) {
 
 renv::snapshot()
 
-#=============================
-# 2. API Keys Setup (if user wants to download data from source from census, GitHub pat may be required for GitHub package installation)
-#=============================
-
-# Example Census API key entry
-# census_api_key = "YOUR_API_KEY_HERE"
-
-# Example GitHub personal access token entry
-# github_pat = "GITHUB_PAT_HERE"
-
-# Example commands to write keys to .Renviron
-# write(sprintf("\nCENSUS_API_KEY=%s", census_api_key), file = "~/.Renviron", append = TRUE)
-# write(sprintf("\nGITHUB_PAT=%s", github_pat), file = "~/.Renviron", append = TRUE)
-# write(sprintf("\nRENV_CONFIG_SANDBOX_ENABLED = FALSE"), file = "~/.Renviron", append = TRUE)
+# ==============================================================================
+# 2. API keys (optional; only needed to re-download Census data or install
+#    GitHub-hosted packages). Set in ~/.Renviron, e.g.:
+#      CENSUS_API_KEY=...
+#      GITHUB_PAT=...
+#      RENV_CONFIG_SANDBOX_ENABLED=FALSE
+# ==============================================================================

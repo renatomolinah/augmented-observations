@@ -1,12 +1,19 @@
 # ==============================================================================
+# Clean hurricane track shapefiles: build observed and forecast tracks, compute
+# county-level track-position errors across cutoffs, and county left/right side.
+# Inputs:  data/raw/track_raw/ (or track_raw.zip): trackline_{bdeck,adeck} shapefiles
+# Outputs: data/clean/{track_actual.rds, track_forecast.rds,
+#          track_errors_all_cutoffs.rds, county_direction.csv}
+# Run:     sourced by code/cleaning_voi/run_all.r
+# ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.02.clean_forecast_track.r\n")
 cat("PURPOSE: Clean hurricane track data - creates track_forecast.rds, track_actual.rds, county_direction.csv\n")
 cat("================================================================================\n")
 
-#=============================
+# ==============================================================================
 # 1. Read actual track files
-#=============================
+# ==============================================================================
 
 if (file.exists("data/raw/track_raw.zip")) {
   unzip("data/raw/track_raw.zip", exdir = "data/raw/")
@@ -22,9 +29,8 @@ file_names <- list.files(
   recursive = TRUE
 )
 
-# Read each file and tag with its source type up-front. Avoids a positional
-# zip across the rbind'd frame, which would silently misalign if any
-# shapefile carried more than one feature.
+# Tag each file with its source type up front, so the type stays aligned
+# even if a shapefile carries more than one feature.
 parse_type <- function(path) {
   bn <- basename(path)
   substr(bn, nchar(bn) - 7, nchar(bn) - 4)
@@ -39,9 +45,9 @@ track_list = Map(
   file_names
 )
 
-#=============================
-# 2. Combine with data for plotting
-#=============================
+# ==============================================================================
+# 2. Combine actual track segments
+# ==============================================================================
 
 track = do.call(rbind, track_list) %>%
   mutate(hurricane = gsub(" .*$", "", Track),
@@ -56,16 +62,15 @@ track = do.call(rbind, track_list) %>%
   st_set_crs(4326) |> 
   ungroup()
 
-#=============================
+# ==============================================================================
 # 3. Save actual track
-#=============================
+# ==============================================================================
 
 saveRDS(track, "data/clean/track_actual.rds")
 
-
-#=============================
+# ==============================================================================
 # 4. Read forecast track files
-#=============================
+# ==============================================================================
 
 file_names <- list.files(
   path = "data/raw/track_raw/",
@@ -86,9 +91,9 @@ track_list = Map(
   file_names
 )
 
-#=============================
-# 5. Combine with data for plotting
-#=============================
+# ==============================================================================
+# 5. Combine forecast track segments
+# ==============================================================================
 
 track_forecast = do.call(rbind, track_list) %>%
   mutate(hurricane = gsub(" .*$", "", Track),
@@ -103,16 +108,15 @@ track_forecast = do.call(rbind, track_list) %>%
   st_set_crs(4326) |> 
   ungroup()
 
-#=============================
+# ==============================================================================
 # 6. Save forecast track
-#=============================
+# ==============================================================================
 
 saveRDS(track_forecast, "data/clean/track_forecast.rds")
 
-
-#=============================
+# ==============================================================================
 # 7. Compute track errors
-#=============================
+# ==============================================================================
 
 county_centroids <- load_county_centroids()
 hurricanes <- readRDS("data/clean/track_forecast.rds") |>
@@ -209,11 +213,10 @@ combined_results <- bind_rows(all_cutoff_results, .id = "cutoff") %>%
 # Save as single file
 saveRDS(combined_results, "data/clean/track_errors_all_cutoffs.rds")
 
-#=============================
-# 8. Get county direction relative to track
-#=============================
+# ==============================================================================
+# 8. County direction (left/right) relative to track
+# ==============================================================================
 
-# Load track data
 track_actual <- readRDS("data/clean/track_actual.rds") |>
   filter(forecast_time == 1 & type == "BEST")
 

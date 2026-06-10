@@ -1,7 +1,15 @@
-# Load packages
+# ==============================================================================
+# Collect per-storm precipitation-error files into the pooled denial inputs,
+# standardizing columns for each NO/ALL file type.
+# Inputs:  data/raw_denial/<storm>/precip/<storm>_precip_errors_*_{NO,ALL}.csv
+# Outputs: data/raw_denial/precip_error_{NO,ALL}/<storm>_precip_errors_<type>.csv
+# Run:     Rscript --vanilla code/cleaning_denial/clean_rain_errors_denial.r
+# Env:     AO_STORM_LIST, AO_DENIAL_FILE_TYPES (comma-separated overrides)
+# ==============================================================================
+
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
-  data.table, janitor, magrittr, fixest, 
+  data.table, janitor, magrittr, fixest,
   broom, tidyverse, tidylog, here, data.table, progress
 )
 options("tidylog.display" = NULL)
@@ -18,11 +26,11 @@ parse_env_list <- function(var_name, default) {
   values[values != ""]
 }
 
-# =============================
+# ==============================================================================
 # Clean precip errors
-# =============================
+# ==============================================================================
 
-# Function to copy precipitation files for each storm and save separately
+# Standardize and copy each storm's precip-error files into the pooled directory
 process_precipitation_files <- function(storm_names, file_type = c("NO", "ALL")) {
   # Initialize progress bar
   pb <- progress_bar$new(

@@ -1,12 +1,17 @@
+# ==============================================================================
+# Helper functions for the VOI cleaning scripts (track distances, centroids,
+# and safe core selection for parallel processing).
+# Run:     sourced by code/cleaning_voi/1.00.prepare_packages.r
+# ==============================================================================
+
+# County centroids in EPSG:4326 with numeric FIPS
 load_county_centroids <- function() {
-  # Load county data
   counties <- get_urbn_map("counties", sf = TRUE) %>%
     st_transform(4326) %>%
     mutate(
-      county_fips = as.numeric(county_fips)  # Keep as numeric
+      county_fips = as.numeric(county_fips)
     )
-  
-  # Calculate centroids
+
   centroids <- counties %>%
     st_centroid() %>%
     select(county_fips, geometry) %>%
@@ -15,9 +20,8 @@ load_county_centroids <- function() {
   return(centroids)
 }
 
-# Function to calculate distances for a single hurricane and lead time
+# County-to-track distances (km) for one hurricane and lead time
 calculate_distances <- function(hurricane, lead_time, county_centroids) {
-  # Define paths
   hurricane_path <- here("data/raw/track_raw", hurricane, "track")
   
   # Load observed track (24-hour BEST)
@@ -47,26 +51,28 @@ calculate_distances <- function(hurricane, lead_time, county_centroids) {
   pred_distances <- st_distance(county_centroids, preds_line) %>%
     as.numeric()
   
-  # Create results dataframe (convert to kilometers)
+  # Distances returned in km (st_distance is meters)
   results <- data.frame(
-    county = county_centroids$county_fips,  # Keep as numeric
+    county = county_centroids$county_fips,
     hurricane = hurricane,
     lead_time = as.numeric(lead_time),
-    obs_distance = obs_distances / 1000,  # Convert to km
-    pred_distance = pred_distances / 1000  # Convert to km
+    obs_distance = obs_distances / 1000,
+    pred_distance = pred_distances / 1000
   )
   
   return(results)
 }
 
 # ==============================================================================
-# Automatic core limit for parallel processing
+# Pick a memory-aware core count for parallel processing.
+# Override via HF_N_CORES, MAX_CORES_FOR_MCLAPPLY, or SLURM_CPUS_PER_TASK;
+# otherwise derive from detected RAM, capped at physical cores and hard_max_cores.
 # ==============================================================================
 
 get_safe_mclapply_cores <- function(target_gb_per_core = 2.5,
                                     hard_max_cores = 8L) {
-  
-  # Manual override - check HF_N_CORES first (project-specific), then MAX_CORES_FOR_MCLAPPLY (generic)
+
+  # Manual overrides, in precedence order
   if (Sys.getenv("HF_N_CORES") != "") {
     cores <- suppressWarnings(as.integer(Sys.getenv("HF_N_CORES")))
     if (!is.na(cores) && cores >= 1L) {

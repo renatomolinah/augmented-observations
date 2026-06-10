@@ -1,14 +1,20 @@
+# ==============================================================================
+# Combine ALL (augmented-obs) and NO (denial) wind and precipitation forecast
+# errors, attach county identifiers, and average over lead times.
+# Inputs:  data/raw_denial/{wind_error,precip_error}_{ALL,NO}/*.csv;
+#          data/raw/census/counties_tigris.rds
+# Outputs: data/clean_denial/forecast_denial_data_with_lead_times.csv
+# Run:     sourced by code/cleaning_denial/run_all.r
+# ==============================================================================
 cat("================================================================================\n")
 cat("RUNNING: 1.01.clean_forecast_error_aug_obs.r\n")
 cat("PURPOSE: Combine ALL/NO denial forecasts into wind_data.rds + rain_data.rds\n")
 cat("================================================================================\n")
 
-#=============================
-# 1. load wind and rain forecasts
-#=============================
-
-# These denial-case CSVs come from the upstream stormwindmodel / P-RAIN
-# workflows archived in code/external_models/.
+# ==============================================================================
+# 1. Load wind and rain forecasts
+# ==============================================================================
+# CSVs are produced upstream by code/external_models/ (stormwindmodel, P-RAIN).
 
 wind_file_names_all = list.files(
   path = "data/raw_denial/wind_error_ALL",
@@ -45,14 +51,12 @@ rain_list_no = lapply(rain_file_names_no, fread)
 
 
 
-#=============================
-# 2. combine forecast files
-#=============================
+# ==============================================================================
+# 2. Combine forecast files
+# ==============================================================================
 
-# 2. Combine hurricane files
-# Parse storm name from filename (e.g. "dorian_wind_errors_ALL.csv" -> "dorian").
-# Robust to new storms or non-alphabetical insertion; the prior positional zip
-# silently mislabeled every file after any misordered insertion.
+# Parse storm name from filename (e.g. "dorian_wind_errors_ALL.csv" -> "dorian"),
+# tagging each file by name so storms stay correctly labeled regardless of order.
 parse_storm <- function(path) str_extract(basename(path), "^[a-z]+")
 
 ## 2.1 Wind data
@@ -73,8 +77,7 @@ wind_no = Map(
 
 wind = rbind(wind_all, wind_no)
 
-# Calculate predicted means. Note: pred_sd columns already exist in raw data and are preserved.
-# If pred_mean columns don't exist, calculate from obs + dif_mean
+# Fill any missing pred_mean columns from obs + dif_mean (pred_sd kept as-is)
 wind = wind |>
   mutate(
     vmax_sust_pred_mean = ifelse(is.na(vmax_sust_pred_mean), vmax_sust_obs + vmax_sust_dif_mean, vmax_sust_pred_mean),
@@ -117,8 +120,8 @@ stopifnot(all(rain$name == rain$hurricane))
 ## 2.3 Wind + rain merge
 
 weather = left_join(
-  wind, 
-  rain,  # FYI: rain has data for extra counties
+  wind,
+  rain,  # rain covers some counties not in wind
   by = c("name", "pred_date", "lead_days", "lead_hrs", "gridid", "hurricane", "augmented_obs")
 ) |>
   mutate(
@@ -130,20 +133,16 @@ weather = left_join(
   rename(lead_hours = lead_hrs) 
   
 
-#=============================
-# 3. create county variables
-#=============================
-
-# counties_map = tigris::counties(cb = TRUE) |>
-#   st_set_crs(4326)
-# saveRDS(counties_map, "data/raw/census/counties_tigris.rds")
-
+# ==============================================================================
+# 3. Create county variables
+# ==============================================================================
+# counties_tigris.rds is a saved tigris::counties(cb = TRUE) pull (EPSG:4326).
 counties_map = readRDS("data/raw/census/counties_tigris.rds")
 counties_map = st_set_crs(counties_map, 4326)
 
-#=============================
-# 4. merge
-#=============================
+# ==============================================================================
+# 4. Merge and average over lead times
+# ==============================================================================
 
 weather = weather |>
   st_as_sf(
@@ -162,10 +161,9 @@ fwrite(weather, "data/clean_denial/forecast_denial_data_with_lead_times.csv")
 
 weather = weather |>
   group_by(name) |>
-  # hurricane date (day after last forecast)
+  # Hurricane date = day after the last forecast
   mutate(date = max(date) + 1) |>
   ungroup() |>
-  # select(-starts_with("gust"), -starts_with("sust")) |>
   as_tibble() |>
   group_by(name, date, gridid, hurricane, augmented_obs, glon, glat, county, county_name, geometry) |>
   summarise_all(
