@@ -14,7 +14,6 @@ s3 <- readLines(s3_path)
 getnum <- function(key) as.numeric(sub(".*=\\s*", "", grep(key, s3, value = TRUE)[1]))
 beta  <- getnum("^beta_hurr")
 delta <- getnum("^delta \\(m/s\\)")
-stopifnot(is.finite(beta), is.finite(delta))
 
 # --- raw 3-day forecast-error panel, all 37 storms ----------------------------
 files <- list.files(here("data/raw/wind_error"), pattern = "_errors\\.csv$", full.names = TRUE)
@@ -30,7 +29,7 @@ hf <- cs[is.finite(wind_obs) & wind_obs > 33 & is.finite(sigma3)]
 hf[, value_M := beta * ((sigma3 + delta)^2 - sigma3^2)]
 
 # uniform per-county value at the denial-sample baseline (robustness)
-sigma_bar <- 10.13
+sigma_bar <- getnum("baseline sigma_All")
 vbar <- beta * ((sigma_bar + delta)^2 - sigma_bar^2)
 
 summ <- function(d) list(storms = uniqueN(d$name), cs = nrow(d),

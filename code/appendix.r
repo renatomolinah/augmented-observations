@@ -224,10 +224,9 @@ add_adjust_box(here("output/cost_jackknife.tex"))
 
 # ==============================================================================
 # Stage-2 robustness tables use wild cluster bootstrap inference and are generated
-# elsewhere: tab:precision_full by 2.3.interaction_bootstrap.r;
-# tab:precision_jackknife_maria (jackknife of the triple) and tab:precision_maria
-# (Maria in/out on the triple) by 2.4.delta_robustness_bootstrap.r. The denial
-# panel is loaded here only for the Appendix C per-storm decomposition below.
+# elsewhere: tab:precision_full by 2.3.stage2_tables.r and tab:precision_jackknife_maria
+# by 2.4.precision_jackknife.r. The denial panel is loaded here only for the
+# Appendix C per-storm decomposition below.
 # ==============================================================================
 
 denial_with_maria <- fread(denial_path) |>

@@ -1,5 +1,4 @@
 data
-output
 
 Hurricanes_output
 Hurricane_data
@@ -41,9 +40,8 @@ Thumbs.db
 __pycache__/
 *.pyc
 
-# Data and output directories
+# Data directories (Box mount); output/ is tracked as a generated-artifacts reference
 data/
-output/
 code/external_models/assets/
 
 # Manuscript directory: source is tracked (paper-draft branch).

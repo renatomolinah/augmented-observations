@@ -8,10 +8,10 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial report appendix workshop paper_tables clean help
+.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial report appendix workshop stage1_tables clean help
 
 ## Default
-all: raw_check report appendix workshop paper_tables
+all: raw_check report appendix workshop stage1_tables
 	@echo -e "$(GREEN)Pipeline complete.$(NC)"
 
 ## Help
@@ -36,7 +36,7 @@ help:
 	@echo "  report       run code/NOAA_report.r -> output/{table_voi,summary_dmg,data_denial,noaa_report_controls_table}.tex + output/augmented_panel.png"
 	@echo "  appendix     run code/appendix.r -> output/app{A,B}_*.tex (incl. appA_valuations) + output/appC_per_storm.tex"
 	@echo "  workshop     run code/workshop_responses.r -> output/appD_*.tex"
-	@echo "  paper_tables run code/2.0.paper_tables.r -> output/{paper_table_voi,paper_controls_table}.tex (full tables for the paper)"
+	@echo "  stage1_tables run code/2.0.stage1_tables.r -> output/{paper_table_voi,paper_precip_costs,paper_cost_outcomes}.tex"
 	@echo "  clean        remove output/ (preserves data/raw/ and data/clean/*)"
 	@echo
 	@echo "Prereqs: R packages restored via renv (renv::restore()) and"
@@ -152,14 +152,14 @@ workshop: output/appD_sample.tex
 ## Step 6 - Paper tables (full, non-abbreviated versions of the report regressions)
 output/paper_table_voi.tex: data/clean/final_dataset.rds \
                             data/clean_denial/forecast_denial_data_with_lead_times.csv \
-                            code/2.0.paper_tables.r \
+                            code/2.0.stage1_tables.r \
                             code/functions_table.r
 	@echo -e "$(YELLOW)[6/6] Paper tables (full Stage 1 / Stage 2 regressions)...$(NC)"
 	@mkdir -p output
-	@$(R) code/2.0.paper_tables.r
-	@echo -e "$(GREEN)  -> output/{paper_table_voi,paper_appA_outcomes,paper_controls_table,paper_value_surface,paper_appB_precision_grid}.tex$(NC)"
+	@$(R) code/2.0.stage1_tables.r
+	@echo -e "$(GREEN)  -> output/{paper_table_voi,paper_precip_costs,paper_cost_outcomes}.tex$(NC)"
 
-paper_tables: output/paper_table_voi.tex
+stage1_tables: output/paper_table_voi.tex
 
 ## Cleanup
 clean:

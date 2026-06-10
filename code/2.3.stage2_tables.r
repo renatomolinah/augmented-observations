@@ -3,7 +3,7 @@
 # (Webb weights, clustered on storm), since few storm clusters make analytical
 # p-values over-reject; stars come from the bootstrap p. Outputs the interaction
 # grid (tab:interaction-grid) and the full coefficient table (tab:precision_full).
-# Run: Rscript --vanilla code/2.3.interaction_bootstrap.r
+# Run: Rscript --vanilla code/2.3.stage2_tables.r
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, fixest, here, modelsummary, parallel)

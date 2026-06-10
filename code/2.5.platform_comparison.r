@@ -6,10 +6,13 @@
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(here)
 
-our_value_B    <- 5.05    # denial-sample headline social value ($B), Stage 3
-aoa_benefits_M <- 501     # AoA external benefits, NPV BY$2024 ($M)
-
-# AoA Fig. 33: life-cycle cost NPV (BY$2024, $M) for the three costed alternatives
+# Only the denial-sample headline is estimated by the pipeline. The AoA benefit and
+# the three life-cycle costs are external figures from the 2016 AoA report
+# (ANSER2016; benefits and Fig. 33 life-cycle costs).
+read_num <- function(file, key)
+  as.numeric(gsub("[^0-9.]", "", sub(".*=", "", grep(key, readLines(here(file)), value = TRUE)[1])))
+our_value_B    <- read_num("output/stage3_numbers.txt", "Total Retrospective Value")
+aoa_benefits_M <- 501L
 alts <- data.frame(
   name = c("Two C-130J (least cost)", "WP-3D life extension", "Two A400M"),
   lcc  = c(680.0, 723.6, 1414.15)
