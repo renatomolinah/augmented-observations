@@ -56,6 +56,6 @@ jktex <- c("\\begin{table}", "",
   "\\end{tabular}", "\\begin{tablenotes}", "\\small",
   "\\item Triple-interaction coefficient $\\delta_{3,\\text{HF}}$ from the full interaction (Table \\ref{tab:precision_full}), re-estimated after dropping each storm. Significance from a restricted wild cluster bootstrap with Webb weights (B = 1999, clustered on storm).",
   "\\end{tablenotes}", "\\end{threeparttable}", "\\end{table}")
-writeLines(jktex, here("augmented_observations/figures and tables/precision_jackknife_maria.tex"))
-add_adjust_box(here("augmented_observations/figures and tables/precision_jackknife_maria.tex"))
+writeLines(jktex, here("output/precision_jackknife_maria.tex"))
+add_adjust_box(here("output/precision_jackknife_maria.tex"))
 cat("\nWrote precision_jackknife_maria.tex\n")

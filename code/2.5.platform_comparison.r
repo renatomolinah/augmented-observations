@@ -46,5 +46,5 @@ tex <- c(
   "\\begin{tablenotes}", "\\small", note, "\\end{tablenotes}",
   "\\end{threeparttable}", "\\end{adjustbox}", "\\end{table}"
 )
-writeLines(tex, here("augmented_observations/figures and tables/platform_comparison.tex"))
+writeLines(tex, here("output/platform_comparison.tex"))
 cat("Wrote platform_comparison.tex\n")

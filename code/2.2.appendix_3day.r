@@ -1,7 +1,7 @@
 # ==============================================================================
 # 2.2 Stage 1 robustness using only 3-day-ahead forecast errors (vs the headline
 # 1-3 day average), rebuilt from the raw per-lead files and re-demeaned in the same
-# bins. Output: figures and tables/cost_3day_robustness.tex. Needs the Box mount.
+# bins. Output: output/cost_3day_robustness.tex. Needs the Box mount.
 # ==============================================================================
 
 if (!require("pacman")) install.packages("pacman")
@@ -107,9 +107,9 @@ msummary(
   align = "lcc",
   threeparttable = TRUE,
   escape = FALSE,
-  output = here("augmented_observations/figures and tables/cost_3day_robustness.tex")
+  output = here("output/cost_3day_robustness.tex")
 )
-.f <- here("augmented_observations/figures and tables/cost_3day_robustness.tex")
+.f <- here("output/cost_3day_robustness.tex")
 # modelsummary strips backslashes in the notes pass; restore the \ref cross-ref.
 writeLines(gsub("@REF\\{", "\\\\ref{", readLines(.f)), .f)
 add_adjust_box(.f)
