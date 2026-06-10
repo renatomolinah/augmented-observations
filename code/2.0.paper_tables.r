@@ -155,12 +155,9 @@ msummary(
   add_rows  = rows,
   title     = "Wind and Precipitation Forecast-Error Costs. \\label{tab:precip_costs}",
   notes     = list(
-    "Full coefficient table for the Stage 1 value-of-information regressions, reporting both the
-     wind ($\\\\beta^w_2$) and precipitation ($\\\\beta^p_2$) squared demeaned forecast-error
-     coefficients; the main table omits precipitation. $e$ is the county-hurricane-specific forecast
-     error and $\\\\mu$ the hurricane-intensity bin-specific mean forecast error. Hurricane wind
-     speeds exceed 33 m/s (74 mph); Sub-Hurricane wind speeds fall below that threshold. Standard
-     errors are Conley Spatial HAC with a 400 km distance radius."
+    "Full Stage 1 specification reporting both the wind ($\\\\beta^w_2$) and precipitation
+     ($\\\\beta^p_2$) squared demeaned forecast-error coefficients, the latter omitted from the
+     main table. Conley spatial HAC standard errors with a 400 km cutoff."
   ),
   threeparttable = TRUE,
   escape = FALSE,
@@ -182,7 +179,7 @@ msummary(
   fmt       = "%.2f",
   stars     = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
   title     = "Outcome robustness for the preferred specification (2005--2024 panel). \\label{tab:cost_outcomes}",
-  notes     = list("All specifications match our preferred specification (Table @REF{tab:voi-table}), with county and state-by-hurricane fixed effects and realized wind and precipitation bins. Standard errors are Conley Spatial HAC with a 400 km distance cutoff."),
+  notes     = list("Preferred specification (Table @REF{tab:voi-table}), with Conley spatial HAC standard errors with a 400 km cutoff."),
   align     = "lccc",
   threeparttable = TRUE,
   escape    = FALSE,

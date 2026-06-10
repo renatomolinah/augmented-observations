@@ -183,7 +183,7 @@ modelsummary(
   fmt = "%.3f", statistic = STAT, stars = STARS,
   escape = FALSE, threeparttable = TRUE,
   title = "Full coefficient estimates for the augmented-observations precision regression. \\label{tab:precision_full}",
-  notes = list(paste0("All estimated coefficients for the precision regression; the main text reports only the augmented-observation terms. HF denotes hurricane-force realizations, wind $\\\\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ", boot_note)),
+  notes = list(paste0("Full coefficient vector of the precision regression, of which the main text reports only the augmented-observation terms. HF denotes hurricane-force realizations ($\\\\geq$ 33 m/s), with 1-day-lead sub-hurricane forecasts as the reference. ", boot_note)),
   output = here("output/paper_precision_full.tex"))
 add_adjust_box(here("output/paper_precision_full.tex"))
 cat("[2.3] wrote output/paper_precision_full.tex\n")

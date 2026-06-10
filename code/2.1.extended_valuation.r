@@ -78,37 +78,6 @@ out <- c(
 dir.create(here("output"), showWarnings = FALSE)
 writeLines(out, here("output/extended_valuation_numbers.txt"))
 cat(paste(out, collapse = "\n"), "\n")
-
-# --- LaTeX table (matches the appendix threeparttable/booktabs style) ---------
-fmtrow <- function(label, s) sprintf("%s & %d & %d & %.2f & %s\\\\",
-                                     label, s$storms, s$cs, s$B, s$ann)
-denrow <- list(storms = uniqueN(den$name), cs = nrow(den),
-               B = sum(den$value_M) / 1000, ann = "--")
-all10$ann  <- sprintf("%.0f", all10$B  * 1000 / yrs10)
-allyr$ann  <- sprintf("%.0f", allyr$B  * 1000 / yrsall)
-hwrf$ann   <- sprintf("%.0f", hwrf$B   * 1000 / yrshwrf)
-tex <- c(
-  "\\begin{table}", "",
-  "\\caption{Extended retrospective social value of augmented observations, full forecast panel. \\label{tab:extended_valuation}}",
-  "\\centering",
-  "\\begin{adjustbox}{max width = \\textwidth}",
-  "\\begin{threeparttable}",
-  "\\begin{tabular}[t]{lrrrr}",
-  "\\toprule",
-  "Sample & Storms & HF County-Storms & Value (\\$B) & Annualized (\\$M/yr)\\\\",
-  "\\midrule",
-  fmtrow("Denial sample, 2017--2020 (validation)", denrow),
-  fmtrow("Since HWRF, 2007--2024", hwrf),
-  fmtrow("Full panel, 2010--2024", all10),
-  fmtrow("Full panel, 2005--2024", allyr),
-  "\\bottomrule",
-  "\\end{tabular}",
-  "\\begin{tablenotes}",
-  "\\small",
-  sprintf("\\item Each hurricane-force ($\\geq$ 33 m/s), 3-day-lead county-storm is priced at its own baseline forecast standard deviation $\\sigma_3$, holding the marginal cost parameter $\\hat{\\beta}^{w}_{Hurr} = %.2f$ and the precision gain $\\delta = %.2f$ m/s fixed at their Stage 1 and Stage 2 estimates: $V = \\hat{\\beta}^{w}_{Hurr}\\,[(\\sigma_3+\\delta)^2 - \\sigma_3^2]$. Under storm-specific $\\sigma_3$ the six continental 2017--2020 denial storms reproduce 62 county-storms at \\$%.2fB; applying the pooled baseline $\\bar{\\sigma} = %.2f$ m/s uniformly across the same 62 county-storms gives the continental-subsample figure. The main-text headline additionally includes Hurricane Maria. Rapidly forming storms with no 3-day-ahead hurricane-force forecast (e.g., Harvey, Hanna) are excluded by construction.", beta, delta, denrow$B, sigma_bar),
-  "\\end{tablenotes}",
-  "\\end{threeparttable}",
-  "\\end{adjustbox}",
-  "\\end{table}"
-)
-writeLines(tex, here("output/extended_valuation.tex"))
+# Numbers only; the standalone extended-valuation table was retired in favor of
+# the platform comparison (code/2.5.platform_comparison.r). The $6.2B BOTE figure
+# is cited from this output in the main text and Appendix C.

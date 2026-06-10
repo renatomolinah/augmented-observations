@@ -368,6 +368,8 @@ Fourth, we hold the 3-day forecast lead fixed throughout. This is the horizon th
 % ============================================================================
 \section{Robustness of the Marginal Cost Parameter} \label{app:beta}
 
+Here we show that the Stage 1 marginal cost of forecast error $\hat{\beta}^w_{Hurr}$ is robust across a range of empirical choices. We assess sensitivity to the cost outcome, to the exclusion of individual storms, and to the forecast lead, and we document why we value wind-speed precision rather than precipitation. Taken together, the estimate is stable and the headline valuation is not an artifact of any single choice.
+
 We first vary the cost outcome. Table \ref{tab:cost_outcomes} re-estimates the Stage 1 marginal cost $\hat{\beta}^w_{Hurr}$ on total cost, cost per county GDP, and cost per capita; the coefficient is positive, significant, and of the same order of magnitude across all three, so the estimate is not an artifact of weighting the panel by population or economy size.
 
 Table \ref{tab:implied_value} carries each of these coefficients through the Stage 3 valuation. The resulting aggregate social values are of comparable magnitude, so the headline retrospective figure does not depend on how the cost outcome is normalized.
@@ -394,9 +396,11 @@ Finally, we report the full specification with the precipitation forecast-error 
 % ============================================================================
 \section{Robustness of the Precision Gain} \label{app:delta}
 
+Here we show that the Stage 2 precision gain $\delta$ is robust. We first report the full lead $\times$ intensity interaction that identifies it, and then confirm that the result survives dropping any single storm from the denial sample.
+
 Table \ref{tab:precision_full} reports the full lead $\times$ intensity interaction behind the Stage 2 precision gain. The gain $\delta$ rises from a negligible 0.021 m/s at the 1-day lead to 0.356 m/s at 3 days, and the identified effect is the augmented-observation $\times$ 3-day $\times$ hurricane-force triple ($-0.410$ m/s), the only term significant under the wild cluster bootstrap.
 
-We then drop one storm at a time and re-estimate that triple. Table \ref{tab:precision_jackknife_maria} shows the coefficient stays between $-0.347$ and $-0.432$ m/s and significant in every case except the removal of Hurricane Maria; Maria contributes the bulk of the hurricane-force / 3-day-lead observations, yet dropping it leaves the estimate essentially unchanged at $-0.397$ m/s ($p = 0.10$).
+We then drop one storm at a time and re-estimate that triple. Table \ref{tab:precision_jackknife_maria} shows the coefficient stays between $-0.347$ and $-0.432$ m/s and significant in every case except the removal of Hurricane Maria. Here we note that Maria contributes the bulk of the hurricane-force / 3-day-lead observations, yet dropping it leaves the estimate essentially unchanged at $-0.397$ m/s ($p = 0.10$).
 
 \clearpage
 
@@ -412,15 +416,17 @@ We then drop one storm at a time and re-estimate that triple. Table \ref{tab:pre
 % ============================================================================
 \section{Per-Storm Decomposition of the Retrospective Social Value} \label{app:per-storm}
 
+Here we look more closely at where the headline retrospective value comes from. We first decompose it across the individual storms in the denial sample, and then set it against the cost of the replacement-platform alternatives the program would fund.
+
 Table \ref{tab:per_storm} decomposes the \$5.05 billion retrospective value by storm, pricing each at its own baseline forecast uncertainty so that storm $h$ contributes its hurricane-force / 3-day-lead county count times $\hat{\beta}^w_{Hurr}\,[(\bar{\sigma}_{\text{ALL},h}+\hat{\delta})^2 - \bar{\sigma}_{\text{ALL},h}^2]$. The total is dominated by Hurricane Maria (\$3.0 billion, 60\%), reflecting both its county count and its unusually high baseline forecast uncertainty.
 
-Table \ref{tab:extended_valuation} extends the same valuation to every continental hurricane-force, 3-day-lead county-storm observed since the HWRF model became operational in 2007. This yields roughly \$6.2 billion over 2007--2024 across 23 storms and 188 county-storms, or about \$340 million per year, a rate that is stable across alternative windows.
+Table \ref{tab:platform_comparison} sets our estimated benefits against the cost of replacing the fleet. The 2016 Analysis of Alternatives costed three replacement platforms at \$680 million to \$1.4 billion in net present value \citep{ANSER2016ExternalBenefits}, and against its own \$0.5 billion benefit estimate every option fell short of break-even.  Our estimate of \$5.05 billion for the denial denial-sample indicates that the value of the precision channel alone makes all three cost-effective several times over.
 
 \clearpage
 
 
 \input{figures and tables/per_storm.tex}
-\input{figures and tables/extended_valuation.tex}
+\input{figures and tables/platform_comparison.tex}
 
 \end{appendices}
 

@@ -224,7 +224,7 @@ jack_tex <- kbl(
   align     = c("l", "r", "r", "r")
 ) |>
   footnote(
-    general = "Each row reports preferred-specification estimates after dropping the indicated storm from the panel. Conley Spatial HAC standard errors (400 km cutoff) in parentheses. The baseline row drops no storm.",
+    general = "Preferred-specification estimate after dropping each storm, with Conley spatial HAC standard errors (400 km cutoff) in parentheses.",
     general_title = "",
     threeparttable = TRUE,
     fixed_small_size = TRUE,
@@ -316,7 +316,7 @@ C_tex <- kbl(
 ) |>
   footnote(
     general = sprintf(
-      "Value for storm $h$ is its affected-county count times $\\\\hat{\\\\beta}^w_{Hurr}\\\\,[(\\\\bar{\\\\sigma}_{\\\\text{ALL},h}+\\\\hat{\\\\delta})^2-\\\\bar{\\\\sigma}_{\\\\text{ALL},h}^2]$, where $\\\\bar{\\\\sigma}_{\\\\text{ALL},h}$ is the storm-mean ex-ante forecast standard deviation on the dropsonde-assimilated subset, $\\\\hat{\\\\beta}^w_{Hurr}=%.2f$, and $\\\\hat{\\\\delta}=%.3f$ m/s. Counties counted are those with a 3-day-lead hurricane-force prediction (wind $\\\\geq$ 33 m/s) in the denial sample. Because the value is linear in $\\\\sigma$, the total equals the headline computed at the pooled mean.",
+      "Each storm's value is its hurricane-force / 3-day-lead county count times $\\\\hat{\\\\beta}^w_{Hurr}\\\\,[(\\\\bar{\\\\sigma}_{\\\\text{ALL},h}+\\\\hat{\\\\delta})^2-\\\\bar{\\\\sigma}_{\\\\text{ALL},h}^2]$, with $\\\\hat{\\\\beta}^w_{Hurr}=%.2f$ and $\\\\hat{\\\\delta}=%.3f$ m/s. The total is invariant to using storm-specific or pooled $\\\\sigma$ because value is linear in $\\\\sigma$.",
       beta_hurr, delta
     ),
     general_title = "",

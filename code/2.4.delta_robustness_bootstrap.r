@@ -54,7 +54,7 @@ jktex <- c("\\begin{table}", "",
   "\\centering", "\\begin{threeparttable}", "\\begin{tabular}[t]{lrrr}", "\\toprule",
   "Dropped & Obs. & $\\delta_{3,\\text{HF}}$ (m/s) & Bootstrap $p$\\\\", "\\midrule", jkbody, "\\bottomrule",
   "\\end{tabular}", "\\begin{tablenotes}", "\\small",
-  "\\item Each row re-estimates the full lead $\\times$ intensity interaction (Table \\ref{tab:precision_full}) on the 2017--2020 denial panel after dropping the indicated storm, and reports the triple-interaction coefficient $\\delta_{3,\\text{HF}}$, the additional precision gain in the 3-day hurricane-force cell. Significance is from a restricted wild cluster bootstrap with Webb weights (B = 1999, clustered on storm). The baseline row drops no storm.",
+  "\\item Triple-interaction coefficient $\\delta_{3,\\text{HF}}$ from the full interaction (Table \\ref{tab:precision_full}), re-estimated after dropping each storm. Significance from a restricted wild cluster bootstrap with Webb weights (B = 1999, clustered on storm).",
   "\\end{tablenotes}", "\\end{threeparttable}", "\\end{table}")
 writeLines(jktex, here("augmented_observations/figures and tables/precision_jackknife_maria.tex"))
 add_adjust_box(here("augmented_observations/figures and tables/precision_jackknife_maria.tex"))
