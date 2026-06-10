@@ -20,9 +20,6 @@ source(here("code/functions_table.r"))
 voi_path <- here("data/clean/final_dataset.rds")
 denial_path <- here("data/clean_denial/forecast_denial_data_with_lead_times.csv")
 
-stopifnot(file.exists(voi_path))
-stopifnot(file.exists(denial_path))
-
 # ==============================================================================
 # Stage 0 - Manuscript Data-section tables
 # ==============================================================================

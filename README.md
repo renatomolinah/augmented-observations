@@ -1,7 +1,7 @@
 # augmented-observations
 
-Replication pipeline for the NOAA report on the socio-economic value of
-augmented hurricane observations.
+Replication pipeline for the paper on the social value of augmented hurricane
+observations. The analysis runs in paper-aligned stages (Data, then Stages 1--4).
 
 ## Funding and Citation
 
@@ -34,16 +34,18 @@ make help           # list targets
 make raw_check      # verify required raw files are present
 make raw_exact_check  # verify those raw files match the current baseline byte-for-byte
 make external_setup_free  # set up repo-owned free-toolchain pieces and print remaining install steps
-make all            # raw_check -> (cleaning if stale) -> report -> appendix -> workshop
+make all            # raw_check -> (cleaning if stale) -> data -> cost -> precision -> valuation -> costbenefit
 make clean_voi      # VOI panel cleaning only
 make clean_denial   # denial panel cleaning only (depends on clean_voi)
-make report         # NOAA_report.r: main tables (Stage 0 data tables + Stages 1-4)
-make appendix       # appendix.r: Appendices A, B, C tables
-make workshop       # workshop_responses.r: Appendix D tables
+make data           # 0.data.r: summary statistics, denial sample, storm-track map (Figure 1)
+make cost           # 1.cost.r: Stage 1 marginal cost of forecast error (beta) + tables
+make precision      # 2.precision.r: Stage 2 precision gain (delta), wild cluster bootstrap + tables
+make valuation      # 3.valuation.r: Stage 3 retrospective social value + tables
+make costbenefit    # 4.costbenefit.r: Stage 4 cost-benefit + platform comparison
 make clean          # remove output/
 ```
 
-Outputs land in `output/` (gitignored).
+Outputs land in `output/`, which is tracked in git as a generated-artifacts reference.
 
 `make all` is intentionally analysis-only and assumes the upstream wind, rain,
 and track raw products have already been generated and placed under
@@ -90,29 +92,34 @@ before any wind, track, or rain outputs are generated into `data/raw/` or
 
 | Stage | Files |
 |---|---|
-| Main report (`make report`) | `table_voi.tex`, `summary_dmg.tex`, `data_denial.tex`, `noaa_report_controls_table.tex`, `augmented_panel.png`, `stage{2,3,4}_*numbers.txt` |
-| Appendices A/B/C (`make appendix`) | `appA_{outcomes,valuations,jackknife}.tex`, `appB_{leadtime,intensity,intensity_maria,jackknife,maria,jackknife_maria}.tex`, `appC_per_storm.tex` |
-| Workshop (`make workshop`) | `appD_{sample,likert_part1,likert_part2,quotes_part1,quotes_part2}.tex` |
+| Data (`make data`) | `summary_dmg.tex`, `data_denial.tex`, `denial_tracks_map.png` |
+| Stage 1 (`make cost`) | `paper_table_voi.tex`, `paper_cost_outcomes.tex`, `paper_precip_costs.tex`, `cost_jackknife.tex`, `cost_3day_robustness.tex`, `stage1_numbers.txt` |
+| Stage 2 (`make precision`) | `paper_interaction_grid.tex`, `paper_precision_full.tex`, `precision_jackknife_maria.tex`, `stage2_numbers.txt` |
+| Stage 3 (`make valuation`) | `implied_value.tex`, `per_storm.tex`, `stage3_numbers.txt`, `extended_valuation_numbers.txt` |
+| Stage 4 (`make costbenefit`) | `platform_comparison.tex`, `stage4_costbenefit_numbers.txt` |
 
 ## Layout
 
 ```
 code/
-  NOAA_report.r          main report: Stage 0 tables + Stage 1 (beta) + Stage 2 (delta) + Stages 3-4 (valuation, cost-benefit)
-  appendix.r             Appendices A (beta robustness), B (delta robustness), C (per-storm decomposition)
-  workshop_responses.r   Appendix D tables from data/workshop/Part {1,2}.csv
-  functions_table.r      table-rendering helpers (sourced by NOAA_report.r and appendix.r)
-  cleaning_voi/          VOI panel cleaning (37-storm continental-US panel, 2005-2024)
-  cleaning_denial/       denial sample cleaning (1.01 -> 1.03)
-  exploratory/           Quarto notebooks (Ditchek replication, wind-error inference)
-  external_models/       archived upstream wind/rain/track generator code
-data/                    data folder (gitignored)
+  0.data.r           Data section: summary statistics, denial sample, storm-track map (Figure 1)
+  1.cost.r           Stage 1: marginal cost of forecast error (beta) and its robustness tables
+  2.precision.r      Stage 2: AO precision gain (delta), wild cluster bootstrap inference
+  3.valuation.r      Stage 3: retrospective social value (reads the Stage 1 and Stage 2 numbers)
+  4.costbenefit.r    Stage 4: cost-benefit vs the fleet life-cycle cost and the 2016 AoA benchmark
+  functions_table.r  shared LaTeX table helper
+  cleaning_voi/      VOI panel cleaning (37-storm continental-US panel, 2005-2024)
+  cleaning_denial/   denial sample cleaning
+  exploratory/       Quarto notebooks (Ditchek replication, wind-error inference)
+  external_models/   upstream wind/rain/track generator code
+archive/             retired NOAA-report deliverable (NOAA_report.{r,tex}, workshop_responses.r)
+data/                data folder (gitignored)
   raw/, clean/             VOI inputs and processed panel
   raw_denial/, clean_denial/  denial archive
-  workshop/                Qualtrics CSV exports for Appendix D
-output/                  generated tables and figures (gitignored)
-Makefile                 dependency-tracking pipeline
-renv.lock                pinned R package versions
+  workshop/                Qualtrics CSV exports (archived NOAA-report appendix)
+output/              generated tables and figures (tracked)
+Makefile             dependency-tracking pipeline
+renv.lock            pinned R package versions
 ```
 
 ## External Model Provenance
