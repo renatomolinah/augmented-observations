@@ -1,7 +1,6 @@
 # 2.4 Stage-2 robustness for the AO x 3-day x hurricane-force triple interaction:
-# one-storm-out jackknife and Maria in/out, wild cluster bootstrap p (Webb
-# weights, B=1999, storm cluster); mirrors 2.3. Writes precision_jackknife_maria
-# and precision_maria.
+# one-storm-out jackknife with wild cluster bootstrap p (Webb weights, B=1999,
+# storm cluster); mirrors 2.3. Writes precision_jackknife_maria.
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, fixest, here, parallel)
 source(here("code/functions_table.r"))
@@ -44,12 +43,7 @@ jk <- rbindlist(mclapply(c("(none)", storms), function(s) {
   r <- wcb(sub, seed_of(paste0("jk_", s)))
   data.table(dropped = s, n = r$n, est = r$est, p = r$p)
 }, mc.cores = N_CORES, mc.set.seed = TRUE))
-maria <- rbindlist(list(
-  { r <- wcb(d,                seed_of("m_in"));  data.table(sample = "Including Maria (main sample)", n = r$n, est = r$est, p = r$p) },
-  { r <- wcb(d[name != "maria"], seed_of("m_out")); data.table(sample = "Excluding Maria (robustness)",  n = r$n, est = r$est, p = r$p) }
-))
 cat("== triple-interaction jackknife ==\n"); print(jk)
-cat("== triple-interaction, Maria in/out ==\n"); print(maria)
 
 tc <- function(s) ifelse(s == "(none)", "(None)", paste0(toupper(substr(s,1,1)), substr(s,2,nchar(s))))
 
@@ -64,16 +58,4 @@ jktex <- c("\\begin{table}", "",
   "\\end{tablenotes}", "\\end{threeparttable}", "\\end{table}")
 writeLines(jktex, here("augmented_observations/figures and tables/precision_jackknife_maria.tex"))
 add_adjust_box(here("augmented_observations/figures and tables/precision_jackknife_maria.tex"))
-
-mbody <- paste0(maria$sample, " & ", format(maria$n, big.mark = ","), " & ",
-                sprintf("%.3f%s", maria$est, star(maria$p)), " & ", sprintf("%.3f", maria$p), "\\\\")
-mtex <- c("\\begin{table}", "",
-  "\\caption{Sensitivity of the triple interaction to Hurricane Maria. \\label{tab:precision_maria}}",
-  "\\centering", "\\begin{adjustbox}{max width = \\textwidth}", "\\begin{threeparttable}",
-  "\\begin{tabular}[t]{lrrr}", "\\toprule",
-  "Sample & Obs. & $\\delta_{3,\\text{HF}}$ (m/s) & Bootstrap $p$\\\\", "\\midrule", mbody, "\\bottomrule",
-  "\\end{tabular}", "\\begin{tablenotes}", "\\small",
-  "\\item The triple-interaction coefficient $\\delta_{3,\\text{HF}}$ from the full lead $\\times$ intensity interaction estimated on all ten 2017--2020 landfalls versus the six continental landfalls (Maria dropped). Significance is from a restricted wild cluster bootstrap with Webb weights (B = 1999, clustered on storm).",
-  "\\end{tablenotes}", "\\end{threeparttable}", "\\end{adjustbox}", "\\end{table}")
-writeLines(mtex, here("augmented_observations/figures and tables/precision_maria.tex"))
-cat("\nWrote precision_jackknife_maria.tex and precision_maria.tex\n")
+cat("\nWrote precision_jackknife_maria.tex\n")
