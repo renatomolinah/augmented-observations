@@ -17,7 +17,6 @@ options(conleyreg.verbose = FALSE)
 # -- paths ---------------------------------------------------------------------
 voi_path <- here("data/clean/final_dataset.rds")
 denial_path <- here("data/clean_denial/forecast_denial_data_with_lead_times.csv")
-stopifnot(file.exists(voi_path), file.exists(denial_path))
 
 # Stars for all msummary tables
 stars_econ <- c("*" = 0.1, "**" = 0.05, "***" = 0.01)
@@ -240,9 +239,8 @@ denial_with_maria <- fread(denial_path) |>
 # Re-derive Stage 3 valuation per storm using the same beta and delta the main
 # report uses.
 
-# Recompute beta on full panel (Conley HAC)
-m_beta <- run_conley(spec_col7("total_cost"), voi_load())
-beta_hurr <- unname(coef(m_beta)[grep("categoryHurricane", names(coef(m_beta)))])
+# beta on the full panel is the A.1 total-cost fit above; reuse it instead of refitting.
+beta_hurr <- unname(coef(mA2_tot)[grep("categoryHurricane", names(coef(mA2_tot)))])
 
 # Delta and baseline sigma from main report's Stage 2 sample (Maria included)
 reg_data <- denial_with_maria |> filter(lead_days == 3, wind_obs > 33)
@@ -315,4 +313,4 @@ C_tex <- kbl(
 writeLines(as.character(C_tex), here("output/per_storm.tex"))
 add_adjust_box(here("output/per_storm.tex"))
 
-cat("\nAppendix outputs written to output/appA_*.tex, output/appB_*.tex, output/per_storm.tex.\n")
+cat("\nWrote output/{implied_value,cost_jackknife,per_storm}.tex\n")

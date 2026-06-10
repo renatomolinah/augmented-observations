@@ -7,10 +7,7 @@
 suppressMessages({library(data.table); library(here)})
 
 # --- beta and delta from the headline pipeline (Stage 1 / Stage 2) ------------
-s3_path <- here("output/stage3_numbers.txt")
-if (!file.exists(s3_path))
-  s3_path <- here("augmented_observations/figures and tables/stage3_numbers.txt")
-s3 <- readLines(s3_path)
+s3 <- readLines(here("output/stage3_numbers.txt"))
 getnum <- function(key) as.numeric(sub(".*=\\s*", "", grep(key, s3, value = TRUE)[1]))
 beta  <- getnum("^beta_hurr")
 delta <- getnum("^delta \\(m/s\\)")
@@ -28,38 +25,21 @@ cs <- raw[lead_days == 3,
 hf <- cs[is.finite(wind_obs) & wind_obs > 33 & is.finite(sigma3)]
 hf[, value_M := beta * ((sigma3 + delta)^2 - sigma3^2)]
 
-# uniform per-county value at the denial-sample baseline (robustness)
-sigma_bar <- getnum("baseline sigma_All")
-vbar <- beta * ((sigma_bar + delta)^2 - sigma_bar^2)
-
-summ <- function(d) list(storms = uniqueN(d$name), cs = nrow(d),
-                         B = sum(d$value_M) / 1000, Bunif = nrow(d) * vbar / 1000)
-all10 <- summ(hf[year >= 2010]); allyr <- summ(hf)
-hwrf  <- summ(hf[year >= 2007])   # back-of-envelope: since HWRF went operational (2007)
-yrs10 <- 2024 - 2010 + 1; yrsall <- 2024 - 2005 + 1; yrshwrf <- 2024 - 2007 + 1
-
-# validation: the six continental denial storms reproduce 62 county-storms
-den <- hf[name %in% c("irma", "michael", "florence", "laura", "sally", "isaias")]
+summ <- function(d) list(storms = uniqueN(d$name), cs = nrow(d), B = sum(d$value_M) / 1000)
+hwrf  <- summ(hf[year >= 2007])   # since HWRF went operational (2007)
+all10 <- summ(hf[year >= 2010])
+allyr <- summ(hf)                 # full 2005-2024 panel
+den   <- summ(hf[name %in% c("irma", "michael", "florence", "laura", "sally", "isaias")])
+rate  <- function(s, y0) s$B * 1000 / (2024 - y0 + 1)   # $M per year
 
 out <- c(
-  sprintf("beta_Hurr ($M per (m/s)^2)            = %.3f", beta),
-  sprintf("delta (m/s)                           = %.3f", delta),
-  sprintf("VALIDATION: continental denial-6 storms = %d county-storms, $%.3fB (own-sigma)",
-          nrow(den), sum(den$value_M) / 1000),
-  "",
-  sprintf("HEADLINE -- since 2010: %d storms, %d hurricane-force county-storms", all10$storms, all10$cs),
-  sprintf("  storm-specific (own sigma_3) total  = $%.2fB  ($%.0fM/yr over %d yr)",
-          all10$B, all10$B * 1000 / yrs10, yrs10),
-  sprintf("  uniform (sigma_bar=%.2f, $%.2fM/cs) = $%.2fB  (robustness)", sigma_bar, vbar, all10$Bunif),
-  "",
-  sprintf("BOTE since HWRF (2007-2024): %d storms, %d county-storms, $%.2fB ($%.0fM/yr over %d yr)",
-          hwrf$storms, hwrf$cs, hwrf$B, hwrf$B * 1000 / yrshwrf, yrshwrf),
-  sprintf("ALL 2005-2024: %d storms, %d county-storms, $%.2fB ($%.0fM/yr over %d yr)",
-          allyr$storms, allyr$cs, allyr$B, allyr$B * 1000 / yrsall, yrsall)
+  sprintf("beta_Hurr ($M/(m/s)^2) = %.3f", beta),
+  sprintf("delta (m/s) = %.3f", delta),
+  sprintf("continental denial-6: %d county-storms, $%.2fB", den$cs, den$B),
+  sprintf("since HWRF 2007-2024: %d storms, %d county-storms, $%.2fB, $%.0fM/yr",
+          hwrf$storms, hwrf$cs, hwrf$B, rate(hwrf, 2007)),
+  sprintf("2010-2024: $%.2fB, $%.0fM/yr", all10$B, rate(all10, 2010)),
+  sprintf("2005-2024: $%.2fB, $%.0fM/yr", allyr$B, rate(allyr, 2005))
 )
-dir.create(here("output"), showWarnings = FALSE)
 writeLines(out, here("output/extended_valuation_numbers.txt"))
-cat(paste(out, collapse = "\n"), "\n")
-# Numbers only; the standalone extended-valuation table was retired in favor of
-# the platform comparison (code/2.5.platform_comparison.r). The $6.2B BOTE figure
-# is cited from this output in the main text and Appendix C.
+cat(out, sep = "\n")
