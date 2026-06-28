@@ -120,14 +120,18 @@ p <- ggplot() +
   geom_sf(data = land, fill = "grey95", color = "grey80", linewidth = 0.2) +
   geom_sf(data = states, fill = NA, color = "grey85", linewidth = 0.15) +
   geom_sf(data = trk, aes(color = Year), linewidth = 0.7) +
-  geom_point(data = anchor, aes(lon, lat, color = Year), size = 1.6) +
+  geom_point(data = anchor, aes(lon, lat, fill = Year, shape = Year),
+             color = "black", stroke = 0.5, size = 2.8) +
   ggrepel::geom_text_repel(data = repel_df, aes(lon, lat, label = Name, color = Year),
                            nudge_x = nx, nudge_y = ny, size = 3, fontface = "bold", seed = 1,
                            box.padding = 0.7, point.padding = 0.25, force = 2, force_pull = 0.6,
                            segment.size = 0.3, segment.color = "grey55",
                            min.segment.length = 0, max.overlaps = Inf, show.legend = FALSE) +
   coord_sf(xlim = c(-104, -58), ylim = c(12, 47), expand = FALSE) +
-  scale_color_brewer(palette = "Dark2") + labs(color = NULL, x = NULL, y = NULL) +
+  scale_color_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_shape_manual(values = c(21, 24, 22, 23)) +
+  labs(color = NULL, fill = NULL, shape = NULL, x = NULL, y = NULL) +
   theme_minimal(base_size = 11) +
   theme(panel.grid = element_line(color = "grey92", linewidth = 0.2), legend.position = "right")
 ggsave(here("output/denial_tracks_map.png"), p, width = 8.5, height = 5.4, dpi = 300)
