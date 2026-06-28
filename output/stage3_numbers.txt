@@ -1,7 +1,0 @@
-beta_hurr (Hurricane, $M per (m/s)^2)  = 5.031
-delta (m/s)                            = 0.356
-baseline sigma_All (m/s)               = 10.13
-delta_sigma_sq ((m/s)^2)               = 7.33
-Value per Affected County ($M)         = 36.88
-Affected hurricane-force counties      = 137
-Total Retrospective Value ($B)         = 5.05

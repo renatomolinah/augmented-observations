@@ -1,8 +1,0 @@
-delta                              = 0.356 m/s
-delta SE                           = 0.180
-delta p-value                      = 0.0483
-
--- HF + 3-day lead, AO-only (Stage 3 baseline) --
-  N                                = 137
-  sigma_bar                        = 10.13 m/s
-  sd(sigma)                        = 1.44 m/s
