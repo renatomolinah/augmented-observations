@@ -1,7 +1,7 @@
 # ==============================================================================
 # Stage 3 - Retrospective social value of augmented observations
-# Combines the Stage 1 cost curvature (beta) and the Stage 2 precision gain
-# (delta) into a dollar value; no re-estimation -- beta and delta are read from
+# Combines the Stage 1 precision gain (delta) and the Stage 2 cost curvature
+# (beta) into a dollar value; no re-estimation -- beta and delta are read from
 # the stage-number files. Builds the valuation tables and the back-of-the-envelope
 # extension beyond the denial archive.
 # Inputs:  output/stage1_numbers.txt, output/stage2_numbers.txt,
@@ -20,14 +20,14 @@ read_num <- function(file, key) {
   rhs <- sub(".*=", "", grep(key, readLines(here(file)), value = TRUE)[1])
   as.numeric(regmatches(rhs, regexpr("-?[0-9]+(\\.[0-9]+)?", rhs)))
 }
-beta_hurr <- read_num("output/stage1_numbers.txt", "^beta_hurr")
-beta_gdp  <- read_num("output/stage1_numbers.txt", "^beta_gdp_hurr")
-beta_pc   <- read_num("output/stage1_numbers.txt", "^beta_pc_hurr")
+beta_hurr <- read_num("output/stage2_numbers.txt", "^beta_hurr")
+beta_gdp  <- read_num("output/stage2_numbers.txt", "^beta_gdp_hurr")
+beta_pc   <- read_num("output/stage2_numbers.txt", "^beta_pc_hurr")
 
 denial_path <- here("data/clean_denial/forecast_denial_data_with_lead_times.csv")
 reg_data <- fread(denial_path)[!is.na(augmented_obs) & lead_days == 3 & wind_obs > 33]
 
-# Stage 2 reports the rounded delta; recompute the point estimate and the baseline
+# Stage 1 reports the rounded delta; recompute the point estimate and the baseline
 # AO forecast SD here at full precision so the dollar valuation does not drift.
 delta     <- abs(coef(feols(wind_fc_sd ~ augmented_obs | county + name, reg_data, vcov = ~name))["augmented_obs"])
 sigma_bar <- mean(reg_data[augmented_obs == 1]$wind_fc_sd, na.rm = TRUE)

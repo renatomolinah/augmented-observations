@@ -1,7 +1,10 @@
 # augmented-observations
 
 Replication pipeline for the paper on the social value of augmented hurricane
-observations. The analysis runs in paper-aligned stages (Data, then Stages 1--4).
+observations. The analysis runs in paper-aligned stages (Data, then Stages 1--4):
+Stage 1 estimates the forecast precision gain from augmented observations, Stage 2
+the marginal cost of forecast error at the 3-day-ahead lead that Stage 1 identifies,
+and Stage 3 combines them into a dollar value.
 
 ## Funding and Citation
 
@@ -34,12 +37,12 @@ make help           # list targets
 make raw_check      # verify required raw files are present
 make raw_exact_check  # verify those raw files match the current baseline byte-for-byte
 make external_setup_free  # set up repo-owned free-toolchain pieces and print remaining install steps
-make all            # raw_check -> (cleaning if stale) -> data -> cost -> precision -> valuation -> costbenefit
+make all            # raw_check -> (cleaning if stale) -> data -> precision -> cost -> valuation -> costbenefit
 make clean_voi      # VOI panel cleaning only
 make clean_denial   # denial panel cleaning only (depends on clean_voi)
 make data           # 0.data.r: summary statistics, denial sample, storm-track map (Figure 1)
-make cost           # 1.cost.r: Stage 1 marginal cost of forecast error (beta) + tables
-make precision      # 2.precision.r: Stage 2 precision gain (delta), wild cluster bootstrap + tables
+make precision      # 1.precision.r: Stage 1 precision gain (delta), wild cluster bootstrap + tables
+make cost           # 2.cost.r: Stage 2 marginal cost of forecast error (beta) at the 3-day lead + tables
 make valuation      # 3.valuation.r: Stage 3 retrospective social value + tables
 make costbenefit    # 4.costbenefit.r: Stage 4 cost-benefit + platform comparison
 make clean          # remove output/
@@ -93,8 +96,8 @@ before any wind, track, or rain outputs are generated into `data/raw/` or
 | Stage | Files |
 |---|---|
 | Data (`make data`) | `summary_dmg.tex`, `data_denial.tex`, `denial_tracks_map.png` |
-| Stage 1 (`make cost`) | `paper_table_voi.tex`, `paper_cost_outcomes.tex`, `paper_precip_costs.tex`, `cost_jackknife.tex`, `cost_3day_robustness.tex`, `stage1_numbers.txt` |
-| Stage 2 (`make precision`) | `paper_interaction_grid.tex`, `paper_precision_full.tex`, `precision_jackknife_maria.tex`, `stage2_numbers.txt` |
+| Stage 1 (`make precision`) | `paper_interaction_grid.tex`, `paper_precision_full.tex`, `precision_jackknife_maria.tex`, `stage1_numbers.txt` |
+| Stage 2 (`make cost`) | `paper_table_voi.tex`, `paper_cost_outcomes.tex`, `paper_precip_costs.tex`, `cost_jackknife.tex`, `cost_lead_robustness.tex`, `stage2_numbers.txt` |
 | Stage 3 (`make valuation`) | `implied_value.tex`, `per_storm.tex`, `stage3_numbers.txt`, `extended_valuation_numbers.txt` |
 | Stage 4 (`make costbenefit`) | `platform_comparison.tex`, `stage4_costbenefit_numbers.txt` |
 
@@ -103,8 +106,8 @@ before any wind, track, or rain outputs are generated into `data/raw/` or
 ```
 code/
   0.data.r           Data section: summary statistics, denial sample, storm-track map (Figure 1)
-  1.cost.r           Stage 1: marginal cost of forecast error (beta) and its robustness tables
-  2.precision.r      Stage 2: AO precision gain (delta), wild cluster bootstrap inference
+  1.precision.r      Stage 1: AO precision gain (delta), wild cluster bootstrap inference
+  2.cost.r           Stage 2: marginal cost of 3-day-ahead forecast error (beta) and its robustness tables
   3.valuation.r      Stage 3: retrospective social value (reads the Stage 1 and Stage 2 numbers)
   4.costbenefit.r    Stage 4: cost-benefit vs the fleet life-cycle cost and the 2016 AoA benchmark
   functions_table.r  shared LaTeX table helper

@@ -1,13 +1,15 @@
 # ==============================================================================
-# Stage 2 - Precision gain from augmented observations (delta)
+# Stage 1 - Precision gain from augmented observations (delta)
 # Estimates how much AO reduce the ex-ante wind-speed forecast SD, with inference
 # from a restricted wild cluster bootstrap (Webb weights, clustered on storm,
-# since there are few storm clusters). Builds the Stage 2 tables.
+# since there are few storm clusters). Builds the Stage 1 tables. The lead and
+# intensity cell identified here (3-day, hurricane-force) is the one Stage 2
+# prices, so Stage 2 estimates its cost curvature at the same 3-day lead.
 # Inputs:  data/clean_denial/forecast_denial_data_with_lead_times.csv
 # Outputs: output/{paper_interaction_grid,paper_precision_full,
 #          precision_jackknife_maria}.tex; output/interaction_wcb_pvalues.csv;
-#          output/stage2_numbers.txt
-# Run:     Rscript --vanilla code/2.precision.r
+#          output/stage1_numbers.txt
+# Run:     Rscript --vanilla code/1.precision.r
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, fixest, here, modelsummary, parallel)
@@ -101,7 +103,7 @@ cols <- list(
   "(4)" = list(regs = c("AO", "l2", "l3", "AO_l2", "AO_l3", "wind_obs"), fe = "county+name"),
   "(5)" = list(regs = full_triple,                                       fe = "county+name"),
   "(6)" = list(regs = c(full_triple, "wind_obs"),                        fe = "county+name"))
-cat(sprintf("[Stage 2] interaction grid: bootstrap (B=%d, %d cores)\n", B, N_CORES))
+cat(sprintf("[Stage 1] interaction grid: bootstrap (B=%d, %d cores)\n", B, N_CORES))
 res <- run_family(cols, d)
 fwrite(res, here("output/interaction_wcb_pvalues.csv"))
 mods <- make_mods(res, cols)
@@ -189,7 +191,7 @@ writeLines(jktex, here("output/precision_jackknife_maria.tex"))
 add_adjust_box(here("output/precision_jackknife_maria.tex"))
 
 # ------------------------------------------------------------------------------
-# Stage 2 numbers: the headline delta and the baseline forecast SD it improves
+# Stage 1 numbers: the headline delta and the baseline forecast SD it improves
 # (HF + 3-day lead, AO-assimilated). Consumed by Stage 3.
 # ------------------------------------------------------------------------------
 reg3   <- d[lead_days == 3 & wind_obs > 33]
@@ -207,5 +209,5 @@ writeLines(c(
   sprintf("  N                                = %d",       nrow(ao3)),
   sprintf("  sigma_bar                        = %.2f m/s", mean(ao3$wind_fc_sd, na.rm = TRUE)),
   sprintf("  sd(sigma)                        = %.2f m/s", sd(ao3$wind_fc_sd,   na.rm = TRUE))
-), here("output/stage2_numbers.txt"))
-cat("Wrote Stage 2 tables + output/stage2_numbers.txt\n")
+), here("output/stage1_numbers.txt"))
+cat("Wrote Stage 1 tables + output/stage1_numbers.txt\n")

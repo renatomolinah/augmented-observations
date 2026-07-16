@@ -8,10 +8,10 @@ GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial data cost precision valuation costbenefit clean help
+.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial data precision cost valuation costbenefit clean help
 
 ## Default
-all: raw_check data cost precision valuation costbenefit
+all: raw_check data precision cost valuation costbenefit
 	@echo -e "$(GREEN)Pipeline complete.$(NC)"
 
 ## Help
@@ -34,8 +34,8 @@ help:
 	@echo "  clean_voi    run code/cleaning_voi/* -> data/clean/final_dataset.rds"
 	@echo "  clean_denial run code/cleaning_denial/* -> data/clean_denial/*"
 	@echo "  data         run code/0.data.r -> output/{summary_dmg,data_denial}.tex + denial_tracks_map.png"
-	@echo "  cost         run code/1.cost.r -> Stage 1 tables + stage1_numbers.txt"
-	@echo "  precision    run code/2.precision.r -> Stage 2 tables + stage2_numbers.txt"
+	@echo "  precision    run code/1.precision.r -> Stage 1 tables + stage1_numbers.txt"
+	@echo "  cost         run code/2.cost.r -> Stage 2 tables + stage2_numbers.txt"
 	@echo "  valuation    run code/3.valuation.r -> Stage 3 tables + stage3_numbers.txt"
 	@echo "  costbenefit  run code/4.costbenefit.r -> platform_comparison.tex + stage4_costbenefit_numbers.txt"
 	@echo "  clean        remove output/ (preserves data/raw/ and data/clean/*)"
@@ -123,24 +123,24 @@ output/summary_dmg.tex: data/clean/final_dataset.rds data/clean/track_actual.rds
 
 data: output/summary_dmg.tex
 
-## Step 4 - Stage 1: marginal cost of forecast error (beta)
-output/stage1_numbers.txt: data/clean/final_dataset.rds code/1.cost.r code/functions_table.r
-	@echo -e "$(YELLOW)[4/7] Stage 1: marginal cost (beta)...$(NC)"
+## Step 4 - Stage 1: precision gain (delta), wild cluster bootstrap
+output/stage1_numbers.txt: data/clean_denial/forecast_denial_data_with_lead_times.csv \
+                           code/1.precision.r code/functions_table.r
+	@echo -e "$(YELLOW)[4/7] Stage 1: precision gain (delta)...$(NC)"
 	@mkdir -p output
-	@$(R) code/1.cost.r
+	@$(R) code/1.precision.r
 	@echo -e "$(GREEN)  -> Stage 1 tables + output/stage1_numbers.txt$(NC)"
 
-cost: output/stage1_numbers.txt
+precision: output/stage1_numbers.txt
 
-## Step 5 - Stage 2: precision gain (delta), wild cluster bootstrap
-output/stage2_numbers.txt: data/clean_denial/forecast_denial_data_with_lead_times.csv \
-                           code/2.precision.r code/functions_table.r
-	@echo -e "$(YELLOW)[5/7] Stage 2: precision gain (delta)...$(NC)"
+## Step 5 - Stage 2: marginal cost of forecast error (beta), 3-day-ahead lead
+output/stage2_numbers.txt: data/clean/final_dataset.rds code/2.cost.r code/functions_table.r
+	@echo -e "$(YELLOW)[5/7] Stage 2: marginal cost (beta)...$(NC)"
 	@mkdir -p output
-	@$(R) code/2.precision.r
+	@$(R) code/2.cost.r
 	@echo -e "$(GREEN)  -> Stage 2 tables + output/stage2_numbers.txt$(NC)"
 
-precision: output/stage2_numbers.txt
+cost: output/stage2_numbers.txt
 
 ## Step 6 - Stage 3: valuation (reads the Stage 1 and Stage 2 numbers)
 output/stage3_numbers.txt: output/stage1_numbers.txt output/stage2_numbers.txt \
