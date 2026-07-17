@@ -178,6 +178,8 @@ data_weather_dmg_en = full_join(
     precip_error = prec_dif_mean,
     total_damage = property_damage_2019 + crop_damage_2019,
     total_damage_pc = property_damage_pc_2019 + crop_damage_pc_2019,
+    # EPA value of a statistical life: $7.4M (2006$) inflated to 2019$ via
+    # CPI-U (7.4 * 255.657/201.6 = 9.38). Inflation-only, no income adjustment.
     value_deaths = 9.39 * 10^6 * deaths,
     value_deaths_pc = 9.39 * 10^6 * deaths_pc,
     dmg_prop_death = property_damage_2019 + value_deaths + crop_damage_2019,
