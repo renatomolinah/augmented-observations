@@ -136,7 +136,7 @@ modelsummary(
   mods, coef_map = intr_cm, gof_map = gm, add_rows = intr_rows,
   fmt = "%.3f", statistic = STAT, stars = STARS, escape = FALSE, threeparttable = TRUE,
   title = "Precision Gained due to Augmented Observations. \\label{tab:interaction-grid}",
-  notes = list(paste0("HF denotes hurricane-force realizations, wind $\\\\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ``Lead-time main effects'' are the 2- and 3-day lead indicators and ``Intensity main effect'' the hurricane-force indicator. ``Forecast-wind bins'' are twenty equal-count bins of the storm-county average forecast wind speed, matching the realized-wind partition used in Stage 2, which absorb ex-ante forecast intensity.", boot_note)),
+  notes = list(paste0("HF denotes hurricane-force realizations, wind $\\\\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ``Lead-time main effects'' are the 2- and 3-day lead indicators and ``Intensity main effect'' the hurricane-force indicator. ``Forecast-wind bins'' are twenty equal-count bins of the storm-county average forecast wind speed.", boot_note)),
   output = here("output/paper_interaction_grid.tex"))
 add_adjust_box(here("output/paper_interaction_grid.tex"))
 
