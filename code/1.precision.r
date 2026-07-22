@@ -33,6 +33,19 @@ d[, `:=`(AO = augmented_obs, AO_l2 = augmented_obs * l2, AO_l3 = augmented_obs *
          AO_hf = augmented_obs * hf, AO_l2_hf = augmented_obs * l2 * hf,
          AO_l3_hf = augmented_obs * l3 * hf, l2_hf = l2 * hf, l3_hf = l3 * hf)]
 
+# Intensity control: 20 equal-count bins of the AVERAGE forecast wind, taken from
+# the operational (ALL) run so it is config-invariant. This replaces the realized
+# wind_obs control: wind_obs is exogenous to AO but the forecast is the ex-ante
+# object; the lead-specific forecast wind is post-treatment (AO shifts it) so we
+# use the storm-county average, which leaves the AO estimates unchanged. Twenty
+# bins to match the wind_cut = ntile(wind_obs, 20) partition used in Stage 2; the
+# estimate is invariant to the count anyway (quantile edges, not ntile, so a
+# county-storm never splits across bins).
+d[, wind_fc_avg := mean(wind_fc[augmented_obs == 1], na.rm = TRUE), by = .(county, name)]
+d[, fc_cut := as.factor(cut(wind_fc_avg,
+             breaks = unique(quantile(wind_fc_avg, 0:20 / 20, na.rm = TRUE)),
+             include.lowest = TRUE, labels = FALSE))]
+
 full_triple <- c("AO", "l2", "l3", "hf", "AO_l2", "AO_l3", "AO_hf",
                  "l2_hf", "l3_hf", "AO_l2_hf", "AO_l3_hf")
 
@@ -97,12 +110,12 @@ boot_note <- "Square brackets report wild cluster bootstrap $p$-values with Webb
 # Tables: interaction grid (tab:interaction-grid) and full vector (tab:precision_full)
 # ------------------------------------------------------------------------------
 cols <- list(
-  "(1)" = list(regs = c("AO"),                                           fe = "county"),
-  "(2)" = list(regs = c("AO"),                                           fe = "county+name"),
-  "(3)" = list(regs = c("AO", "wind_obs"),                               fe = "county+name"),
-  "(4)" = list(regs = c("AO", "l2", "l3", "AO_l2", "AO_l3", "wind_obs"), fe = "county+name"),
-  "(5)" = list(regs = full_triple,                                       fe = "county+name"),
-  "(6)" = list(regs = c(full_triple, "wind_obs"),                        fe = "county+name"))
+  "(1)" = list(regs = c("AO"),                              fe = "county"),
+  "(2)" = list(regs = c("AO"),                              fe = "county+name"),
+  "(3)" = list(regs = c("AO"),                              fe = "county+name+fc_cut"),
+  "(4)" = list(regs = c("AO", "l2", "l3", "AO_l2", "AO_l3"), fe = "county+name+fc_cut"),
+  "(5)" = list(regs = full_triple,                          fe = "county+name"),
+  "(6)" = list(regs = full_triple,                          fe = "county+name+fc_cut"))
 cat(sprintf("[Stage 1] interaction grid: bootstrap (B=%d, %d cores)\n", B, N_CORES))
 res <- run_family(cols, d)
 fwrite(res, here("output/interaction_wcb_pvalues.csv"))
@@ -111,31 +124,31 @@ mods <- make_mods(res, cols)
 intr_cm <- c(
   "AO" = "$\\delta$: Augmented Observations (AO)", "AO_l2" = "$\\delta \\times$ 2-day lead",
   "AO_l3" = "$\\delta \\times$ 3-day lead", "AO_hf" = "$\\delta \\times$ Hurricane-force",
-  "AO_l2_hf" = "$\\delta \\times$ 2-day $\\times$ HF", "AO_l3_hf" = "$\\delta \\times$ 3-day $\\times$ HF",
-  "wind_obs" = "Realized wind speed (m/s)")
+  "AO_l2_hf" = "$\\delta \\times$ 2-day $\\times$ HF", "AO_l3_hf" = "$\\delta \\times$ 3-day $\\times$ HF")
 intr_rows <- data.frame(
-  term = c("County FE", "Storm FE", "Lead-time main effects", "Intensity main effect"),
-  "(1)" = c("\\checkmark", "", "", ""), "(2)" = c("\\checkmark", "\\checkmark", "", ""),
-  "(3)" = c("\\checkmark", "\\checkmark", "", ""), "(4)" = c("\\checkmark", "\\checkmark", "\\checkmark", ""),
-  "(5)" = c("\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark"),
-  "(6)" = c("\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark"), check.names = FALSE)
+  term = c("County FE", "Storm FE", "Lead-time main effects", "Intensity main effect", "Forecast-wind bins"),
+  "(1)" = c("\\checkmark", "", "", "", ""), "(2)" = c("\\checkmark", "\\checkmark", "", "", ""),
+  "(3)" = c("\\checkmark", "\\checkmark", "", "", "\\checkmark"),
+  "(4)" = c("\\checkmark", "\\checkmark", "\\checkmark", "", "\\checkmark"),
+  "(5)" = c("\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", ""),
+  "(6)" = c("\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark", "\\checkmark"), check.names = FALSE)
 modelsummary(
   mods, coef_map = intr_cm, gof_map = gm, add_rows = intr_rows,
   fmt = "%.3f", statistic = STAT, stars = STARS, escape = FALSE, threeparttable = TRUE,
   title = "Precision Gained due to Augmented Observations. \\label{tab:interaction-grid}",
-  notes = list(paste0("HF denotes hurricane-force realizations, wind $\\\\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ``Lead-time main effects'' are the 2- and 3-day lead indicators and ``Intensity main effect'' the hurricane-force indicator. ", boot_note)),
+  notes = list(paste0("HF denotes hurricane-force realizations, wind $\\\\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ``Lead-time main effects'' are the 2- and 3-day lead indicators and ``Intensity main effect'' the hurricane-force indicator. ``Forecast-wind bins'' are twenty equal-count bins of the storm-county average forecast wind speed, matching the realized-wind partition used in Stage 2, which absorb ex-ante forecast intensity.", boot_note)),
   output = here("output/paper_interaction_grid.tex"))
 add_adjust_box(here("output/paper_interaction_grid.tex"))
 
 intr_cm_full <- c(
   "AO" = "$\\delta$: Augmented Observations (AO)", "l2" = "2-day lead", "l3" = "3-day lead",
-  "hf" = "Hurricane-force (HF)", "wind_obs" = "Realized wind speed (m/s)",
+  "hf" = "Hurricane-force (HF)",
   "AO_l2" = "$\\delta \\times$ 2-day lead", "AO_l3" = "$\\delta \\times$ 3-day lead",
   "AO_hf" = "$\\delta \\times$ Hurricane-force", "l2_hf" = "2-day lead $\\times$ HF",
   "l3_hf" = "3-day lead $\\times$ HF", "AO_l2_hf" = "$\\delta \\times$ 2-day $\\times$ HF",
   "AO_l3_hf" = "$\\delta \\times$ 3-day $\\times$ HF")
 intr_rows_full <- data.frame(
-  term = c("County FE", "Storm FE", "Realized wind control"),
+  term = c("County FE", "Storm FE", "Forecast-wind bins"),
   "(1)" = c("\\checkmark", "", ""), "(2)" = c("\\checkmark", "\\checkmark", ""),
   "(3)" = c("\\checkmark", "\\checkmark", "\\checkmark"), "(4)" = c("\\checkmark", "\\checkmark", "\\checkmark"),
   "(5)" = c("\\checkmark", "\\checkmark", ""), "(6)" = c("\\checkmark", "\\checkmark", "\\checkmark"),
@@ -195,7 +208,7 @@ add_adjust_box(here("output/precision_jackknife_maria.tex"))
 # (HF + 3-day lead, AO-assimilated). Consumed by Stage 3.
 # ------------------------------------------------------------------------------
 reg3   <- d[lead_days == 3 & wind_obs > 33]
-mod    <- feols(wind_fc_sd ~ augmented_obs | county + name, reg3, vcov = ~name)
+mod    <- feols(wind_fc_sd ~ augmented_obs | county + name + fc_cut, reg3, vcov = ~name)
 delta  <- abs(coef(mod)["augmented_obs"])
 dse    <- sqrt(diag(vcov(mod)))["augmented_obs"]
 dp     <- 2 * (1 - pnorm(abs(coef(mod)["augmented_obs"]) / dse))
