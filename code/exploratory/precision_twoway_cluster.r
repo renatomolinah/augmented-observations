@@ -59,8 +59,7 @@ make_mods <- function(res, coldefs) {
 }
 gm <- list(
   list(raw = "nobs",          clean = "Num.Obs.", fmt = function(x) formatC(x, format = "d", big.mark = ",")),
-  list(raw = "r.squared",     clean = "R2",       fmt = 3),
-  list(raw = "adj.r.squared", clean = "R2 Adj.",  fmt = 3))
+  list(raw = "r.squared",     clean = "R2",       fmt = 3))
 twoway_note <- "Round parentheses report two-way cluster-robust standard errors on storm and county, with the small-sample $t$ correction based on the smaller cluster count (ten storms)."
 
 cols <- list(

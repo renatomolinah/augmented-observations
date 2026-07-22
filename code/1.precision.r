@@ -102,8 +102,7 @@ make_mods <- function(res, coldefs) {
 }
 gm <- list(
   list(raw = "nobs",          clean = "Num.Obs.", fmt = function(x) formatC(x, format = "d", big.mark = ",")),
-  list(raw = "r.squared",     clean = "R2",       fmt = 3),
-  list(raw = "adj.r.squared", clean = "R2 Adj.",  fmt = 3))
+  list(raw = "r.squared",     clean = "R2",       fmt = 3))
 boot_note <- "Square brackets report wild cluster bootstrap $p$-values with Webb weights, on which the stars are based."
 
 # ------------------------------------------------------------------------------
