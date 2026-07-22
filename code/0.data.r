@@ -24,17 +24,17 @@ data_summary <- voi_full |>
   distinct(year, hurricane, state, county, wind_obs, wind_fc, wind_error,
            precip_obs, precip_fc, precip_error, damages, deaths, ex_post_spending, ex_ante_spending) |>
   group_by(hurricane, year) |>
-  summarise(max_wind_speed = sprintf("%.2f", mean(wind_obs)),
-            max_wind_error = sprintf("%.2f", mean(abs(wind_error))),
-            max_prec       = sprintf("%.2f", mean(precip_obs)),
-            max_prec_error = sprintf("%.2f", mean(abs(precip_error))),
-            sum_damage     = sprintf("%.2f", sum(damages) / 1e9),
-            ex_post_spending = sprintf("%.2f", sum(ex_post_spending) / 1e9), .groups = "drop") |>
+  summarise(mean_wind_speed   = sprintf("%.2f", mean(wind_obs)),
+            mean_wind_error   = sprintf("%.2f", mean(abs(wind_error))),
+            mean_precip       = sprintf("%.2f", mean(precip_obs)),
+            mean_precip_error = sprintf("%.2f", mean(abs(precip_error))),
+            sum_damage        = sprintf("%.2f", sum(damages) / 1e9),
+            ex_post_spending  = sprintf("%.2f", sum(ex_post_spending) / 1e9), .groups = "drop") |>
   arrange(year) |>
   mutate(hurricane = str_to_title(hurricane)) |>
-  rename(Hurricane = hurricane, Year = year, `Wind Speed` = max_wind_speed,
-         `Wind Speed Error` = max_wind_error, `Precipitation` = max_prec,
-         `Precipitation Error` = max_prec_error, `Total Damage` = sum_damage,
+  rename(Hurricane = hurricane, Year = year, `Wind Speed` = mean_wind_speed,
+         `Wind Speed Error` = mean_wind_error, `Precipitation` = mean_precip,
+         `Precipitation Error` = mean_precip_error, `Total Damage` = sum_damage,
          `Recovery Expenditures` = ex_post_spending)
 
 summary_units <- c("", "", "(m/s)", "abs(m/s)", "(mm)", "abs(mm)", "(Billion \\$)", "(Billion \\$)")
@@ -55,29 +55,44 @@ add_adjust_box(here("output/summary_dmg.tex"))
 # ------------------------------------------------------------------------------
 # Table: the data-denial sample (tab:data_denial)
 # ------------------------------------------------------------------------------
+# Forecast leads = the pre-landfall cycles in the denial archive; every storm has
+# the 1-3 day set except Harvey (1, 2) and Hanna (1), which formed too close to landfall.
 denial_summary <- tribble(
-  ~Year, ~Storm,     ~Intensity,   ~Landfall,
-  2017,  "Harvey",   "Category 4", "26 Aug 0000",
-  2017,  "Irma",     "Category 4", "10 Sep 1200",
-  2017,  "Maria",    "Category 4", "20 Sep 0600",
-  2018,  "Florence", "Category 1", "14 Sep 0600",
-  2018,  "Michael",  "Category 5", "10 Oct 1200",
-  2019,  "Dorian",   "Category 1", " 6 Sep 1200",
-  2020,  "Hanna",    "Category 1", "25 Jul 1800",
-  2020,  "Isaias",   "Category 1", " 4 Aug 0000",
-  2020,  "Laura",    "Category 4", "27 Aug 0600",
-  2020,  "Sally",    "Category 2", "16 Sep 0600")
+  ~Year, ~Storm,     ~Intensity,   ~Leads,
+  2017,  "Harvey",   "Category 4", "1, 2",
+  2017,  "Irma",     "Category 4", "1, 2, 3",
+  2017,  "Maria",    "Category 4", "1, 2, 3",
+  2018,  "Florence", "Category 1", "1, 2, 3",
+  2018,  "Michael",  "Category 5", "1, 2, 3",
+  2019,  "Dorian",   "Category 1", "1, 2, 3",
+  2020,  "Hanna",    "Category 1", "1",
+  2020,  "Isaias",   "Category 1", "1, 2, 3",
+  2020,  "Laura",    "Category 4", "1, 2, 3",
+  2020,  "Sally",    "Category 2", "1, 2, 3")
 writeLines(c(
-  "\\begin{table}", "    \\centering", "    \\begin{threeparttable}",
-  "      \\caption{Landfalling hurricanes in the data-denial sample, 2017--2020.}",
-  "      \\label{tab:data_denial}", "      \\small", "      \\setlength{\\tabcolsep}{22pt}",
-  "      \\renewcommand{\\arraystretch}{1.25}", "      \\begin{tabular}{c c c c}", "        \\hline",
-  "        Year & Storm Name & Landfall Intensity & Landfall Time\\\\", "        \\hline",
-  paste0("        ", denial_summary$Year, " & ", denial_summary$Storm, " & ",
-         denial_summary$Intensity, " & ", denial_summary$Landfall, "\\\\"),
-  "        \\hline", "      \\end{tabular}", "\\begin{tablenotes}", "\\small",
-  "\\item \\textit{Note:} Landfall intensity follows the Saffir-Simpson Hurricane Wind Scale. Landfall time is the nearest synoptic hour (UTC). Maria made landfall in Puerto Rico; the remaining storms in the continental United States.",
-  "\\end{tablenotes}", "\\end{threeparttable}", "\\end{table}"
+  "\\begin{table}", "",
+  "  \\caption{Landfalling hurricanes in the data-denial sample, 2017--2020. \\label{tab:data_denial}}",
+  "  \\centering",
+  "  \\begin{adjustbox}{max width = \\textwidth}",
+  "  \\begin{threeparttable}",
+  "  \\begin{tabular}[t]{cccc}",
+  "  \\toprule",
+  "  Year & Storm Name & Landfall Intensity & Forecast Leads (days)\\\\",
+  "  \\midrule",
+  paste0("  ", denial_summary$Year, " & ", denial_summary$Storm, " & ",
+         denial_summary$Intensity, " & ", denial_summary$Leads, "\\\\"),
+  "  \\bottomrule",
+  "  \\end{tabular}",
+  "  \\begin{tablenotes}",
+  "  \\small",
+  paste("  \\item \\textit{Note:} Landfall intensity follows the Saffir-Simpson Hurricane Wind Scale.",
+        "Maria made landfall in Puerto Rico; the remaining storms in the continental United States.",
+        "Forecast leads lists the pre-landfall cycles available in the denial archive; Harvey and Hanna",
+        "formed too close to landfall to have a complete set."),
+  "  \\end{tablenotes}",
+  "  \\end{threeparttable}",
+  "  \\end{adjustbox}",
+  "  \\end{table}"
 ), here("output/data_denial.tex"))
 
 # ------------------------------------------------------------------------------

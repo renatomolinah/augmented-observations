@@ -10,11 +10,8 @@
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(here)
+source(here("code/functions_table.r"))
 
-read_num <- function(file, key) {
-  rhs <- sub(".*=", "", grep(key, readLines(here(file)), value = TRUE)[1])
-  as.numeric(regmatches(rhs, regexpr("-?[0-9]+(\\.[0-9]+)?", rhs)))
-}
 our_value_B <- read_num("output/stage3_numbers.txt", "Total Retrospective Value")
 
 # --- External constants -------------------------------------------------------

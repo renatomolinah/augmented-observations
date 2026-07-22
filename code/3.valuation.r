@@ -12,14 +12,9 @@
 # Run:     Rscript --vanilla code/3.valuation.r
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(data.table, tidyverse, here, fixest, kableExtra)
+pacman::p_load(data.table, tidyverse, here, kableExtra)
 source(here("code/functions_table.r"))
 
-# read a numeric value from a "label = value [unit]" stage-number line
-read_num <- function(file, key) {
-  rhs <- sub(".*=", "", grep(key, readLines(here(file)), value = TRUE)[1])
-  as.numeric(regmatches(rhs, regexpr("-?[0-9]+(\\.[0-9]+)?", rhs)))
-}
 beta_hurr <- read_num("output/stage2_numbers.txt", "^beta_hurr")
 beta_gdp  <- read_num("output/stage2_numbers.txt", "^beta_gdp_hurr")
 beta_pc   <- read_num("output/stage2_numbers.txt", "^beta_pc_hurr")
@@ -27,10 +22,10 @@ beta_pc   <- read_num("output/stage2_numbers.txt", "^beta_pc_hurr")
 denial_path <- here("data/clean_denial/forecast_denial_data_with_lead_times.csv")
 reg_data <- fread(denial_path)[!is.na(augmented_obs) & lead_days == 3 & wind_obs > 33]
 
-# Stage 1 reports the rounded delta; recompute the point estimate and the baseline
-# AO forecast SD here at full precision so the dollar valuation does not drift.
-delta     <- abs(coef(feols(wind_fc_sd ~ augmented_obs | county + name, reg_data, vcov = ~name))["augmented_obs"])
-sigma_bar <- mean(reg_data[augmented_obs == 1]$wind_fc_sd, na.rm = TRUE)
+# delta and the baseline AO forecast SD come from Stage 1 (written at full precision),
+# so both stages share one delta and the dollar valuation cannot drift from the spec.
+delta     <- read_num("output/stage1_numbers.txt", "^delta ")
+sigma_bar <- read_num("output/stage1_numbers.txt", "sigma_bar")
 delta_sigma_sq <- (sigma_bar + delta)^2 - sigma_bar^2
 value_per_county <- beta_hurr * delta_sigma_sq
 

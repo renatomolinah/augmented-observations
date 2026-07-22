@@ -213,14 +213,15 @@ delta  <- abs(coef(mod)["augmented_obs"])
 dse    <- sqrt(diag(vcov(mod)))["augmented_obs"]
 dp     <- 2 * (1 - pnorm(abs(coef(mod)["augmented_obs"]) / dse))
 ao3    <- reg3[augmented_obs == 1]
+# full precision: Stage 3 reads delta and sigma_bar for the dollar valuation (the paper rounds when citing)
 writeLines(c(
-  sprintf("delta                              = %.3f m/s", delta),
-  sprintf("delta SE                           = %.3f",     dse),
+  sprintf("delta                              = %.6f m/s", delta),
+  sprintf("delta SE                           = %.6f",     dse),
   sprintf("delta p-value                      = %.4f",     dp),
   "",
   "-- HF + 3-day lead, AO-only (Stage 3 baseline) --",
   sprintf("  N                                = %d",       nrow(ao3)),
-  sprintf("  sigma_bar                        = %.2f m/s", mean(ao3$wind_fc_sd, na.rm = TRUE)),
-  sprintf("  sd(sigma)                        = %.2f m/s", sd(ao3$wind_fc_sd,   na.rm = TRUE))
+  sprintf("  sigma_bar                        = %.6f m/s", mean(ao3$wind_fc_sd, na.rm = TRUE)),
+  sprintf("  sd(sigma)                        = %.6f m/s", sd(ao3$wind_fc_sd,   na.rm = TRUE))
 ), here("output/stage1_numbers.txt"))
 cat("Wrote Stage 1 tables + output/stage1_numbers.txt\n")

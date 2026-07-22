@@ -1,3 +1,9 @@
+# Read a numeric value from a "label = value [unit]" line in a stage-number file.
+read_num <- function(file, key) {
+  rhs <- sub(".*=", "", grep(key, readLines(here(file)), value = TRUE)[1])
+  as.numeric(regmatches(rhs, regexpr("-?[0-9]+(\\.[0-9]+)?", rhs)))
+}
+
 # Wrap a generated threeparttable in an adjustbox so wide tables fit the text width.
 add_adjust_box <- function(file,
                            line_before = "\\begin{adjustbox}{max width = \\textwidth}",
