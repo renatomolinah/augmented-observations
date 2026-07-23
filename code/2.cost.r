@@ -129,7 +129,7 @@ msummary(
   gof_omit = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors", fmt = "%.2f",
   stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01), add_rows = rows,
   title = "The Value of a Wind Speed Forecast Improvement (damages plus recovery expenditures, \\$ millions). \\label{tab:voi-table}",
-  notes = list(sprintf("$e$ is the county-hurricane-specific forecast error at the 3-day-ahead lead, and $\\\\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds exceed 33 m/s (74 mph); sub-hurricane wind speeds fall below. The panel covers the %d landfalling hurricanes that received a 3-day forecast; Table @REF{tab:cost_lead} shows the estimate is not an artifact of that restriction. Conley spatial HAC standard errors with a 400 km cutoff.", length(storms_3day))),
+  notes = list(sprintf("$e$ is the county-hurricane-specific forecast error at the 3-day-ahead lead, and $\\\\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds exceed 33 m/s (74 mph); sub-hurricane wind speeds fall below. The panel covers the %d landfalling hurricanes that received a 3-day forecast. Conley spatial HAC standard errors with a 400 km cutoff.", length(storms_3day))),
   threeparttable = TRUE, escape = FALSE,
   output = here("output/paper_table_voi.tex")
 )
@@ -149,7 +149,7 @@ msummary(
   gof_omit = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors", fmt = "%.3f",
   stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01), add_rows = rows,
   title = "Wind and Precipitation Forecast-Error Costs. \\label{tab:precip_costs}",
-  notes = list("Main Stage 2 specification on the 3-day-ahead forecast error, reporting both the wind ($\\\\beta^w_2$) and precipitation ($\\\\beta^p_2$) squared demeaned forecast-error coefficients, the latter omitted from the main table. Conley spatial HAC standard errors with a 400 km cutoff."),
+  notes = list("The forecast-error cost specifications on the 3-day-ahead forecast error, reporting both the wind ($\\\\beta^w_2$) and precipitation ($\\\\beta^p_2$) squared demeaned forecast-error coefficients, the latter omitted from the main table. Conley spatial HAC standard errors with a 400 km cutoff."),
   threeparttable = TRUE, escape = FALSE,
   output = here("output/paper_precip_costs.tex")
 )
@@ -168,7 +168,7 @@ msummary(
   gof_omit = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors|Num.Obs.", fmt = "%.2f",
   stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
   title = "Outcome robustness for the preferred specification. \\label{tab:cost_outcomes}",
-  notes = list("Preferred specification (Table @REF{tab:voi-table}) on the 3-day-ahead forecast error, with Conley spatial HAC standard errors with a 400 km cutoff."),
+  notes = list("Preferred specification on the 3-day-ahead forecast error, with Conley spatial HAC standard errors with a 400 km cutoff."),
   align = "lccc", threeparttable = TRUE, escape = FALSE,
   output = here("output/paper_cost_outcomes.tex")
 )
@@ -232,7 +232,7 @@ msummary(
   gof_omit = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors|Num.Obs.", fmt = "%.2f",
   stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01), add_rows = rows3,
   title = "Marginal cost of forecast error by forecast lead. \\label{tab:cost_lead}",
-  notes = list(sprintf("Preferred specification (Table @REF{tab:voi-table}) on total cost. Column (1) is the main specification, using the 3-day-ahead forecast error. Column (2) uses the 1--3 day average error on the same %d storms, isolating the change in forecast lead. Column (3) uses the 1--3 day average on all %d storms, restoring the %d storms that never received a 3-day forecast (%s). Conley spatial HAC standard errors with a 400 km cutoff.",
+  notes = list(sprintf("Preferred specification on total cost. Column (1) is the main specification, using the 3-day-ahead forecast error. Column (2) uses the 1--3 day average error on the same %d storms, isolating the change in forecast lead. Column (3) uses the 1--3 day average on all %d storms, restoring the %d storms that never received a 3-day forecast (%s). Conley spatial HAC standard errors with a 400 km cutoff.",
     length(storms_3day), length(storms_all), length(storms_lost),
     paste(str_to_title(storms_lost), collapse = ", "))),
   align = "lccc", threeparttable = TRUE, escape = FALSE,
