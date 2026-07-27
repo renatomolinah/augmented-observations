@@ -186,7 +186,7 @@ add_adjust_box(here("output/paper_interaction_grid_precip.tex"))
 # Table: one-storm-out jackknife of the AO x 3-day x HF triple (tab:precision_jackknife_maria)
 # ------------------------------------------------------------------------------
 TERM <- "AO_l3_hf"
-mkf  <- function(lhs, regs) as.formula(paste(lhs, "~", paste(regs, collapse = "+"), "| county + name"))
+mkf  <- function(lhs, regs) as.formula(paste(lhs, "~", paste(regs, collapse = "+"), "| county + name + fc_cut"))
 wcb  <- function(dat, seed) {
   storms <- unique(dat$name); G_ <- length(storms); idx_ <- match(dat$name, storms)
   set.seed(seed)
@@ -205,11 +205,15 @@ wcb  <- function(dat, seed) {
 seed_of <- function(s) 2024L + sum(utf8ToInt(s))
 star    <- function(p) ifelse(p < 0.01, "***", ifelse(p < 0.05, "**", ifelse(p < 0.1, "*", "")))
 storms  <- sort(unique(d$name))
-jk <- rbindlist(mclapply(c("(none)", storms), function(s) {
-  sub <- if (s == "(none)") d else d[name != s]
-  r <- wcb(sub, seed_of(paste0("jk_", s)))
-  data.table(dropped = s, n = r$n, est = r$est, p = r$p)
-}, mc.cores = N_CORES, mc.set.seed = TRUE))
+# (None) reuses the grid's col-6 estimate/p so the baseline matches the main table exactly;
+# only the dropped-storm rows are re-bootstrapped here.
+base <- res[col == "(6)" & term == "AO_l3_hf"]
+jk <- rbind(
+  data.table(dropped = "(none)", n = base$nobs, est = base$estimate, p = base$p.value),
+  rbindlist(mclapply(storms, function(s) {
+    r <- wcb(d[name != s], seed_of(paste0("jk_", s)))
+    data.table(dropped = s, n = r$n, est = r$est, p = r$p)
+  }, mc.cores = N_CORES, mc.set.seed = TRUE)))
 
 tc <- function(s) ifelse(s == "(none)", "(None)", paste0(toupper(substr(s,1,1)), substr(s,2,nchar(s))))
 jkbody <- paste0(tc(jk$dropped), " & ", format(jk$n, big.mark = ","), " & ",
@@ -217,9 +221,9 @@ jkbody <- paste0(tc(jk$dropped), " & ", format(jk$n, big.mark = ","), " & ",
 jktex <- c("\\begin{table}", "",
   "\\caption{One-storm-out jackknife of the augmented-observation $\\times$ 3-day $\\times$ hurricane-force interaction. \\label{tab:precision_jackknife_maria}}",
   "\\centering", "\\begin{threeparttable}", "\\begin{tabular}[t]{lrrr}", "\\toprule",
-  "Dropped & Obs. & $\\delta_{3,\\text{HF}}$ (m/s) & Bootstrap $p$\\\\", "\\midrule", jkbody, "\\bottomrule",
+  "Dropped & Obs. & AO $\\times$ 3-day $\\times$ HF (m/s) & Bootstrap $p$\\\\", "\\midrule", jkbody, "\\bottomrule",
   "\\end{tabular}", "\\begin{tablenotes}", "\\small",
-  "\\item Triple-interaction coefficient $\\delta_{3,\\text{HF}}$ from the full interaction, re-estimated after dropping each storm. Significance from a restricted wild cluster bootstrap with Webb weights (B = 1999, clustered on storm).",
+  "\\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 The augmented-observation $\\times$ 3-day $\\times$ hurricane-force interaction from the full lead $\\times$ intensity model, re-estimated after dropping each storm; the (None) row reproduces the main-text estimate. Significance from a restricted wild cluster bootstrap with Webb weights (B = 1999, clustered on storm).",
   "\\end{tablenotes}", "\\end{threeparttable}", "\\end{table}")
 writeLines(jktex, here("output/precision_jackknife_maria.tex"))
 add_adjust_box(here("output/precision_jackknife_maria.tex"))

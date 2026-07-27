@@ -142,7 +142,12 @@ writeLines(c(
   sprintf("continental denial-6: %d county-storms, $%.2fB", den$cs, den$B),
   sprintf("since HWRF 2007-2024: %d storms, %d county-storms, $%.2fB, $%.0fM/yr",
           hwrf$storms, hwrf$cs, hwrf$B, rate(hwrf, 2007)),
+  sprintf("  decomposition: %.1f HF exposures/yr x $%.1fM per exposure = $%.0fM/yr",
+          hwrf$cs / (2024 - 2007 + 1), hwrf$B * 1000 / hwrf$cs, rate(hwrf, 2007)),
   sprintf("2010-2024: $%.2fB, $%.0fM/yr", all10$B, rate(all10, 2010)),
-  sprintf("2005-2024: $%.2fB, $%.0fM/yr", allyr$B, rate(allyr, 2005))
+  sprintf("2005-2024: %d storms, %d county-storms, $%.2fB, $%.0fM/yr",
+          allyr$storms, allyr$cs, allyr$B, rate(allyr, 2005)),
+  sprintf("  decomposition: %.1f HF exposures/yr x $%.1fM per exposure = $%.0fM/yr",
+          allyr$cs / (2024 - 2005 + 1), allyr$B * 1000 / allyr$cs, rate(allyr, 2005))
 ), here("output/extended_valuation_numbers.txt"))
 cat("Wrote Stage 3 tables + output/{stage3_numbers,extended_valuation_numbers}.txt\n")

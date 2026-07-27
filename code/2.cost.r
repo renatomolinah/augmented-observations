@@ -7,7 +7,7 @@
 # never received a 3-day forecast and so leave the main sample; the lead
 # robustness table separates that sample change from the change in lead.
 # Inputs:  data/clean/final_dataset.rds; data/raw/{wind,precip}_error/*.csv
-# Outputs: output/{paper_table_voi,paper_cost_outcomes,paper_precip_costs,
+# Outputs: output/{paper_table_voi,paper_voi_other_costs,paper_cost_outcomes,paper_precip_costs,
 #          cost_jackknife,cost_lead_robustness}.tex; output/stage2_numbers.txt
 # Run:     Rscript --vanilla code/2.cost.r
 # ==============================================================================
@@ -135,6 +135,26 @@ msummary(
 )
 restore_refs(here("output/paper_table_voi.tex"))
 add_adjust_box(here("output/paper_table_voi.tex"))
+
+# ------------------------------------------------------------------------------
+# Appendix table: the other two cost outcomes (per-GDP, per-capita) under the
+# same fixed-effect ladder as the main total-cost table (tab:voi-other-costs)
+# ------------------------------------------------------------------------------
+msummary(
+  list("(Damages + Recovery) / GDP (%)" = regs_pgdp,
+       "(Damages + Recovery) Per Capita ($/person)" = regs_pc),
+  coef_map = c(
+    "squared_error"                        = "$\\beta_2: (e - \\mu)^2$",
+    "squared_error:categoryHurricane"      = "$\\text{Hurricane } \\beta_2: (e - \\mu)^2$",
+    "squared_error:categoryTropical Storm" = "$\\text{Sub-Hurricane } \\beta_2: (e - \\mu)^2$"),
+  gof_omit = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors", fmt = "%.2f",
+  stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01), add_rows = rows,
+  title = "The Value of a Wind Speed Forecast Improvement: Cost per GDP and per Capita. \\label{tab:voi-other-costs}",
+  notes = list(sprintf("The other two cost outcomes, cost per county GDP in percent and cost per capita in dollars per person, under the fixed-effect ladder of the main total-cost table on the 3-day-ahead forecast error. $e$ is the county-hurricane-specific forecast error at the 3-day-ahead lead, and $\\\\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds exceed 33 m/s (74 mph); sub-hurricane wind speeds fall below. The panel covers the %d landfalling hurricanes that received a 3-day forecast. Conley spatial HAC standard errors with a 400 km cutoff.", length(storms_3day))),
+  threeparttable = TRUE, escape = FALSE, shape = "rbind",
+  output = here("output/paper_voi_other_costs.tex")
+)
+add_adjust_box(here("output/paper_voi_other_costs.tex"))
 
 # ------------------------------------------------------------------------------
 # Table: precipitation coefficient (tab:precip_costs)
