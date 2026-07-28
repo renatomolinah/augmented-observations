@@ -1,17 +1,12 @@
-delta                              = 0.258 m/s
-delta SE                           = 0.095
-delta p-value                      = 0.0070
+beta_hurr (Hurricane, $M per (m/s)^2)  = 3.798799
+beta_gdp_hurr (% per (m/s)^2)          = 0.178461
+beta_pc_hurr ($/person per (m/s)^2)     = 76.439625
 
--- HF + 3-day lead, AO-only (Stage 3 baseline) --
-  N                                = 62
-  sigma_bar                        = 8.98 m/s
-  sd(sigma)                        = 1.45 m/s
-  delta / sigma_bar                = 2.87% of mean
-  delta / sd(sigma)                = 0.18 SDs
+-- main sample: 3-day-ahead forecast error --
+  storms                               = 32
+  storms with no 3-day forecast        = barry, cindy, hanna, harvey, nicholas
 
--- 3-day lead, all wind speeds, pooled (broader noise benchmark) --
-  N                                = 16772
-  sigma_bar                        = 2.09 m/s
-  sd(sigma)                        = 2.03 m/s
-  delta / sigma_bar                = 12.35% of mean
-  delta / sd(sigma)                = 0.13 SDs
+-- lead decomposition, Hurricane beta_2 --
+  3-day error, 32 storms               = 3.798799
+  1-3 day average, 32 storms           = 4.811070
+  1-3 day average, 37 storms           = 5.030832
