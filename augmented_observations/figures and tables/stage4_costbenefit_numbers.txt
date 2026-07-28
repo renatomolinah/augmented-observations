@@ -8,15 +8,10 @@
   Base-case BCR                           = 0.75
 
 -- Our retrospective valuation (2017-2020) --
-  Total retrospective value ($M)          = 1464.06
-  Active years covered                    = 4
-  Annualized rate ($M/yr)                 = 366.01
-
--- Comparisons --
-  Our 2017-2020 value / ANSER 25-yr NPV   = 2.92x
-  Our annualized / ANSER annualized       = 18.27x
-  Our 2017-2020 value / ANSER Alt 2 LCC   = 2.15x
-  Our 2017-2020 value / NOAA total acq    = 1.05x
+  Total retrospective value ($M)          = 3815.07
+  Our value / ANSER 25-yr benefit NPV     = 7.62x
+  Our value / ANSER Alt 2 LCC             = 5.61x
+  Our value / NOAA total acquisition      = 2.73x
 
 -- NOAA Aircraft Recapitalization (NOAA 2022 / GAO 2025) --
   Total acquisition, 4x C-130J ($B)       = 1.40

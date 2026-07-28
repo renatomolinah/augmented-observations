@@ -45,7 +45,8 @@ writeLines(c(
   sprintf("delta_sigma_sq ((m/s)^2)               = %.2f", delta_sigma_sq),
   sprintf("Value per Affected County ($M)         = %.2f", value_per_county),
   sprintf("Affected hurricane-force counties      = %d",   sum(sample_benefits$affected_counties)),
-  sprintf("Total Retrospective Value ($B)         = %.2f", total_value_B)
+  # full precision: Stage 4 reads this for the benefit-cost ratios (the paper rounds when citing)
+  sprintf("Total Retrospective Value ($B)         = %.6f", total_value_B)
 ), here("output/stage3_numbers.txt"))
 
 # ------------------------------------------------------------------------------
@@ -106,18 +107,18 @@ per_storm <- reg_data |>
   arrange(desc(value_M))
 per_storm_disp <- per_storm |>
   transmute(Storm = str_to_title(name), `HF Counties Affected` = affected_counties,
-            `$\\bar{\\sigma}_{\\text{ALL},h}$ (m/s)` = formatC(sigma_h, format = "f", digits = 2),
+            `$\\sigma_{\\text{ALL},h}$ (m/s)` = formatC(sigma_h, format = "f", digits = 2),
             `Value (\\$M)` = formatC(value_M, format = "f", digits = 1, big.mark = ","),
             `Share of Total` = sprintf("%.1f\\%%", 100 * share)) |>
   bind_rows(tibble(Storm = "\\textbf{Total}",
                    `HF Counties Affected` = sum(per_storm$affected_counties),
-                   `$\\bar{\\sigma}_{\\text{ALL},h}$ (m/s)` = "",
+                   `$\\sigma_{\\text{ALL},h}$ (m/s)` = "",
                    `Value (\\$M)` = sprintf("\\textbf{%s}", formatC(sum(per_storm$value_M), format = "f", digits = 1, big.mark = ",")),
                    `Share of Total` = "\\textbf{100.0\\%}"))
 kbl(per_storm_disp, format = "latex", booktabs = TRUE, escape = FALSE, linesep = "",
     caption = sprintf("Per-storm decomposition of the \\$%.2fB retrospective social value. \\label{tab:per_storm}", sum(per_storm$value_M) / 1000),
     align = c("l", "r", "r", "r", "r")) |>
-  footnote(general = sprintf("Each storm's value is its hurricane-force / 3-day-lead county count times $\\\\hat{\\\\beta}^w_{Hurr}\\\\,[(\\\\bar{\\\\sigma}_{\\\\text{ALL},h}+\\\\hat{\\\\delta})^2-\\\\bar{\\\\sigma}_{\\\\text{ALL},h}^2]$, with $\\\\hat{\\\\beta}^w_{Hurr}=%.2f$ and $\\\\hat{\\\\delta}=%.3f$ m/s. The total is invariant to using storm-specific or pooled $\\\\sigma$ because value is linear in $\\\\sigma$.", beta_hurr, delta),
+  footnote(general = sprintf("Each storm's value is its hurricane-force / 3-day-lead county count times $\\\\hat{\\\\beta}^w_{Hurr}\\\\,[\\\\sigma_{\\\\text{NO},h}^2-\\\\sigma_{\\\\text{ALL},h}^2]$, where $\\\\sigma_{\\\\text{NO},h}=\\\\sigma_{\\\\text{ALL},h}+\\\\hat{\\\\delta}_{3,\\\\text{HF}}$, with $\\\\hat{\\\\beta}^w_{Hurr}=%.2f$ and $\\\\hat{\\\\delta}_{3,\\\\text{HF}}=%.3f$ m/s. The total is invariant to using storm-specific or pooled $\\\\sigma$ because value is linear in $\\\\sigma$.", beta_hurr, delta),
            general_title = "", threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE) |>
   as.character() |> writeLines(here("output/per_storm.tex"))
 add_adjust_box(here("output/per_storm.tex"))

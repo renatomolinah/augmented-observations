@@ -6,7 +6,7 @@
 \begin{threeparttable}
 \begin{tabular}[t]{lrrrr}
 \toprule
-Storm & HF Counties Affected & $\bar{\sigma}_{\text{ALL},h}$ (m/s) & Value (\$M) & Share of Total\\
+Storm & HF Counties Affected & $\sigma_{\text{ALL},h}$ (m/s) & Value (\$M) & Share of Total\\
 \midrule
 Maria & 75 & 11.08 & 2,281.0 & 59.8\%\\
 Michael & 27 & 9.04 & 672.1 & 17.6\%\\
@@ -20,7 +20,7 @@ Sally & 5 & 5.96 & 82.9 & 2.2\%\\
 \end{tabular}
 \begin{tablenotes}
 \small
-\item Each storm's value is its hurricane-force / 3-day-lead county count times $\hat{\beta}^w_{Hurr}\,[(\bar{\sigma}_{\text{ALL},h}+\hat{\delta})^2-\bar{\sigma}_{\text{ALL},h}^2]$, with $\hat{\beta}^w_{Hurr}=3.80$ and $\hat{\delta}=0.356$ m/s. The total is invariant to using storm-specific or pooled $\sigma$ because value is linear in $\sigma$.
+\item Each storm's value is its hurricane-force / 3-day-lead county count times $\hat{\beta}^w_{Hurr}\,[\sigma_{\text{NO},h}^2-\sigma_{\text{ALL},h}^2]$, where $\sigma_{\text{NO},h}=\sigma_{\text{ALL},h}+\hat{\delta}_{3,\text{HF}}$, with $\hat{\beta}^w_{Hurr}=3.80$ and $\hat{\delta}_{3,\text{HF}}=0.356$ m/s. The total is invariant to using storm-specific or pooled $\sigma$ because value is linear in $\sigma$.
 \end{tablenotes}
 \end{threeparttable}
 \end{adjustbox}
