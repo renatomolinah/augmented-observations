@@ -254,7 +254,7 @@ msummary(
   gof_omit = "R2|AIC|BIC|Log.|RMSE|FE|Std.Errors|Num.Obs.", fmt = "%.2f",
   stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01), add_rows = rows3,
   title = "Marginal cost of forecast error by forecast lead. \\label{tab:cost_lead}",
-  notes = list(sprintf("Preferred specification on total cost. Column (1) is the main specification, using the 3-day-ahead forecast error. Column (2) uses the 1--3 day average error on the same %d storms, isolating the change in forecast lead. Column (3) uses the 1--3 day average on all %d storms, restoring the %d storms that never received a 3-day forecast (%s). Conley spatial HAC standard errors with a 400 km cutoff.",
+  notes = list(sprintf("Preferred specification on total cost. Column (1) is the main specification, using the 3-day-ahead forecast error. Column (2) pools the 1--3 day lead forecasts into an average error on the same %d storms, which also brings in the county-storms that never received a 3-day forecast. Column (3) pools the same leads on all %d storms, restoring the %d storms that never received a 3-day forecast (%s). Conley spatial HAC standard errors with a 400 km cutoff.",
     length(storms_3day), length(storms_all), length(storms_lost),
     paste(str_to_title(storms_lost), collapse = ", "))),
   align = "lccc", threeparttable = TRUE, escape = FALSE,
