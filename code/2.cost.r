@@ -209,17 +209,19 @@ jack <- bind_rows(lapply(c("none", top_storms), function(s) {
          beta_hurr = ce[hi, "Estimate"], se_hurr = ce[hi, "Std. Error"],
          beta_sub  = ce[si, "Estimate"], se_sub  = ce[si, "Std. Error"])
 }))
+jstar <- function(b, se) { pv <- 2 * (1 - pnorm(abs(b / se))); ifelse(pv < 0.01, "***", ifelse(pv < 0.05, "**", ifelse(pv < 0.1, "*", ""))) }
 jack_disp <- jack |>
-  mutate(across(c(beta_hurr, se_hurr, beta_sub, se_sub), \(x) sprintf("%.3f", x)),
+  mutate(sh = jstar(beta_hurr, se_hurr), ss = jstar(beta_sub, se_sub),
+         across(c(beta_hurr, se_hurr, beta_sub, se_sub), \(x) sprintf("%.3f", x)),
          dropped = if_else(dropped == "none", "(none)", str_to_title(dropped)),
          n_rows  = format(n_rows, big.mark = ",")) |>
   transmute(Dropped = dropped, `Obs.` = n_rows,
-            `$\\beta_2$: Hurricane` = paste0(beta_hurr, " (", se_hurr, ")"),
-            `$\\beta_2$: Sub-Hurr.` = paste0(beta_sub, " (", se_sub, ")"))
+            `$\\beta_2$: Hurricane` = paste0(beta_hurr, sh, " (", se_hurr, ")"),
+            `$\\beta_2$: Sub-Hurr.` = paste0(beta_sub, ss, " (", se_sub, ")"))
 kbl(jack_disp, format = "latex", booktabs = TRUE, escape = FALSE, linesep = "",
     caption = "One-storm-out jackknife of the marginal cost of forecast error. \\label{tab:cost_jackknife}",
     align = c("l", "r", "r", "r")) |>
-  footnote(general = "Preferred specification on the 3-day-ahead forecast error, re-estimated after dropping each storm, with Conley spatial HAC standard errors (400 km cutoff) in parentheses.",
+  footnote(general = "* p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 Preferred specification on the 3-day-ahead forecast error, re-estimated after dropping each storm, with Conley spatial HAC standard errors (400 km cutoff) in parentheses.",
            general_title = "", threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE) |>
   as.character() |> writeLines(here("output/cost_jackknife.tex"))
 add_adjust_box(here("output/cost_jackknife.tex"))
