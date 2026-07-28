@@ -51,20 +51,25 @@ writeLines(c(
 alts <- data.frame(name = names(aoa$lcc), lcc = unname(aoa$lcc))
 alts$aoa_bcr <- aoa$npv_total / alts$lcc
 alts$our_bcr <- (our_value_B * 1000) / alts$lcc
+alts$combined_bcr <- (aoa$npv_total + our_value_B * 1000) / alts$lcc
 body <- paste0(alts$name, " & ", formatC(alts$lcc, format = "f", digits = 0, big.mark = ","),
-               " & ", sprintf("%.2f", alts$aoa_bcr), " & ", sprintf("%.1f", alts$our_bcr), "\\\\")
+               " & ", sprintf("%.2f", alts$aoa_bcr), " & ", sprintf("%.1f", alts$our_bcr),
+               " & ", sprintf("%.1f", alts$combined_bcr), "\\\\")
 note <- sprintf(paste0(
   "\\item Life-cycle costs are the net present values (base-year \\$2024) of the three replacement ",
   "alternatives costed in the 2016 Analysis of Alternatives \\citep{ANSER2016ExternalBenefits}. The ",
-  "AoA column divides that study's \\$%d million external-benefit estimate by each cost, and the final ",
-  "column instead uses the \\$%.2f billion denial-sample social value of the dropsonde precision channel."),
-  round(aoa$npv_total), our_value_B)
+  "AoA column divides that study's \\$%d million external-benefit estimate by each cost, the this-paper ",
+  "column instead uses the \\$%.2f billion denial-sample social value of the dropsonde precision channel, ",
+  "and the combined column their \\$%.2f billion sum."),
+  round(aoa$npv_total), our_value_B, aoa$npv_total / 1000 + our_value_B)
 writeLines(c(
   "\\begin{table}", "",
   "\\caption{Social value of augmented observations against the replacement-platform alternatives. \\label{tab:platform_comparison}}",
   "\\centering", "\\begin{adjustbox}{max width = \\textwidth}", "\\begin{threeparttable}",
-  "\\begin{tabular}[t]{lrrr}", "\\toprule",
-  "Replacement alternative & Life-cycle cost (NPV, \\$M) & Benefit-cost ratio, AoA & Benefit-cost ratio, this paper\\\\",
+  "\\begin{tabular}[t]{lrrrr}", "\\toprule",
+  "Replacement alternative & Life-cycle cost & \\multicolumn{3}{c}{Benefit-cost ratio}\\\\",
+  "\\cmidrule(l{3pt}r{3pt}){3-5}",
+  " & (NPV, \\$M) & AoA & This paper & Combined\\\\",
   "\\midrule", body, "\\bottomrule", "\\end{tabular}",
   "\\begin{tablenotes}", "\\small", note, "\\end{tablenotes}",
   "\\end{threeparttable}", "\\end{adjustbox}", "\\end{table}"
