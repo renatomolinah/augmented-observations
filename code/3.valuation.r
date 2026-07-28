@@ -24,7 +24,7 @@ reg_data <- fread(denial_path)[!is.na(augmented_obs) & lead_days == 3 & wind_obs
 
 # delta and the baseline AO forecast SD come from Stage 1 (written at full precision),
 # so both stages share one delta and the dollar valuation cannot drift from the spec.
-delta     <- read_num("output/stage1_numbers.txt", "^delta ")
+delta     <- read_num("output/stage1_numbers.txt", "^delta +=")
 sigma_bar <- read_num("output/stage1_numbers.txt", "sigma_bar")
 delta_sigma_sq <- (sigma_bar + delta)^2 - sigma_bar^2
 value_per_county <- beta_hurr * delta_sigma_sq
