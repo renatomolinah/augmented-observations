@@ -234,6 +234,9 @@ add_adjust_box(here("output/precision_jackknife_maria.tex"))
 # ------------------------------------------------------------------------------
 reg3   <- d[lead_days == 3 & wind_obs > 33]
 mod    <- feols(wind_fc_sd ~ augmented_obs | county + name + fc_cut, reg3, vcov = ~name)
+# delta is signed as a precision gain downstream, so a positive coefficient would
+# price a precision loss as a benefit; stop rather than let the sign flip silently.
+stopifnot(coef(mod)["augmented_obs"] < 0)
 delta  <- abs(coef(mod)["augmented_obs"])
 dse    <- sqrt(diag(vcov(mod)))["augmented_obs"]
 dp     <- 2 * (1 - pnorm(abs(coef(mod)["augmented_obs"]) / dse))
