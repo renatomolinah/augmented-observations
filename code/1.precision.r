@@ -64,6 +64,8 @@ wcb_p <- function(dat, idx_, G_, regs, fe, term, lhs = "wind_fc_sd") {
   t_obs <- coef(m)[term] / se(m)[term]
   mr <- feols(mkform(lhs, setdiff(regs, term), fe), dat, cluster = ~name)
   fit_r <- predict(mr); res_r <- resid(mr); dt <- copy(dat); tstar <- numeric(B)
+  # the restricted fit must span every row, or the DGP below recycles silently
+  stopifnot(length(fit_r) == nrow(dt))
   for (b in seq_len(B)) {
     w <- webb[sample.int(6, G_, replace = TRUE)][idx_]
     dt[, ystar := fit_r + res_r * w]
@@ -194,6 +196,7 @@ wcb  <- function(dat, seed) {
   t_obs <- coef(m)[[TERM]] / se(m)[[TERM]]
   mr <- feols(mkf("wind_fc_sd", setdiff(full_triple, TERM)), dat, cluster = ~name)
   fit_r <- predict(mr); res_r <- resid(mr); dt <- copy(dat); ts <- numeric(B)
+  stopifnot(length(fit_r) == nrow(dt))
   for (b in seq_len(B)) {
     w <- webb[sample.int(6, G_, replace = TRUE)][idx_]
     dt[, ystar := fit_r + res_r * w]
