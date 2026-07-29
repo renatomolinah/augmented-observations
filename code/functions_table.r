@@ -1,6 +1,5 @@
-# Read a numeric value from a "label = value [unit]" line in a stage-number file.
-# The key must select exactly one line: a partial key that also matched a
-# neighbouring row would otherwise return that row's number without a warning.
+# Read the numeric value from a "label = value" line in a stage-number file. The
+# key must match exactly one line: a looser key returns a neighbour's number silently.
 read_num <- function(file, key) {
   hits <- grep(key, readLines(here(file)), value = TRUE)
   if (length(hits) != 1) {

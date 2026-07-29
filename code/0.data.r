@@ -1,7 +1,7 @@
 # ==============================================================================
 # Data section - descriptive exhibits
-# Builds the Data-section tables (per-hurricane summary statistics; the
-# data-denial sample) and the storm-track map (Figure 1).
+# Builds the per-hurricane summary table, the data-denial sample table, and the
+# storm-track map (Figure 1).
 # Inputs:  data/clean/final_dataset.rds; data/clean/track_actual.rds
 # Outputs: output/{summary_dmg,data_denial}.tex; output/denial_tracks_map.png
 # Run:     Rscript --vanilla code/0.data.r
@@ -11,9 +11,6 @@ pacman::p_load(data.table, tidyverse, here, kableExtra,
                sf, ggplot2, ggrepel, rnaturalearth)
 source(here("code/functions_table.r"))
 
-# ------------------------------------------------------------------------------
-# Table: per-hurricane summary statistics (tab:summary_dmg)
-# ------------------------------------------------------------------------------
 voi_full <- readRDS(here("data/clean/final_dataset.rds")) |>
   as_tibble() |> drop_na(lat, lon, total_cost_pc, total_cost_per_gdp)
 
@@ -52,11 +49,8 @@ kbl(data_summary, format = "latex", caption = "Summary Statistics by Hurricane."
   as.character() |> writeLines(here("output/summary_dmg.tex"))
 add_adjust_box(here("output/summary_dmg.tex"))
 
-# ------------------------------------------------------------------------------
-# Table: the data-denial sample (tab:data_denial)
-# ------------------------------------------------------------------------------
-# Forecast leads = the pre-landfall cycles in the denial archive; every storm has
-# the 1-3 day set except Harvey (1, 2) and Hanna (1), which formed too close to landfall.
+# forecast leads are the pre-landfall denial-archive cycles; Harvey (1, 2) and
+# Hanna (1) formed too close to landfall for the full 1-3 day set
 denial_summary <- tribble(
   ~Year, ~Storm,     ~Intensity,   ~Leads,
   2017,  "Harvey",   "Category 4", "1, 2",
@@ -95,9 +89,6 @@ writeLines(c(
   "  \\end{table}"
 ), here("output/data_denial.tex"))
 
-# ------------------------------------------------------------------------------
-# Figure 1: observed tracks of the ten denial-sample storms
-# ------------------------------------------------------------------------------
 sf_use_s2(FALSE)
 yr  <- c(harvey = 2017, irma = 2017, maria = 2017, florence = 2018, michael = 2018,
          dorian = 2019, laura = 2020, sally = 2020, isaias = 2020, hanna = 2020)

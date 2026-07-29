@@ -1,10 +1,8 @@
 # ==============================================================================
 # Stage 1 - Precision gain from augmented observations (delta)
-# Estimates how much AO reduce the ex-ante wind-speed forecast SD, with inference
-# from a restricted wild cluster bootstrap (Webb weights, clustered on storm,
-# since there are few storm clusters). Builds the Stage 1 tables. The lead and
-# intensity cell identified here (3-day, hurricane-force) is the one Stage 2
-# prices, so Stage 2 estimates its cost curvature at the same 3-day lead.
+# Estimates how much AO reduce the ex-ante wind-speed forecast SD; inference is a
+# restricted wild cluster bootstrap with Webb weights, clustered on storm. Stage 2
+# prices the cell identified here: hurricane-force at the 3-day lead.
 # Inputs:  data/clean_denial/forecast_denial_data_with_lead_times.csv
 # Outputs: output/{paper_interaction_grid,paper_precision_full,
 #          paper_interaction_grid_precip,precision_jackknife_maria}.tex;
@@ -33,14 +31,8 @@ d[, `:=`(AO = augmented_obs, AO_l2 = augmented_obs * l2, AO_l3 = augmented_obs *
          AO_hf = augmented_obs * hf, AO_l2_hf = augmented_obs * l2 * hf,
          AO_l3_hf = augmented_obs * l3 * hf, l2_hf = l2 * hf, l3_hf = l3 * hf)]
 
-# Intensity control: 20 equal-count bins of the AVERAGE forecast wind, taken from
-# the operational (ALL) run so it is config-invariant. This replaces the realized
-# wind_obs control: wind_obs is exogenous to AO but the forecast is the ex-ante
-# object; the lead-specific forecast wind is post-treatment (AO shifts it) so we
-# use the storm-county average, which leaves the AO estimates unchanged. Twenty
-# bins to match the wind_cut = ntile(wind_obs, 20) partition used in Stage 2; the
-# estimate is invariant to the count anyway (quantile edges, not ntile, so a
-# county-storm never splits across bins).
+# intensity control: bins of the storm-county average forecast wind from the ALL
+# run; the lead-specific forecast is post-treatment. Twenty bins match Stage 2's wind_cut.
 d[, wind_fc_avg := mean(wind_fc[augmented_obs == 1], na.rm = TRUE), by = .(county, name)]
 d[, fc_cut := as.factor(cut(wind_fc_avg,
              breaks = unique(quantile(wind_fc_avg, 0:20 / 20, na.rm = TRUE)),
@@ -49,10 +41,8 @@ d[, fc_cut := as.factor(cut(wind_fc_avg,
 full_triple <- c("AO", "l2", "l3", "hf", "AO_l2", "AO_l3", "AO_hf",
                  "l2_hf", "l3_hf", "AO_l2_hf", "AO_l3_hf")
 
-# ------------------------------------------------------------------------------
-# Restricted wild cluster bootstrap p-value for one coefficient. Seeded from the
-# test content so each p is reproducible and order-invariant; resample on storm.
-# ------------------------------------------------------------------------------
+# restricted wild cluster bootstrap, resampled on storm; each p-value's seed is
+# derived from the test content, so results are reproducible and order-invariant
 mkform <- function(lhs, regs, fe) {
   rhs <- if (length(regs) == 0) "1" else paste(regs, collapse = "+")
   as.formula(paste(lhs, "~", rhs, "|", fe))
@@ -106,9 +96,6 @@ gm <- list(
   list(raw = "nobs",          clean = "Num.Obs.", fmt = function(x) formatC(x, format = "d", big.mark = ",")))
 boot_note <- " Square brackets report wild cluster bootstrap $p$-values with Webb weights, on which the stars are based."
 
-# ------------------------------------------------------------------------------
-# Tables: interaction grid (tab:interaction-grid) and full vector (tab:precision_full)
-# ------------------------------------------------------------------------------
 cols <- list(
   "(1)" = list(regs = c("AO"),                              fe = "county"),
   "(2)" = list(regs = c("AO"),                              fe = "county+name"),
@@ -161,12 +148,6 @@ modelsummary(
   output = here("output/paper_precision_full.tex"))
 add_adjust_box(here("output/paper_precision_full.tex"))
 
-# ------------------------------------------------------------------------------
-# Appendix table: precipitation forecast precision (tab:interaction-grid-precip).
-# Mirror of the wind grid with the ex ante precipitation forecast SD as the
-# outcome. Reported for symmetry with the null precipitation cost curvature in
-# Stage 2: augmented observations sharpen the wind forecast, not precipitation.
-# ------------------------------------------------------------------------------
 d_precip <- d[!is.na(precip_fc_sd)]
 cat(sprintf("[Stage 1] precip interaction grid: bootstrap (B=%d, %d cores)\n", B, N_CORES))
 res_p  <- run_family(cols, d_precip, lhs = "precip_fc_sd")
@@ -184,9 +165,6 @@ modelsummary(
   output = here("output/paper_interaction_grid_precip.tex"))
 add_adjust_box(here("output/paper_interaction_grid_precip.tex"))
 
-# ------------------------------------------------------------------------------
-# Table: one-storm-out jackknife of the AO x 3-day x HF triple (tab:precision_jackknife_maria)
-# ------------------------------------------------------------------------------
 TERM <- "AO_l3_hf"
 mkf  <- function(lhs, regs) as.formula(paste(lhs, "~", paste(regs, collapse = "+"), "| county + name + fc_cut"))
 wcb  <- function(dat, seed) {
@@ -208,8 +186,7 @@ wcb  <- function(dat, seed) {
 seed_of <- function(s) 2024L + sum(utf8ToInt(s))
 star    <- function(p) ifelse(p < 0.01, "***", ifelse(p < 0.05, "**", ifelse(p < 0.1, "*", "")))
 storms  <- sort(unique(d$name))
-# (None) reuses the grid's col-6 estimate/p so the baseline matches the main table exactly;
-# only the dropped-storm rows are re-bootstrapped here.
+# the (none) row reuses the grid's col-6 estimate and p; only dropped-storm rows are re-bootstrapped
 base <- res[col == "(6)" & term == "AO_l3_hf"]
 jk <- rbind(
   data.table(dropped = "(none)", n = base$nobs, est = base$estimate, p = base$p.value),
@@ -231,14 +208,9 @@ jktex <- c("\\begin{table}", "",
 writeLines(jktex, here("output/precision_jackknife_maria.tex"))
 add_adjust_box(here("output/precision_jackknife_maria.tex"))
 
-# ------------------------------------------------------------------------------
-# Stage 1 numbers: the headline delta and the baseline forecast SD it improves
-# (HF + 3-day lead, AO-assimilated). Consumed by Stage 3.
-# ------------------------------------------------------------------------------
 reg3   <- d[lead_days == 3 & wind_obs > 33]
 mod    <- feols(wind_fc_sd ~ augmented_obs | county + name + fc_cut, reg3, vcov = ~name)
-# delta is signed as a precision gain downstream, so a positive coefficient would
-# price a precision loss as a benefit; stop rather than let the sign flip silently.
+# downstream takes abs(): a positive coefficient would price a precision loss as a benefit
 stopifnot(coef(mod)["augmented_obs"] < 0)
 delta  <- abs(coef(mod)["augmented_obs"])
 dse    <- sqrt(diag(vcov(mod)))["augmented_obs"]

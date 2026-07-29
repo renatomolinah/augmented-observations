@@ -1,9 +1,8 @@
 # ==============================================================================
 # Stage 3 - Retrospective social value of augmented observations
-# Combines the Stage 1 precision gain (delta) and the Stage 2 cost curvature
-# (beta) into a dollar value; no re-estimation -- beta and delta are read from
-# the stage-number files. Builds the valuation tables and the back-of-the-envelope
-# extension beyond the denial archive.
+# Prices the Stage 1 precision gain (delta) with the Stage 2 cost curvature
+# (beta); both are read from the stage-number files, nothing is re-estimated.
+# Also runs the back-of-the-envelope extension beyond the denial archive.
 # Inputs:  output/stage1_numbers.txt, output/stage2_numbers.txt,
 #          data/clean_denial/forecast_denial_data_with_lead_times.csv,
 #          data/clean/final_dataset.rds, data/raw/wind_error/*.csv
@@ -22,16 +21,11 @@ beta_pc   <- read_num("output/stage2_numbers.txt", "^beta_pc_hurr")
 denial_path <- here("data/clean_denial/forecast_denial_data_with_lead_times.csv")
 reg_data <- fread(denial_path)[!is.na(augmented_obs) & lead_days == 3 & wind_obs > 33]
 
-# delta and the baseline AO forecast SD come from Stage 1 (written at full precision),
-# so both stages share one delta and the dollar valuation cannot drift from the spec.
 delta     <- read_num("output/stage1_numbers.txt", "^delta +=")
 sigma_bar <- read_num("output/stage1_numbers.txt", "sigma_bar")
 delta_sigma_sq <- (sigma_bar + delta)^2 - sigma_bar^2
 value_per_county <- beta_hurr * delta_sigma_sq
 
-# ------------------------------------------------------------------------------
-# Headline valuation (uniform per-county value over the denial county-storms)
-# ------------------------------------------------------------------------------
 sample_benefits <- reg_data |>
   group_by(name) |>
   summarise(affected_counties = n_distinct(county), .groups = "drop") |>
@@ -49,13 +43,10 @@ writeLines(c(
   sprintf("Total Retrospective Value ($B)         = %.6f", total_value_B)
 ), here("output/stage3_numbers.txt"))
 
-# ------------------------------------------------------------------------------
-# Table: implied value under three cost outcomes (tab:implied_value)
-# ------------------------------------------------------------------------------
 county_attr <- readRDS(here("data/clean/final_dataset.rds")) |>
   as_tibble() |> distinct(county, year, population, gdp)
 val <- reg_data |>
-  distinct(county, name, year) |>                       # one row per county-storm
+  distinct(county, name, year) |>
   left_join(county_attr, by = c("county", "year")) |>
   mutate(v_tot_M = beta_hurr * delta_sigma_sq,
          v_gdp_M = (beta_gdp / 100) * delta_sigma_sq * gdp / 1e3,
@@ -63,8 +54,7 @@ val <- reg_data |>
 val_econ <- val |> filter(!is.na(gdp), !is.na(population))
 n_all <- nrow(val); n_econ <- nrow(val_econ)
 
-# Maria's PR counties lack GDP/population: the total-cost aggregate spans all
-# county-storms, the scaled columns only the continental ones.
+# Maria's PR counties lack GDP/population: the scaled columns span only the continental county-storms
 writeLines(sprintf(
 '\\begin{table}
 
@@ -95,9 +85,6 @@ Cost per capita (\\$) & %.3f & %.2f & %.2f\\\\
   n_all, n_econ),
   here("output/implied_value.tex"))
 
-# ------------------------------------------------------------------------------
-# Table: per-storm decomposition with storm-specific baseline sigma (tab:per_storm)
-# ------------------------------------------------------------------------------
 per_storm <- reg_data |>
   group_by(name) |>
   summarise(affected_counties = n_distinct(county),
@@ -123,10 +110,8 @@ kbl(per_storm_disp, format = "latex", booktabs = TRUE, escape = FALSE, linesep =
   as.character() |> writeLines(here("output/per_storm.tex"))
 add_adjust_box(here("output/per_storm.tex"))
 
-# ------------------------------------------------------------------------------
-# Extension beyond the denial archive: price every continental hurricane-force,
-# 3-day-lead county-storm at its own baseline sigma_3 (back-of-the-envelope).
-# ------------------------------------------------------------------------------
+# back-of-the-envelope extension beyond the denial archive: every continental
+# hurricane-force, 3-day-lead county-storm priced at its own baseline sigma_3
 files <- list.files(here("data/raw/wind_error"), pattern = "_errors\\.csv$", full.names = TRUE)
 raw <- rbindlist(lapply(files, fread), fill = TRUE)
 raw[, year := as.integer(substr(as.character(pred_date), 1, 4))]

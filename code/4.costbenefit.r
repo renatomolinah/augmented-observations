@@ -1,9 +1,9 @@
 # ==============================================================================
 # Stage 4 - Cost-benefit benchmark
-# Compares the Stage 3 social value against published program costs: the 2016 AoA
-# external-benefit estimate and replacement-platform life-cycle costs (ANSER2016),
-# and the NOAA/GAO fleet recapitalization. All cost/benefit figures are external,
-# cited constants; only the social value is read from the pipeline (Stage 3).
+# Compares the Stage 3 social value against published program costs: the 2016
+# ANSER AoA external benefits and life-cycle costs, and the NOAA/GAO fleet
+# recapitalization. Only the social value comes from the pipeline; the cost
+# figures are cited constants.
 # Inputs:  output/stage3_numbers.txt
 # Outputs: output/platform_comparison.tex; output/stage4_costbenefit_numbers.txt
 # Run:     Rscript --vanilla code/4.costbenefit.r
@@ -14,9 +14,8 @@ source(here("code/functions_table.r"))
 
 our_value_B <- read_num("output/stage3_numbers.txt", "Total Retrospective Value")
 
-# --- External constants -------------------------------------------------------
-# 2016 ANSER External Benefits AoA (BY$2024 NPV @ 7%, 2030-2055): benefit channels
-# (Fig. 34), the three costed replacement alternatives' life-cycle costs (Fig. 33).
+# ANSER 2016 External Benefits AoA (BY$2024 NPV @ 7%, 2030-2055): benefit
+# channels from Fig. 34, replacement life-cycle costs from Fig. 33
 aoa <- list(
   npv_evacuation = 138.84, npv_air_traffic = 134.18, npv_maritime = 0.18,
   npv_chemistry = 227.65, npv_total = 500.86, bcr_base = 0.75, years_horizon = 25,
@@ -24,7 +23,6 @@ aoa <- list(
 # 2022 NOAA Aircraft Recapitalization Plan + GAO-25-107210 (Jan 2025).
 recap <- list(total_acq_B = 1.40, remaining_B = 0.678)
 
-# --- Stage 4 numbers ----------------------------------------------------------
 our_value_M <- our_value_B * 1000
 writeLines(c(
   "-- ANSER (2016) External Benefits AoA, NPV BY$2024 @ 7%, 2030-2055 --",
@@ -47,7 +45,6 @@ writeLines(c(
   sprintf("  Remaining to fund (Jan 2025, $B)        = %.2f", recap$remaining_B)
 ), here("output/stage4_costbenefit_numbers.txt"))
 
-# --- Table: social value vs replacement-platform alternatives (tab:platform_comparison)
 alts <- data.frame(name = names(aoa$lcc), lcc = unname(aoa$lcc))
 alts$aoa_bcr <- aoa$npv_total / alts$lcc
 alts$our_bcr <- (our_value_B * 1000) / alts$lcc
