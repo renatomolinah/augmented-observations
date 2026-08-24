@@ -2,7 +2,7 @@
 # Clean hurricane track shapefiles: build observed and forecast tracks, compute
 # county-level track-position errors across cutoffs, and county left/right side.
 # Inputs:  data/raw/track_raw/ (or track_raw.zip): trackline_{bdeck,adeck} shapefiles
-# Outputs: data/clean/{track_actual.rds, track_forecast.rds,
+# Outputs: data/clean/{track_actual.rds, track_observed_points.rds, track_forecast.rds,
 #          track_errors_all_cutoffs.rds, county_direction.csv}
 # Run:     sourced by code/cleaning_voi/run_all.r
 # ==============================================================================
@@ -67,6 +67,38 @@ track = do.call(rbind, track_list) %>%
 # ==============================================================================
 
 saveRDS(track, "data/clean/track_actual.rds")
+
+# ==============================================================================
+# 3b. Observed track positions at the forecast verification times
+# ==============================================================================
+
+# The b-deck trackpoints carry the best-track position at each verification hour
+# of the cycle (0-120 h from initialization), so pooling cycles recovers the
+# observed track over the full window the analysis looks at.
+point_files <- list.files(
+  path = "data/raw/track_raw/",
+  pattern = "trackpoints_bdeck_BEST.*\\.shp$",
+  full.names = TRUE,
+  recursive = TRUE
+)
+
+track_points <- do.call(rbind, lapply(point_files, function(file) {
+  dt <- st_read(file, quiet = TRUE)
+  names(dt)[1:5] <- c("Track", "forecast_hour", "lat", "lon", "wind_kt")
+  dt
+})) |>
+  mutate(hurricane = gsub(" .*$", "", Track),
+         init  = ymd_hm(str_extract(Track, "[0-9]{12}")),
+         valid = init + hours(forecast_hour)) |>
+  select(hurricane, init, forecast_hour, valid, lat, lon, wind_kt) |>
+  st_set_crs(4326)
+
+# cycles overlap; the best track is identical where they do, so keep one row per time
+track_points <- track_points |>
+  arrange(hurricane, valid, init) |>
+  distinct(hurricane, valid, .keep_all = TRUE)
+
+saveRDS(track_points, "data/clean/track_observed_points.rds")
 
 # ==============================================================================
 # 4. Read forecast track files

@@ -2,8 +2,9 @@
 # Data section - descriptive exhibits
 # Builds the per-hurricane summary table, the data-denial sample table, and the
 # storm-track map (Figure 1).
-# Inputs:  data/clean/final_dataset.rds; data/clean/track_actual.rds
+# Inputs:  data/clean/final_dataset.rds; data/clean/track_observed_points.rds
 # Outputs: output/{summary_dmg,data_denial}.tex; output/denial_tracks_map.png
+#          output/denial_track_windows.csv
 # Run:     Rscript --vanilla code/0.data.r
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
@@ -92,13 +93,31 @@ writeLines(c(
 sf_use_s2(FALSE)
 yr  <- c(harvey = 2017, irma = 2017, maria = 2017, florence = 2018, michael = 2018,
          dorian = 2019, laura = 2020, sally = 2020, isaias = 2020, hanna = 2020)
-trk <- readRDS(here("data/clean/track_actual.rds")) |>
-  filter(type == "BEST", hurricane %in% names(yr))
-if (is.na(st_crs(trk))) st_crs(trk) <- 4326
-trk$np   <- vapply(st_geometry(trk), function(g) nrow(st_coordinates(g)), integer(1))
-trk      <- trk |> group_by(hurricane) |> slice_max(np, n = 1, with_ties = FALSE) |> ungroup()
+# plotted segment = observed best track over the analysis window: from the
+# initialization of the earliest pre-landfall denial cycle through the end of
+# the last 5-day verification window (or the end of the best track)
+pts <- readRDS(here("data/clean/track_observed_points.rds")) |>
+  st_drop_geometry() |>
+  filter(hurricane %in% names(yr)) |>
+  arrange(hurricane, valid)
+# spline through the 12- to 24-hourly best-track fixes, as the NHC tracklines do
+smooth_track <- function(d) {
+  t <- as.numeric(d$valid)
+  n <- 30 * (nrow(d) - 1)
+  st_linestring(cbind(spline(t, d$lon, n = n, method = "natural")$y,
+                      spline(t, d$lat, n = n, method = "natural")$y))
+}
+by_storm <- split(pts, pts$hurricane)
+trk <- st_sf(hurricane = names(by_storm),
+             geometry  = st_sfc(lapply(by_storm, smooth_track), crs = 4326))
 trk$Name <- tools::toTitleCase(trk$hurricane)
 trk$Year <- factor(yr[trk$hurricane])
+
+track_window <- pts |>
+  group_by(hurricane) |>
+  summarise(first_cycle = min(init), last_cycle = max(init),
+            track_start = min(valid), track_end = max(valid), n_points = n(), .groups = "drop")
+write_csv(track_window, here("output/denial_track_windows.csv"))
 
 land   <- ne_countries(scale = "medium", returnclass = "sf")
 states <- ne_states(country = "United States of America", returnclass = "sf")
