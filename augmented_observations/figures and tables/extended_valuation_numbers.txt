@@ -1,6 +1,0 @@
-continental denial-6: 62 county-storms, $1.49B
-since HWRF 2007-2024: 23 storms, 188 county-storms, $4.68B, $260M/yr
-  decomposition: 10.4 HF exposures/yr x $24.9M per exposure = $260M/yr
-2010-2024: $4.07B, $271M/yr
-2005-2024: 27 storms, 216 county-storms, $5.42B, $271M/yr
-  decomposition: 10.8 HF exposures/yr x $25.1M per exposure = $271M/yr
