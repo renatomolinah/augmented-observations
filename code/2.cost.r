@@ -13,6 +13,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, tidyverse, here, fixest, conleyreg, modelsummary, kableExtra)
 options(conleyreg.verbose = FALSE)
 options(modelsummary_format_numeric_latex = "plain")
+options(modelsummary_factory_latex = "kableExtra")   # modelsummary >= 2.0 defaults to tinytable; add_adjust_box expects kableExtra output
 source(here("code/functions_table.r"))
 
 # conleyreg mutates its data.table input by reference, so every fit gets a
@@ -121,8 +122,8 @@ restore_refs(here("output/paper_table_voi.tex"))
 add_adjust_box(here("output/paper_table_voi.tex"))
 
 msummary(
-  list("(Damages + Recovery) / GDP (%)" = regs_pgdp,
-       "(Damages + Recovery) Per Capita ($/person)" = regs_pc),
+  list("(Damages + Recovery) / GDP (\\%)" = regs_pgdp,
+       "(Damages + Recovery) Per Capita (\\$/person)" = regs_pc),   # pre-escaped: escape = FALSE passes panel labels through verbatim
   coef_map = c(
     "squared_error"                        = "$\\beta_2: (e - \\mu)^2$",
     "squared_error:categoryHurricane"      = "$\\text{Hurricane } \\beta_2: (e - \\mu)^2$",

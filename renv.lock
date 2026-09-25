@@ -2173,11 +2173,11 @@
     },
     "fixest": {
       "Package": "fixest",
-      "Version": "0.13.2",
+      "Version": "0.12.1",
       "Source": "Repository",
       "Type": "Package",
       "Title": "Fast Fixed-Effects Estimations",
-      "Authors@R": "c(person(given = \"Laurent\", family = \"Berge\", role = c(\"aut\", \"cre\"), email = \"laurent.berge@u-bordeaux.fr\"), person(given = \"Sebastian\", family = \"Krantz\", role = \"ctb\"), person(given = \"Grant\", family = \"McDermott\", role = \"ctb\", email = \"grantmcd@uoregon.edu\", comment = c(ORCID = \"0000-0001-7883-8573\")), person(given = \"Russell\", family = \"Lenth\", role = \"ctb\", email = \"russell-lenth@uiowa.edu\"), person(given = \"Kyle\", family = \"Butts\", role = \"ctb\", email = \"buttskyle96@gmail.com\"))",
+      "Authors@R": "c(person(given = \"Laurent\", family = \"Berge\", role = c(\"aut\", \"cre\"), email = \"laurent.berge@u-bordeaux.fr\"), person(given = \"Sebastian\", family = \"Krantz\", role = \"ctb\"), person(given = \"Grant\", family = \"McDermott\", role = \"ctb\", email = \"grantmcd@uoregon.edu\", comment = c(ORCID = \"0000-0001-7883-8573\")), person(given = \"Russell\", family = \"Lenth\", role = \"ctb\", email = \"russell-lenth@uiowa.edu\"))",
       "Imports": [
         "stats",
         "graphics",
@@ -2190,7 +2190,7 @@
         "sandwich",
         "Rcpp(>= 1.0.5)",
         "dreamerr(>= 1.4.0)",
-        "stringmagic(>= 1.2.0)"
+        "stringmagic(>= 1.1.2)"
       ],
       "Suggests": [
         "knitr",
@@ -2205,8 +2205,7 @@
         "pdftools",
         "emmeans",
         "estimability",
-        "AER",
-        "Matrix"
+        "AER"
       ],
       "LinkingTo": [
         "Rcpp"
@@ -2220,10 +2219,10 @@
       "URL": "https://lrberge.github.io/fixest/, https://github.com/lrberge/fixest",
       "VignetteBuilder": "knitr",
       "LazyData": "true",
-      "RoxygenNote": "7.3.2.9000",
+      "RoxygenNote": "7.3.1",
       "Encoding": "UTF-8",
       "NeedsCompilation": "yes",
-      "Author": "Laurent Berge [aut, cre], Sebastian Krantz [ctb], Grant McDermott [ctb] (ORCID: <https://orcid.org/0000-0001-7883-8573>), Russell Lenth [ctb], Kyle Butts [ctb]",
+      "Author": "Laurent Berge [aut, cre], Sebastian Krantz [ctb], Grant McDermott [ctb] (<https://orcid.org/0000-0001-7883-8573>), Russell Lenth [ctb]",
       "Maintainer": "Laurent Berge <laurent.berge@u-bordeaux.fr>",
       "Repository": "CRAN"
     },
