@@ -12,6 +12,7 @@
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, fixest, here, modelsummary, parallel)
 options(modelsummary_format_numeric_latex = "plain")
+options(modelsummary_factory_latex = "kableExtra")   # modelsummary >= 2.0 defaults to tinytable; add_adjust_box expects kableExtra output
 source(here("code/functions_table.r"))
 setFixest_nthreads(1)               # parallelism is across bootstrap tasks instead
 
