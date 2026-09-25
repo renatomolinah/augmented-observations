@@ -1,7 +1,16 @@
 {
   "bioconductor.version": null,
   "external.libraries": [],
-  "ignored.packages": [],
+  "ignored.packages": [
+    "arrow",
+    "SafeGraphR",
+    "starpolishr",
+    "startR",
+    "stormwindmodel",
+    "hurricaneexposuredata",
+    "urbnmapr",
+    "weathermetrics"
+  ],
   "package.dependency.fields": [
     "Imports",
     "Depends",

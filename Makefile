@@ -2,7 +2,8 @@
 # ==============================================
 
 SHELL := /bin/bash
-R     := Rscript --vanilla
+# --vanilla minus --no-init-file: the project .Rprofile must load so renv activates the locked library.
+R     := Rscript --no-save --no-restore --no-environ --no-site-file
 
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
