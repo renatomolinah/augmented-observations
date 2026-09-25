@@ -20,8 +20,9 @@ fema_df = fread("data/raw/fema/PublicAssistanceFundedProjectsDetails_2024.csv") 
   clean_names()
 fema_df = remove_empty(fema_df, which = c("cols"))
 
-# Create indicator for ex ante spending
-fema_df = fema_df[, ex_ante_spending := damage_category_code == "B - Protective Measures"]
+# Create indicator for ex ante spending (Category B, Emergency Protective Measures).
+# Match on the leading letter: 2023+ declarations code categories as bare "B", older ones as "B - Protective Measures".
+fema_df = fema_df[, ex_ante_spending := substr(damage_category_code, 1, 1) == "B"]
 
 # Remove currency symbols from dollar variables
 fema_df = fema_df[, 
