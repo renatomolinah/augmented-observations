@@ -134,6 +134,7 @@ writeLines(c(
   sprintf("2005-2024: %d storms, %d county-storms, $%.2fB, $%.0fM/yr",
           allyr$storms, allyr$cs, allyr$B, rate(allyr, 2005)),
   sprintf("  decomposition: %.1f HF exposures/yr x $%.1fM per exposure = $%.0fM/yr",
-          allyr$cs / (2024 - 2005 + 1), allyr$B * 1000 / allyr$cs, rate(allyr, 2005))
+          allyr$cs / (2024 - 2005 + 1), allyr$B * 1000 / allyr$cs, rate(allyr, 2005)),
+  sprintf("annual value 2005-2024 ($M/yr) = %.2f", rate(allyr, 2005))
 ), here("output/extended_valuation_numbers.txt"))
 cat("Wrote Stage 3 tables + output/{stage3_numbers,extended_valuation_numbers}.txt\n")

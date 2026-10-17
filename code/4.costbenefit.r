@@ -22,8 +22,19 @@ aoa <- list(
   lcc = c("Two C-130J (least cost)" = 680.0, "WP-3D life extension" = 723.6, "Two A400M" = 1414.15))
 # 2022 NOAA Aircraft Recapitalization Plan + GAO-25-107210 (Jan 2025).
 recap <- list(total_acq_B = 1.40, remaining_B = 0.678)
+# 2026 Recapitalization Act: $2.5B acquisition + $45M/yr O&M over a 30-year life.
+# 7% is the A-94 base case (1992 text, reinstated by M-25-23); 2% is the 30-year
+# real Treasury rate in Appendix C (M-26-09), reported as a sensitivity.
+bill <- list(acq_M = 2500, om_M = 45, life = 30, r_base = 0.07, r_treasury = 0.02)
 
 our_value_M <- our_value_B * 1000
+annual_value_M <- read_num("output/extended_valuation_numbers.txt", "annual value 2005-2024")
+crf <- function(r, n) r / (1 - (1 + r)^-n)
+annual_cost <- function(r) bill$acq_M * crf(r, bill$life) + bill$om_M
+bcr <- function(r, benefit = annual_value_M) benefit / annual_cost(r)
+aoa_annual_M <- aoa$npv_total * crf(bill$r_base, aoa$years_horizon)
+r_breakeven <- uniroot(function(r) bcr(r) - 1, c(1e-4, 0.5))$root
+r_breakeven_aoa <- uniroot(function(r) bcr(r, annual_value_M + aoa_annual_M) - 1, c(1e-4, 0.5))$root
 writeLines(c(
   "-- ANSER (2016) External Benefits AoA, NPV BY$2024 @ 7%, 2030-2055 --",
   sprintf("  Evacuation avoided NPV ($M)             = %.2f", aoa$npv_evacuation),
@@ -42,7 +53,20 @@ writeLines(c(
   "",
   "-- NOAA Aircraft Recapitalization (NOAA 2022 / GAO 2025) --",
   sprintf("  Total acquisition, 4x C-130J ($B)       = %.2f", recap$total_acq_B),
-  sprintf("  Remaining to fund (Jan 2025, $B)        = %.2f", recap$remaining_B)
+  sprintf("  Remaining to fund (Jan 2025, $B)        = %.2f", recap$remaining_B),
+  "",
+  "-- 2026 Recapitalization Act: annualized over 30 years --",
+  sprintf("  Annual avoided costs, 2005-2024 ($M/yr) = %.2f", annual_value_M),
+  sprintf("  Capital charge @ 7%% ($M/yr)             = %.2f", annual_cost(bill$r_base) - bill$om_M),
+  sprintf("  Annual cost incl. O&M @ 7%% ($M/yr)      = %.2f", annual_cost(bill$r_base)),
+  sprintf("  BCR @ 7%% (A-94 base case)               = %.2f", bcr(bill$r_base)),
+  sprintf("  Capital charge @ 2%% ($M/yr)             = %.2f", annual_cost(bill$r_treasury) - bill$om_M),
+  sprintf("  Annual cost incl. O&M @ 2%% ($M/yr)      = %.2f", annual_cost(bill$r_treasury)),
+  sprintf("  BCR @ 2%% (30-yr real Treasury)          = %.2f", bcr(bill$r_treasury)),
+  sprintf("  Break-even real rate (%%)                = %.2f", 100 * r_breakeven),
+  sprintf("  ANSER benefits annualized @ 7%% ($M/yr)  = %.2f", aoa_annual_M),
+  sprintf("  BCR @ 7%% incl. ANSER channels           = %.2f", bcr(bill$r_base, annual_value_M + aoa_annual_M)),
+  sprintf("  Break-even real rate incl. ANSER (%%)    = %.2f", 100 * r_breakeven_aoa)
 ), here("output/stage4_costbenefit_numbers.txt"))
 
 alts <- data.frame(name = names(aoa$lcc), lcc = unname(aoa$lcc))
