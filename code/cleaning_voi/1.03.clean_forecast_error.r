@@ -23,6 +23,8 @@ wind_file_names <- list.files(
   full.names = TRUE,
   pattern = "*csv"
 )
+# Puerto Rico storms live in pr/ so the continental build never reads them
+if (include_pr) wind_file_names <- c(wind_file_names, pr_files("data/raw/wind_error"))
 
 wind_list <- lapply(wind_file_names, function(file) {
   hurricane_name <- gsub("_wind_errors\\.csv$", "", basename(file))
@@ -39,6 +41,7 @@ rain_file_names <- list.files(
   full.names = TRUE,
   pattern = "*csv"
 )
+if (include_pr) rain_file_names <- c(rain_file_names, pr_files("data/raw/precip_error"))
 
 rain_list <- lapply(rain_file_names, function(file) {
   hurricane_name <- gsub("_precip_errors?\\.csv$", "", basename(file))
@@ -106,7 +109,7 @@ weather = weather |>
   ungroup()
 
 # Save weather data
-fwrite(weather, "data/clean/forecast_data.csv")
+fwrite(weather, file.path(clean_dir, "forecast_data.csv"))
 
 # ==============================================================================
 # 5. Build county shapefile for maps
@@ -160,4 +163,4 @@ data_counties_final = data_counties |>
 weather_error_sf = left_join(weather, data_counties_final |> select(gridid, geom, state), by = "gridid")
 
 # Save county shape files
-saveRDS(weather_error_sf, "data/clean/weather_error_sf.rds")
+saveRDS(weather_error_sf, file.path(clean_dir, "weather_error_sf.rds"))

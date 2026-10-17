@@ -46,6 +46,7 @@ if [ -f "$manifest" ]; then
   while IFS=, read -r stormname _rest; do
     [ "$stormname" = "stormname" ] && continue
     [ "$stormname" = "maria" ] && continue
+    [ "$stormname" = "fiona" ] && continue
     f="data/raw/wind_error/${stormname}_errors.csv"
     if [ ! -e "$f" ]; then
       printf '[missing] VOI wind error file for %s (%s)\n' "$stormname" "$f" >&2

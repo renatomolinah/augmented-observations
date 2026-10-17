@@ -16,6 +16,8 @@ cat("===========================================================================
 
 # Each file is damages_YEAR_NAME.csv with hurricane-specific damage records
 damage_files = Sys.glob("data/raw/sheldus/damages_*.csv")
+# Puerto Rico named-storm pulls (damages_YEAR_NAME_pr.csv) carry extra hazard/injury columns
+if (include_pr) damage_files = c(damage_files, Sys.glob("data/raw/sheldus/named_pr/damages_*.csv"))
 stopifnot(length(damage_files) > 0)
 
 damage_list = lapply(damage_files, function(f) {
@@ -87,7 +89,7 @@ counties_sf = counties_sf |>
 # 3. Combine data
 # ==============================================================================
 
-# Attach standardized county/state names by FIPS; drop Puerto Rico (FIPS 72)
+# Attach standardized county/state names by FIPS; drop Puerto Rico (FIPS 72) except for the Puerto Rico landfalls
 data_sheldus = left_join(
                      data_sheldus |> select(-state, -county),
                      counties_sf,
@@ -96,7 +98,7 @@ data_sheldus = left_join(
   select(-fips_class, -geometry) |>
   rename(state = std_state,
          county = std_county) |>
-  filter(str_sub(county_fips, 1, 2) != "72")
+  filter(str_sub(county_fips, 1, 2) != "72" | hurricane %in% pr_storms)
 
 cat("Total property damage (2019 $B):", sum(data_sheldus$property_damage_2019) / 1e9, "\n")
 cat("Total deaths:", sum(data_sheldus$deaths), "\n")
@@ -105,4 +107,4 @@ cat("Total deaths:", sum(data_sheldus$deaths), "\n")
 # 4. Save SHELDUS data
 # ==============================================================================
 
-fwrite(data_sheldus, "data/clean/data_sheldus.csv")
+fwrite(data_sheldus, file.path(clean_dir, "data_sheldus.csv"))

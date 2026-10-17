@@ -118,6 +118,9 @@ katrina_num = c(3262, 3263, 3258, 3255, 3256, 3257, 3251, 3244, 3252, 3245, 3253
 dennis_num = c(1593, 1594, 1595)
 rita_num = c(1606, 1607, 3260, 3261, 3259)
 cindy_num = c(1601)
+# Puerto Rico landfalls, only in the AO_INCLUDE_PR build
+maria_num = if (include_pr) c(4339) else c()
+fiona_num = if (include_pr) c(4671) else c()
 
 # Collect every *_num vector defined above into one set of disaster numbers
 all_objects <- ls()
@@ -164,6 +167,8 @@ fema_df = fema_df[,
                     disaster_number %in% isaias_num ~ "isaias",
                     disaster_number %in% katrina_num ~ "katrina",
                     disaster_number %in% laura_num ~ "laura",
+                    disaster_number %in% maria_num ~ "maria",
+                    disaster_number %in% fiona_num ~ "fiona",
                     disaster_number %in% matthew_num ~ "matthew",
                     disaster_number %in% michael_num ~ "michael",
                     disaster_number %in% nate_num ~ "nate",
@@ -258,4 +263,4 @@ print(
   n = Inf
 )
 
-fwrite(fema_df_county, "data/clean/fema_spending.csv")
+fwrite(fema_df_county, file.path(clean_dir, "fema_spending.csv"))

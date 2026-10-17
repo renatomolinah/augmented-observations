@@ -28,12 +28,19 @@ counties_sf <- get_urbn_map("counties", sf = FALSE) |>
 
 county_lat_lon = housingData::geoCounty |> 
   select(county = fips, lon, lat)
+# geoCounty has no Puerto Rico; use the wind-model municipio centroids
+if (include_pr) {
+  county_lat_lon = bind_rows(
+    county_lat_lon,
+    fread("data/code/run_stormwindmodel/us_county_stats_puertorico.csv") |>
+      transmute(county = str_pad(gridid, 5, "left", "0"), lon = glon, lat = glat))
+}
   
 # ==============================================================================
 # 2. Load county demographics
 # ==============================================================================
 
-county_demos = fread("data/clean/county_demographics.csv") |>
+county_demos = fread(file.path(clean_dir, "county_demographics.csv")) |>
   as_tibble() |>
   mutate(county = str_pad(county, 5, 'left', '0'))
 
@@ -41,15 +48,15 @@ county_demos = fread("data/clean/county_demographics.csv") |>
 # 3. Load cleaned data
 # ==============================================================================
 
-weather = fread("data/clean/forecast_data.csv") |>
+weather = fread(file.path(clean_dir, "forecast_data.csv")) |>
   mutate(date = as.Date(date)) |>
   mutate(county_fips = str_pad(county, 5, 'left', '0'))
 
-fema_spending = fread("data/clean/fema_spending.csv") |>
+fema_spending = fread(file.path(clean_dir, "fema_spending.csv")) |>
   mutate(county_fips = str_pad(fips, 5, 'left', '0')) |>
   select(-fips)
 
-data_sheldus = fread("data/clean/data_sheldus.csv") |>
+data_sheldus = fread(file.path(clean_dir, "data_sheldus.csv")) |>
   mutate(county_fips = str_pad(county_fips, 5, 'left', '0')) |> 
   group_by(hurricane, county_fips, state_fips) |>
   summarise(
@@ -60,7 +67,7 @@ data_sheldus = fread("data/clean/data_sheldus.csv") |>
   ) |> 
   ungroup()
 
-income_gdp = fread("data/clean/income_gdp.csv") |>
+income_gdp = fread(file.path(clean_dir, "income_gdp.csv")) |>
   mutate(
     county_fips = str_pad(as.character(county_fips), 5, 'left', '0'),
     year = as.numeric(year),
@@ -69,10 +76,10 @@ income_gdp = fread("data/clean/income_gdp.csv") |>
   )
 
 
-coastline_counties = fread("data/clean/coastline_counties.csv") |>
+coastline_counties = fread(file.path(clean_dir, "coastline_counties.csv")) |>
   as_tibble()
 
-county_direction = fread("data/clean/county_direction.csv") |>
+county_direction = fread(file.path(clean_dir, "county_direction.csv")) |>
   as_tibble() |>
   mutate(county_id = str_pad(county_id, 5, 'left', '0'))
 
@@ -88,7 +95,9 @@ data_weather = weather |>
     state_name = str_to_lower(state_name),
     county_name = str_to_lower(county_name),
     year = year(date),
-    month = month(date)
+    month = month(date),
+    # urbnmapr has no Puerto Rico, so its municipios get their state code here
+    state_fips = ifelse(is.na(state_fips) & substr(county_fips, 1, 2) == "72", "72", state_fips)
   ) |>
   as_tibble() |>
   select(
@@ -96,8 +105,10 @@ data_weather = weather |>
     starts_with(c("vmax", "prec")), sust_dur_obs, sust_dur_pred_mean, sust_dur_dif_mean, sust_dur_pred_sd, -prec_dif_sd, -vmax_gust_dif_sd, -vmax_sust_dif_sd
     )
 
+# zero-impact rows for never-forecast counties cover continental storms only
 data_date_hurr = weather |>
-  distinct(date, lead_hours, hurricane)
+  distinct(date, lead_hours, hurricane) |>
+  filter(hurricane %notin% pr_storms)
 
 # Add counties without forecast records and assign zero forecast impacts
 data_unaffected_counties = anti_join(
@@ -135,6 +146,12 @@ data_weather_final = rbind(data_weather, data_unaffected_counties) |>
 # Without this, such rows survive the full_join with NA weather columns,
 # get zeroed by replace_na, and produce county-storm rows with damages
 # but zero wind/precip — silently distorting beta.
+# A Puerto Rico storm whose forecast files are not in yet is skipped, not an error
+pr_pending = setdiff(intersect(unique(data_sheldus$hurricane), pr_storms), unique(data_weather_final$hurricane))
+if (length(pr_pending) > 0) {
+  cat("[1.07] Puerto Rico storms without forecast files, skipped:", paste(pr_pending, collapse = ", "), "\n")
+  data_sheldus = data_sheldus |> filter(hurricane %notin% pr_pending)
+}
 sheldus_orphans = setdiff(unique(data_sheldus$hurricane), unique(data_weather_final$hurricane))
 if (length(sheldus_orphans) > 0) {
   stop("SHELDUS storms with no forecast match: ", paste(sheldus_orphans, collapse = ", "))
@@ -186,12 +203,15 @@ data_weather_dmg_en = full_join(
     dmg_prop_death_pc = property_damage_pc_2019 + value_deaths_pc + crop_damage_pc_2019
   ) |>
   filter(!is.na(hurricane)) |>
+  # Puerto Rico rain was island-wide, so a missing (-999) gauge there is missing, not zero
+  mutate(precip_missing = hurricane %in% pr_storms & (is.na(prec_obs) | prec_obs == -999)) |>
   # In this source, -999 indicates missing values and is treated as zero
   mutate(
     precip_obs = ifelse(precip_obs == -999, 0, precip_obs),
     precip_fc = ifelse(precip_fc == -999, 0, precip_fc),
     precip_error = ifelse(precip_error == -999, 0, precip_error),
-    prec_pred_sd = ifelse(prec_pred_sd == -999, 0, prec_pred_sd)
+    prec_pred_sd = ifelse(prec_pred_sd == -999, 0, prec_pred_sd),
+    precip_obs = ifelse(precip_missing, NA, precip_obs)
   ) |>
   select(-geometry) |>
   select(
@@ -206,7 +226,7 @@ data_weather_dmg_en = full_join(
     crop_damage = crop_damage_2019, mortality_damage = value_deaths
   )
 
-saveRDS(data_weather_dmg_en, "data/clean/ncei_compare.rds")
+saveRDS(data_weather_dmg_en, file.path(clean_dir, "ncei_compare.rds"))
 
 # Merge in FEMA data
 final_dataset = left_join(
@@ -229,9 +249,15 @@ final_dataset = final_dataset |>
   inner_join(county_demos, by = "county")
 
 # Merge in county GDP/income
-final_dataset = final_dataset |>
-  # Rows dropped here are primarily Virginia independent cities and some Alaska counties without GDP
-  inner_join(income_gdp, by = c("county" = "county_fips", "year" = "year"))
+final_dataset = bind_rows(
+  final_dataset |>
+    filter(hurricane %notin% pr_storms) |>
+    # Rows dropped here are primarily Virginia independent cities and some Alaska counties without GDP
+    inner_join(income_gdp, by = c("county" = "county_fips", "year" = "year")),
+  # BEA has no Puerto Rico GDP; keep the municipios with GDP missing
+  final_dataset |>
+    filter(hurricane %in% pr_storms) |>
+    left_join(income_gdp, by = c("county" = "county_fips", "year" = "year")))
 
 # Merge in coastal-county indicators
 final_dataset = final_dataset |>
@@ -388,13 +414,13 @@ final_dataset = final_dataset |>
   mutate(hurricane_id = cur_group_id()) |>
   ungroup()
 
-saveRDS(final_dataset, "data/clean/final_dataset.rds")
+saveRDS(final_dataset, file.path(clean_dir, "final_dataset.rds"))
 
 # ==============================================================================
 # 6. Create track-error dataset
 # ==============================================================================
 
-df_track_errors <- readRDS("data/clean/track_errors_all_cutoffs.rds") |>
+df_track_errors <- readRDS(file.path(clean_dir, "track_errors_all_cutoffs.rds")) |>
   inner_join(final_dataset, by = c("county", "hurricane")) |>
   mutate(
     squared_error_track = level_error_track^2
@@ -404,7 +430,7 @@ df_track_errors <- readRDS("data/clean/track_errors_all_cutoffs.rds") |>
   mutate(hurricane_id = cur_group_id()) |>
   ungroup()
 
-saveRDS(df_track_errors, "data/clean/pooled_track_errors_all_cutoffs.rds")
+saveRDS(df_track_errors, file.path(clean_dir, "pooled_track_errors_all_cutoffs.rds"))
 
 # ==============================================================================
 # 7. Create normalized datasets
@@ -432,7 +458,7 @@ df_normalized <- final_dataset |>
   )
 
 # Save the normalized dataset for future use
-saveRDS(df_normalized, "data/clean/normalized_dataset.rds")
+saveRDS(df_normalized, file.path(clean_dir, "normalized_dataset.rds"))
 
 df_norm_global <- final_dataset |>
   mutate(
@@ -444,7 +470,7 @@ df_norm_global <- final_dataset |>
     squared_error_norm = level_error_norm^2
   )
 
-saveRDS(df_norm_global, "data/clean/normalized_dataset_global.rds")
+saveRDS(df_norm_global, file.path(clean_dir, "normalized_dataset_global.rds"))
 
 # ==============================================================================
 # 8. Cleanup intermediate files not used by 2.* scripts

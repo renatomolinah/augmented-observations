@@ -63,7 +63,7 @@ income_gdp = inner_join(income, gdp, by = c("county_fips", "year")) |>
     mutate(county_fips = ifelse(!is.na(fips_census), fips_census, county_fips)) |>
     select(-fips_census)
 
-fwrite(income_gdp, "data/clean/income_gdp.csv")
+fwrite(income_gdp, file.path(clean_dir, "income_gdp.csv"))
 
 # ==============================================================================
 # 2. Clean coastline counties list
@@ -80,7 +80,7 @@ coastline_counties <- readxl::read_xlsx("data/raw/census/coastline-counties-list
   ) |>
   mutate(coastal = TRUE)
 
-fwrite(coastline_counties, "data/clean/coastline_counties.csv")
+fwrite(coastline_counties, file.path(clean_dir, "coastline_counties.csv"))
 
 # ==============================================================================
 # 3. Clean ACS population
@@ -145,5 +145,7 @@ if (!file.exists("data/raw/census/county_demographics.csv")) {
     "Missing data/raw/census/county_demographics.csv. Provide this file or rerun with CENSUS_API_KEY set and HF_CENSUS_OVERRIDE=process."
   )
 }
-fread("data/raw/census/county_demographics.csv") |>
-    fwrite("data/clean/county_demographics.csv")
+# Puerto Rico municipios come from the same 2005-2009 ACS table, pulled separately
+county_demos_out = fread("data/raw/census/county_demographics.csv")
+if (include_pr) county_demos_out = rbind(county_demos_out, fread("data/raw/census/pr_demographics.csv"))
+fwrite(county_demos_out, file.path(clean_dir, "county_demographics.csv"))

@@ -66,7 +66,7 @@ track = do.call(rbind, track_list) %>%
 # 3. Save actual track
 # ==============================================================================
 
-saveRDS(track, "data/clean/track_actual.rds")
+saveRDS(track, file.path(clean_dir, "track_actual.rds"))
 
 # ==============================================================================
 # 3b. Observed track positions at the forecast verification times
@@ -98,7 +98,7 @@ track_points <- track_points |>
   arrange(hurricane, valid, init) |>
   distinct(hurricane, valid, .keep_all = TRUE)
 
-saveRDS(track_points, "data/clean/track_observed_points.rds")
+saveRDS(track_points, file.path(clean_dir, "track_observed_points.rds"))
 
 # ==============================================================================
 # 4. Read forecast track files
@@ -144,14 +144,14 @@ track_forecast = do.call(rbind, track_list) %>%
 # 6. Save forecast track
 # ==============================================================================
 
-saveRDS(track_forecast, "data/clean/track_forecast.rds")
+saveRDS(track_forecast, file.path(clean_dir, "track_forecast.rds"))
 
 # ==============================================================================
 # 7. Compute track errors
 # ==============================================================================
 
 county_centroids <- load_county_centroids()
-hurricanes <- readRDS("data/clean/track_forecast.rds") |>
+hurricanes <- readRDS(file.path(clean_dir, "track_forecast.rds")) |>
   as_tibble() %>%
   mutate(year = year(date)) |>
   select(hurricane, year) %>%
@@ -243,16 +243,16 @@ combined_results <- bind_rows(all_cutoff_results, .id = "cutoff") %>%
   mutate(cutoff = as.numeric(cutoff))
 
 # Save as single file
-saveRDS(combined_results, "data/clean/track_errors_all_cutoffs.rds")
+saveRDS(combined_results, file.path(clean_dir, "track_errors_all_cutoffs.rds"))
 
 # ==============================================================================
 # 8. County direction (left/right) relative to track
 # ==============================================================================
 
-track_actual <- readRDS("data/clean/track_actual.rds") |>
+track_actual <- readRDS(file.path(clean_dir, "track_actual.rds")) |>
   filter(forecast_time == 1 & type == "BEST")
 
-track_forecast <- readRDS("data/clean/track_forecast.rds") |>
+track_forecast <- readRDS(file.path(clean_dir, "track_forecast.rds")) |>
   filter(forecast_time == 1 & type == "OFCL")
 
 county_sf <- get_urbn_map("counties", sf = TRUE) |>
@@ -322,4 +322,4 @@ county_hurricane_df <- bind_rows(county_hurricane_actual, county_hurricane_forec
   rename(left_of_track = left_of_track_actual)
 
 # Save results
-fwrite(county_hurricane_df, "data/clean/county_direction.csv")
+fwrite(county_hurricane_df, file.path(clean_dir, "county_direction.csv"))
