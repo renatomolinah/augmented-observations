@@ -5,9 +5,11 @@
 # Also runs the back-of-the-envelope extension beyond the denial archive.
 # Inputs:  output/stage1_numbers.txt, output/stage2_numbers.txt,
 #          data/clean_denial/forecast_denial_data_with_lead_times.csv,
-#          data/clean/final_dataset.rds, data/raw/wind_error/*.csv
+#          data/clean/final_dataset.rds, data/raw/wind_error/*.csv,
+#          data/raw/sheldus/named_pr/damages_2017_maria_pr.csv,
+#          data/raw/fema/PublicAssistanceFundedProjectsDetails_2024.csv
 # Outputs: output/{implied_value,per_storm}.tex; output/stage3_numbers.txt;
-#          output/extended_valuation_numbers.txt
+#          output/{extended_valuation,denial_cost}_numbers.txt
 # Run:     Rscript --vanilla code/3.valuation.r
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
@@ -109,6 +111,41 @@ kbl(per_storm_disp, format = "latex", booktabs = TRUE, escape = FALSE, linesep =
            general_title = "", threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE) |>
   as.character() |> writeLines(here("output/per_storm.tex"))
 add_adjust_box(here("output/per_storm.tex"))
+
+# realized cost of the denial-sample storms, the denominator for the avoided-cost
+# share. Continental storms come from the cost panel; Maria (Puerto Rico, outside
+# the panel) is built to the same definition: SHELDUS named-storm damages plus
+# fatalities at the VSL, and FEMA PA for DR-4339 net of Category B, in 2019$
+# all ten denial storms, and the seven with hurricane-force 3-day exposures that carry value
+denial_storms <- unique(fread(denial_path)$name)
+panel_cost <- readRDS(here("data/clean/final_dataset.rds")) |>
+  as_tibble() |>
+  filter(hurricane %in% denial_storms) |>
+  group_by(hurricane) |>
+  summarise(cost_B = sum(total_cost, na.rm = TRUE) / 1e3, .groups = "drop") |>
+  mutate(valued = hurricane %in% unique(reg_data$name))
+maria_sheldus <- fread(here("data/raw/sheldus/named_pr/damages_2017_maria_pr.csv"))
+maria_dmg_B <- maria_sheldus[, sum(`PropertyDmg(ADJ 2019)` + `CropDmg(ADJ 2019)` + 9.39e6 * Fatalities)] / 1e9
+pa <- fread(here("data/raw/fema/PublicAssistanceFundedProjectsDetails_2024.csv"),
+            select = c("disasterNumber", "stateCode", "damageCategoryCode", "projectAmount"))
+pa[, projectAmount := as.numeric(gsub("[$,]", "", projectAmount))]
+# CPI-U 2017 -> 2019, the landfall-year deflation used for the panel in 1.01.clean_fema_foia.r
+maria_pa_B <- pa[disasterNumber == 4339 & stateCode == "PR" & substr(damageCategoryCode, 1, 1) != "B",
+                 sum(projectAmount, na.rm = TRUE)] * (255.657 / 245.120) / 1e9
+maria_cost_B <- maria_dmg_B + maria_pa_B
+denial_cost_B <- sum(panel_cost$cost_B) + maria_cost_B
+valued_cost_B <- sum(panel_cost$cost_B[panel_cost$valued]) + maria_cost_B
+writeLines(c(
+  sprintf("continental denial storms, panel cost ($B)   = %.2f", sum(panel_cost$cost_B)),
+  sprintf("  of which storms carrying value ($B)        = %.2f", sum(panel_cost$cost_B[panel_cost$valued])),
+  sprintf("Maria SHELDUS damages + VSL deaths ($B)      = %.2f", maria_dmg_B),
+  sprintf("Maria FEMA PA ex Cat B, DR-4339 ($B)         = %.2f", maria_pa_B),
+  sprintf("Maria total cost ($B)                        = %.2f", maria_cost_B),
+  sprintf("all denial storms, total cost ($B)           = %.2f", denial_cost_B),
+  sprintf("avoided-cost share, all denial storms (%%)    = %.2f", 100 * total_value_B / denial_cost_B),
+  sprintf("storms carrying value, total cost ($B)       = %.2f", valued_cost_B),
+  sprintf("avoided-cost share, storms carrying value (%%) = %.2f", 100 * total_value_B / valued_cost_B)
+), here("output/denial_cost_numbers.txt"))
 
 # back-of-the-envelope extension beyond the denial archive: every continental
 # hurricane-force, 3-day-lead county-storm priced at its own baseline sigma_3
