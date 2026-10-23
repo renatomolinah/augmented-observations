@@ -16,7 +16,7 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) {
-  stop("Usage: Rscript build_wind_errors.r STORM_NAME MC_TARBALL [OBS_DIR] [OUTPUT_DIR] [OBS_PREFIX]")
+  stop("Usage: Rscript build_wind_errors.r STORM_NAME MC_TARBALL [OBS_DIR] [OUTPUT_DIR] [OBS_PREFIX] [GRID_FILE]")
 }
 
 storm_name <- args[[1]]
@@ -24,6 +24,16 @@ mc_tarball <- normalizePath(args[[2]], mustWork = TRUE)
 obs_dir <- if (length(args) >= 3) args[[3]] else "data/raw/wind_error/all_forecasts"
 output_dir <- if (length(args) >= 4) args[[4]] else "data/raw/wind_error"
 obs_prefix <- if (length(args) >= 5) args[[5]] else storm_name
+# Newer county-grid files (Fiona onward) carry gridid only; glat/glon come from the grid file
+grid_file <- if (length(args) >= 6) args[[6]] else NA_character_
+
+add_coords <- function(data) {
+  if ("date_time_max_wind" %in% names(data)) data[, date_time_max_wind := NULL]
+  if (all(c("glat", "glon") %in% names(data))) return(data)
+  if (is.na(grid_file)) stop("County-grid files have no glat/glon; pass GRID_FILE.")
+  grid <- fread(grid_file, select = c("gridid", "glat", "glon"))
+  merge(data[, gridid := as.integer(gridid)], grid[, gridid := as.integer(gridid)], by = "gridid")
+}
 
 obs_files <- list.files(
   path = obs_dir,
@@ -43,7 +53,8 @@ obs <- obs_files |>
     data$pred_date <- as.Date(substr(file_datetime, 1, 8), format = "%Y%m%d")
     data
   }) |>
-  as.data.table()
+  as.data.table() |>
+  add_coords()
 setkey(obs, pred_date)
 
 temp_dir <- tempfile("ao_mc_wind_")
@@ -70,7 +81,8 @@ preds <- pred_files |>
     data$pred_date <- as.Date(substr(file_datetime, 1, 8), format = "%Y%m%d")
     data
   }) |>
-  as.data.table()
+  as.data.table() |>
+  add_coords()
 setkey(preds, pred_date)
 
 data <- merge(
