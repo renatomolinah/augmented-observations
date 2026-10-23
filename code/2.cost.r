@@ -40,7 +40,9 @@ read_lead3 <- function() {
   pfiles <- pfiles[!grepl("all_forecasts", pfiles)]
   precip3 <- rbindlist(lapply(pfiles, function(f) {
     h <- gsub("_precip_errors?\\.csv$", "", basename(f))
-    fread(f)[lead_days == 3, .(precip_error_3 = -mean(prec_dif_mean, na.rm = TRUE)),
+    # -999 marks out-of-swath cells; treated as zero, as in 1.07.merge_data.r
+    fread(f)[prec_dif_mean == -999, prec_dif_mean := 0][
+      lead_days == 3, .(precip_error_3 = -mean(prec_dif_mean, na.rm = TRUE)),
              by = .(county = as.numeric(gridid))][, hurricane := h][]
   }))
   list(wind = wind3, precip = precip3)
