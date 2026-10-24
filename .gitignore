@@ -69,3 +69,6 @@ augmented_observations/*.pdf
 # Julia/Quarto files
 
 .jupyter_cache/
+
+# Standalone theory note (drafting, not part of the replication package)
+theory_note/
