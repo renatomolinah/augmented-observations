@@ -57,9 +57,6 @@ read_lead3 <- function() {
     fread(f)[lead_days == 3, .(wind_error_3 = -mean(vmax_sust_dif_mean, na.rm = TRUE)),
              by = .(hurricane = name, county = as.numeric(gridid))]
   }))
-  # TODO (redo with the official Fiona run): raw precip files code missing as -999, which the
-  # cleaning zeroes (1.07.merge_data.r) but this re-read does not, so ~11.7k out-of-swath
-  # county-storms enter with precip_error_3 = +999. Zeroing them moves beta_hurr 3.80 -> 3.82.
   pfiles <- list.files(here("data/raw/precip_error"), pattern = "csv$", full.names = TRUE)
   pfiles <- pfiles[!grepl("all_forecasts", pfiles)]
   if (include_pr) pfiles <- c(pfiles, pr_files("data/raw/precip_error"))
