@@ -4,12 +4,15 @@
 SHELL := /bin/bash
 # --vanilla minus --no-init-file: the project .Rprofile must load so renv activates the locked library.
 R     := Rscript --no-save --no-restore --no-environ --no-site-file
+# conleyreg starts one PSOCK worker per core; with renv's sandbox on, the workers contend
+# for the sandbox lock and time out, so it is off for every target.
+export RENV_CONFIG_SANDBOX_ENABLED := FALSE
 
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
 NC := \033[0m
 
-.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case clean_voi clean_denial data precision cost valuation costbenefit clean help
+.PHONY: all raw_check raw_exact_check raw_manifest_refresh external_help external_assets_stage external_toolchain_check external_setup_free external_build_phram external_install_stormwindmodel external_run_case external_run_denial_case external_pr_wind clean_voi clean_denial data precision cost valuation costbenefit clean help
 
 ## Default
 all: raw_check data precision cost valuation costbenefit
@@ -32,6 +35,7 @@ help:
 	@echo "  external_install_stormwindmodel install the staged stormwindmodel tarball into the active R library"
 	@echo "  external_run_case generate one storm's standard raw products (set STORM=..., optional SKIP_ERA5_DOWNLOAD=1 SKIP_ERA5_SPLIT=1)"
 	@echo "  external_run_denial_case generate one storm's denial raw products (set STORM=..., optional EXPERIMENT=NO|ALL)"
+	@echo "  external_pr_wind rebuild data/raw/wind_error/pr/{maria,fiona}_errors.csv from the Monte Carlo swaths"
 	@echo "  clean_voi    run code/cleaning_voi/* -> data/clean/final_dataset.rds"
 	@echo "  clean_denial run code/cleaning_denial/* -> data/clean_denial/*"
 	@echo "  data         run code/0.data.r -> output/{summary_dmg,data_denial}.tex + denial_tracks_map.png"
@@ -92,6 +96,15 @@ external_run_denial_case:
 	if [ "$(SKIP_ERA5_DOWNLOAD)" = "1" ]; then args+=(--skip-era5-download); fi; \
 	if [ "$(SKIP_ERA5_SPLIT)" = "1" ]; then args+=(--skip-era5-split); fi; \
 	bash code/external_models/run_external_case.sh "$${args[@]}"
+
+## Puerto Rico wind errors: Monte Carlo county-grid swaths + best-track swaths -> pr/<storm>_errors.csv.
+## Fiona's county-grid files carry gridid only, so glat/glon come from the Puerto Rico municipio grid.
+PR_GRID := data/code/run_stormwindmodel/us_county_stats_puertorico.csv
+external_pr_wind:
+	@$(R) code/external_models/build_wind_errors.r maria "data/raw/wind_error/Maria - wind/maria_mc_windswath.tar.gz" \
+	  "data/raw/wind_error/Maria - wind" data/raw/wind_error/pr al152017
+	@$(R) code/external_models/build_wind_errors.r fiona "data/raw/wind_error/Fiona - wind/fiona_mc_windswath.tar.gz" \
+	  "data/raw/wind_error/Fiona - wind" data/raw/wind_error/pr al072022 $(PR_GRID)
 
 ## Step 1 - VOI panel
 data/clean/final_dataset.rds: code/cleaning_voi/run_all.r \
