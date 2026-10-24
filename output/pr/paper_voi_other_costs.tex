@@ -1,0 +1,43 @@
+\begin{table}
+
+\caption{The Value of a Wind Speed Forecast Improvement: Cost per GDP and per Capita. \label{tab:voi-other-costs}}
+\centering
+\begin{adjustbox}{max width = \textwidth}
+\begin{threeparttable}
+\begin{tabular}[t]{lccccccc}
+\toprule
+  & (1) & (2) & (3) & (4) & (5) & (6) & (7)\\
+\midrule
+\addlinespace[0.5em]
+\multicolumn{8}{l}{\textit{(Damages + Recovery) / GDP (\textbackslash{}\%)}}\\
+\midrule \hspace{1em}$\beta_2: (e - \mu)^2$ & 0.12*** & 0.13*** & 0.12*** & 0.12*** & 0.13*** & 0.13*** & \\
+\hspace{1em} & (0.04) & (0.04) & (0.04) & (0.03) & (0.03) & (0.03) & \\
+\hspace{1em}$\text{Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & 0.18***\\
+\hspace{1em} &  &  &  &  &  &  & (0.04)\\
+\hspace{1em}$\text{Sub-Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & 0.01\\
+\hspace{1em} &  &  &  &  &  &  & (0.01)\\
+\addlinespace[0.5em]
+\multicolumn{8}{l}{\textit{(Damages + Recovery) Per Capita (\textbackslash{}\$/person)}}\\
+\midrule \hspace{1em}$\beta_2: (e - \mu)^2$ & 51.37*** & 52.19*** & 48.75*** & 49.58*** & 60.57*** & 64.86*** & \\
+\hspace{1em} & (16.81) & (17.02) & (16.06) & (15.35) & (19.62) & (18.25) & \\
+\hspace{1em}$\text{Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & 76.17***\\
+\hspace{1em} &  &  &  &  &  &  & (24.16)\\
+\hspace{1em}$\text{Sub-Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & 4.00\\
+\hspace{1em} &  &  &  &  &  &  & (2.84)\\
+ &  &  &  &  &  &  \vphantom{1} & \\
+Observations & 75,626 & 75,626 & 75,626 & 75,626 & 75,626 & 75,626 & 75,626\\
+ &  &  &  &  &  &  & \\
+Realized Wind/Precip Bins &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+Level Wind/Precip Error &  &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+State-Hurricane FE & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
+County FE & \checkmark & \checkmark & \checkmark &  &  &  & \checkmark\\
+County-Month of Year FE &  &  &  & \checkmark &  & \checkmark & \\
+County-Year FE &  &  &  &  & \checkmark & \checkmark & \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 The other two cost outcomes, cost per county GDP in percent and cost per capita in dollars per person, under the fixed-effect ladder of the main total-cost table on the 3-day-ahead forecast error. $e$ is the county-hurricane-specific forecast error at the 3-day-ahead lead, and $\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds exceed 33 m/s (74 mph); sub-hurricane wind speeds fall below. The panel covers the 34 landfalling hurricanes that received a 3-day forecast. Conley spatial HAC standard errors with a 400 km cutoff.
+\end{tablenotes}
+\end{threeparttable}
+\end{adjustbox}
+\end{table}
