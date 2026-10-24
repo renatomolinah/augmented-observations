@@ -46,12 +46,12 @@ sf_use_s2(FALSE)
 
 "%notin%" = Negate("%in%")
 
-# Puerto Rico build: AO_INCLUDE_PR=1 adds the Puerto Rico landfalls to the panel and
-# writes to data/clean_pr so the continental data/clean is never overwritten.
-# AO_CLEAN_DIR overrides the output directory (e.g. to check a continental rebuild).
-include_pr <- Sys.getenv("AO_INCLUDE_PR", "0") == "1"
+# The panel includes the Puerto Rico landfalls (Maria, Fiona). AO_INCLUDE_PR=0 builds
+# the continental-only panel in data/clean_continental for comparison.
+# AO_CLEAN_DIR overrides the output directory.
+include_pr <- Sys.getenv("AO_INCLUDE_PR", "1") == "1"
 pr_storms <- if (include_pr) c("maria", "fiona") else character(0)
-clean_dir <- Sys.getenv("AO_CLEAN_DIR", if (include_pr) "data/clean_pr" else "data/clean")
+clean_dir <- Sys.getenv("AO_CLEAN_DIR", if (include_pr) "data/clean" else "data/clean_continental")
 dir.create(clean_dir, showWarnings = FALSE, recursive = TRUE)
 # AO_PR_MOCK=1 also reads the NHC-file mock-ups in pr_mock/ for storms with no official file in pr/
 pr_files <- function(dir) {

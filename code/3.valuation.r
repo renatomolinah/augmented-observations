@@ -113,14 +113,15 @@ kbl(per_storm_disp, format = "latex", booktabs = TRUE, escape = FALSE, linesep =
 add_adjust_box(here("output/per_storm.tex"))
 
 # realized cost of the denial-sample storms, the denominator for the avoided-cost
-# share. Continental storms come from the cost panel; Maria (Puerto Rico, outside
-# the panel) is built to the same definition: SHELDUS named-storm damages plus
-# fatalities at the VSL, and FEMA PA for DR-4339 net of Category B, in 2019$
+# share. Continental storms come from the cost panel. Maria is built from the raw
+# sources instead, since most of its FEMA PA is statewide and the panel keeps only
+# county-level projects: SHELDUS named-storm damages plus fatalities at the VSL, and
+# FEMA PA for DR-4339 net of Category B, in 2019$
 # all ten denial storms, and the seven with hurricane-force 3-day exposures that carry value
 denial_storms <- unique(fread(denial_path)$name)
 panel_cost <- readRDS(here("data/clean/final_dataset.rds")) |>
   as_tibble() |>
-  filter(hurricane %in% denial_storms) |>
+  filter(hurricane %in% denial_storms, hurricane != "maria") |>
   group_by(hurricane) |>
   summarise(cost_B = sum(total_cost, na.rm = TRUE) / 1e3, .groups = "drop") |>
   mutate(valued = hurricane %in% unique(reg_data$name))
@@ -147,9 +148,10 @@ writeLines(c(
   sprintf("avoided-cost share, storms carrying value (%%) = %.2f", 100 * total_value_B / valued_cost_B)
 ), here("output/denial_cost_numbers.txt"))
 
-# back-of-the-envelope extension beyond the denial archive: every continental
-# hurricane-force, 3-day-lead county-storm priced at its own baseline sigma_3
-files <- list.files(here("data/raw/wind_error"), pattern = "_errors\\.csv$", full.names = TRUE)
+# back-of-the-envelope extension beyond the denial archive: every hurricane-force,
+# 3-day-lead county-storm, Puerto Rico included, priced at its own baseline sigma_3
+files <- c(list.files(here("data/raw/wind_error"), pattern = "_errors\\.csv$", full.names = TRUE),
+           list.files(here("data/raw/wind_error/pr"), pattern = "_errors\\.csv$", full.names = TRUE))
 raw <- rbindlist(lapply(files, fread), fill = TRUE)
 raw[, year := as.integer(substr(as.character(pred_date), 1, 4))]
 cs <- raw[lead_days == 3, .(wind_obs = max(vmax_sust_obs, na.rm = TRUE),
@@ -159,6 +161,7 @@ hf <- cs[is.finite(wind_obs) & wind_obs > 33 & is.finite(sigma3)]
 hf[, value_M := beta_hurr * ((sigma3 + delta)^2 - sigma3^2)]
 summ <- function(d) list(storms = uniqueN(d$name), cs = nrow(d), B = sum(d$value_M) / 1000)
 hwrf <- summ(hf[year >= 2007]); all10 <- summ(hf[year >= 2010]); allyr <- summ(hf)
+cont <- summ(hf[substr(sprintf("%05d", as.integer(county)), 1, 2) != "72"])
 den  <- summ(hf[name %in% c("irma", "michael", "florence", "laura", "sally", "isaias")])
 rate <- function(s, y0) s$B * 1000 / (2024 - y0 + 1)
 writeLines(c(
@@ -172,6 +175,7 @@ writeLines(c(
           allyr$storms, allyr$cs, allyr$B, rate(allyr, 2005)),
   sprintf("  decomposition: %.1f HF exposures/yr x $%.1fM per exposure = $%.0fM/yr",
           allyr$cs / (2024 - 2005 + 1), allyr$B * 1000 / allyr$cs, rate(allyr, 2005)),
+  sprintf("  continental only: %d county-storms, $%.2fB, $%.0fM/yr", cont$cs, cont$B, rate(cont, 2005)),
   sprintf("annual value 2005-2024 ($M/yr) = %.2f", rate(allyr, 2005))
 ), here("output/extended_valuation_numbers.txt"))
 cat("Wrote Stage 3 tables + output/{stage3_numbers,extended_valuation_numbers}.txt\n")

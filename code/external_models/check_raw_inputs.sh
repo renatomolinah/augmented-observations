@@ -55,8 +55,8 @@ if [ -f "$manifest" ]; then
   done < "$manifest"
 fi
 
-# Puerto Rico landfalls (Maria, Fiona) live in pr/ and enter only the AO_INCLUDE_PR=1 build
-if [ "${AO_INCLUDE_PR:-0}" = "1" ]; then
+# Puerto Rico landfalls (Maria, Fiona) live in pr/ and enter the panel unless AO_INCLUDE_PR=0
+if [ "${AO_INCLUDE_PR:-1}" = "1" ]; then
   for storm in maria fiona; do
     check_path "Puerto Rico wind error file for ${storm}" "data/raw/wind_error/pr/${storm}_errors.csv"
     check_path "Puerto Rico precipitation error file for ${storm}" "data/raw/precip_error/pr/${storm}_precip_errors.csv"

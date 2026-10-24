@@ -1,5 +1,5 @@
 \begin{table}
-\centering
+
 \caption{The Value of a Wind Speed Forecast Improvement (damages plus recovery expenditures, \$ millions). \label{tab:voi-table}}
 \centering
 \begin{adjustbox}{max width = \textwidth}
@@ -8,14 +8,14 @@
 \toprule
   & (1) & (2) & (3) & (4) & (5) & (6) & (7)\\
 \midrule
-$\beta_2: (e - \mu)^2$ & 2.68** & 2.70** & 2.50** & 2.48** & 3.09** & 2.91*** & \\
- & (1.18) & (1.20) & (1.16) & (1.07) & (1.30) & (1.12) & \\
-$\text{Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & 3.82**\\
- &  &  &  &  &  &  & (1.87)\\
-$\text{Sub-Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & 0.18\\
- &  &  &  &  &  &  & (0.19)\\
+$\beta_2: (e - \mu)^2$ & 2.55** & 2.57** & 2.34** & 2.35** & 3.03** & 2.86*** & \\
+ & (1.12) & (1.14) & (1.08) & (1.01) & (1.28) & (1.10) & \\
+$\text{Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & 3.70**\\
+ &  &  &  &  &  &  & (1.81)\\
+$\text{Sub-Hurricane } \beta_2: (e - \mu)^2$ &  &  &  &  &  &  & 0.15\\
+ &  &  &  &  &  &  & (0.16)\\
  &  &  &  &  &  &  & \\
-Observations & 75,512 & 75,512 & 75,512 & 75,512 & 75,512 & 75,512 & 75,512\\
+Observations & 75,668 & 75,668 & 75,668 & 75,668 & 75,668 & 75,668 & 75,668\\
  &  &  &  &  &  &  & \\
 Realized Wind/Precip Bins &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
 Level Wind/Precip Error &  &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
@@ -26,7 +26,7 @@ County-Year FE &  &  &  &  & \checkmark & \checkmark & \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
-\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 $e$ is the county-hurricane-specific forecast error at the 3-day-ahead lead, and $\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds exceed 33 m/s (74 mph); sub-hurricane wind speeds fall below. The panel covers the 32 landfalling hurricanes that received a 3-day forecast. Conley spatial HAC standard errors with a 400 km cutoff.
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 $e$ is the county-hurricane-specific forecast error at the 3-day-ahead lead, and $\mu$ is the hurricane-intensity bin-specific mean forecast error. Hurricane wind speeds exceed 33 m/s (74 mph); sub-hurricane wind speeds fall below. The panel covers the 34 landfalling hurricanes that received a 3-day forecast. Conley spatial HAC standard errors with a 400 km cutoff.
 \end{tablenotes}
 \end{threeparttable}
 \end{adjustbox}

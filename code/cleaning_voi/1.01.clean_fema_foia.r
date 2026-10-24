@@ -118,7 +118,7 @@ katrina_num = c(3262, 3263, 3258, 3255, 3256, 3257, 3251, 3244, 3252, 3245, 3253
 dennis_num = c(1593, 1594, 1595)
 rita_num = c(1606, 1607, 3260, 3261, 3259)
 cindy_num = c(1601)
-# Puerto Rico landfalls, only in the AO_INCLUDE_PR build
+# Puerto Rico landfalls, dropped when AO_INCLUDE_PR=0
 maria_num = if (include_pr) c(4339) else c()
 fiona_num = if (include_pr) c(4671) else c()
 

@@ -16,13 +16,13 @@ options(modelsummary_format_numeric_latex = "plain")
 options(modelsummary_factory_latex = "kableExtra")   # modelsummary >= 2.0 defaults to tinytable; add_adjust_box expects kableExtra output
 source(here("code/functions_table.r"))
 
-# AO_INCLUDE_PR=1 runs on the Puerto Rico panel (data/clean_pr) and writes to output/pr,
-# leaving the continental tables untouched
-include_pr <- Sys.getenv("AO_INCLUDE_PR", "0") == "1"
+# The panel includes the Puerto Rico landfalls; AO_INCLUDE_PR=0 runs on the continental-only
+# panel (data/clean_continental) and writes to output/continental
+include_pr <- Sys.getenv("AO_INCLUDE_PR", "1") == "1"
 pr_storms  <- if (include_pr) c("maria", "fiona") else character(0)
 pr_mock    <- include_pr && Sys.getenv("AO_PR_MOCK", "0") == "1"
-clean_dir  <- Sys.getenv("AO_CLEAN_DIR", if (include_pr) "data/clean_pr" else "data/clean")
-out_dir    <- if (pr_mock) "output/pr_mock" else if (include_pr) "output/pr" else "output"
+clean_dir  <- Sys.getenv("AO_CLEAN_DIR", if (include_pr) "data/clean" else "data/clean_continental")
+out_dir    <- if (pr_mock) "output/pr_mock" else if (include_pr) "output" else "output/continental"
 dir.create(here(out_dir), showWarnings = FALSE)
 # AO_PR_MOCK=1 also reads the NHC-file mock-ups in pr_mock/ for storms with no official file in pr/
 pr_files <- function(dir) {
