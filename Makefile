@@ -4,6 +4,9 @@
 SHELL := /bin/bash
 # --vanilla minus --no-init-file: the project .Rprofile must load so renv activates the locked library.
 R     := Rscript --no-save --no-restore --no-environ --no-site-file
+# conleyreg starts one PSOCK worker per core; with renv's sandbox on, the workers contend
+# for the sandbox lock and time out, so it is off for every target.
+export RENV_CONFIG_SANDBOX_ENABLED := FALSE
 
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
