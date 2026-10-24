@@ -1,7 +1,8 @@
 # ==============================================================================
 # One-time reproducibility setup: write .Rprofile options, install vendored
 # packages, and restore the renv environment. Run once before any other script.
-# Run:     Rscript --vanilla code/cleaning_voi/0.0.PRELIMINARIES.r
+# Run:     Rscript --no-save --no-restore --no-environ --no-site-file code/cleaning_voi/0.0.PRELIMINARIES.r
+#          (not --vanilla: the project .Rprofile must load so renv installs into the project library)
 # ==============================================================================
 
 # ==============================================================================
@@ -30,33 +31,23 @@ if (length(new)) {
 # ==============================================================================
 
 
-install.packages("./local_packages/renv_1.1.4.tar.gz", repos = NULL, type = "source")
+# renv itself is locked at 1.1.4 and bootstraps from renv/activate.R
 renv::settings$ignored.packages(c("arrow", "SafeGraphR", "starpolishr", "startR", "stormwindmodel", "hurricaneexposuredata", "urbnmapr", "weathermetrics"))
 renv::restore()
 
-# Install packages with error checking
-cat("Installing weathermetrics...\n")
-install.packages('./local_packages/weathermetrics_1.2.2.tar.gz', repos = NULL, type = 'source')
-if (!requireNamespace("weathermetrics", quietly = TRUE)) {
-  stop("Failed to install weathermetrics")
-}
-
-cat("Installing stormwindmodel...\n")
-install.packages("./local_packages/stormwindmodel.tar.gz", repos = NULL, type = "source")
-if (!requireNamespace("stormwindmodel", quietly = TRUE)) {
-  stop("Failed to install stormwindmodel")
-}
-
-cat("Installing hurricaneexposuredata...\n")
-renv::install('./local_packages/hurricaneexposuredata-master.zip')
-if (!requireNamespace("hurricaneexposuredata", quietly = TRUE)) {
-  stop("Failed to install hurricaneexposuredata")
-}
-
-cat("Installing urbnmapr...\n")
-renv::install('./local_packages/urbnmapr-master.zip')
-if (!requireNamespace("urbnmapr", quietly = TRUE)) {
-  stop("Failed to install urbnmapr")
+# Packages kept out of renv.lock, each pinned to an exact source:
+# weathermetrics from CRAN, stormwindmodel from the staged tarball in Box,
+# and the two GitHub-only packages at fixed commits.
+vendored <- list(
+  weathermetrics        = "weathermetrics@1.2.2",
+  stormwindmodel        = "data/code/run_stormwindmodel/stormwindmodel_0.1.4.tar.gz",
+  hurricaneexposuredata = "geanders/hurricaneexposuredata@b42fe54788ba8ade5e6aab614c75eea41d51a80c",
+  urbnmapr              = "UrbanInstitute/urbnmapr@ef9f4488d6bc916a07746aafe5755e9fb9da19eb"
+)
+for (pkg in names(vendored)) {
+  cat("Installing", pkg, "...\n")
+  renv::install(vendored[[pkg]], prompt = FALSE)
+  if (!requireNamespace(pkg, quietly = TRUE)) stop("Failed to install ", pkg)
 }
 
 renv::snapshot()

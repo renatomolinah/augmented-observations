@@ -321,14 +321,14 @@ final_dataset = final_dataset |>
   # The underlying error variable is not inherently bounded
   mutate(
     var = ifelse(wind_error < -10, -10, wind_error),
-    var = ifelse(wind_error > 10, 10, wind_error)
+    var = ifelse(var > 10, 10, var)
   ) |>
   # Wind error bins
   mutate(wind_error_bin = cut(var, seq(-10, 10, 2), include.lowest = TRUE)) |>
   ungroup() |>
   mutate(
     var = ifelse(precip_error < -200, -200, precip_error),
-    var = ifelse(precip_error > 200, 200, precip_error)
+    var = ifelse(var > 200, 200, var)
   ) |>
   # Precipitation error bins
   mutate(precip_error_bin = cut(var, seq(-200, 200, 40), include.lowest = TRUE)) |>

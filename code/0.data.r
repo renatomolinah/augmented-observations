@@ -23,6 +23,7 @@ data_summary <- voi_full |>
            precip_obs, precip_fc, precip_error, damages, deaths, ex_post_spending, ex_ante_spending) |>
   group_by(hurricane, year) |>
   summarise(mean_wind_speed   = sprintf("%.2f", mean(wind_obs)),
+            max_wind_speed    = sprintf("%.2f", max(wind_obs)),
             mean_wind_error   = sprintf("%.2f", mean(abs(wind_error))),
             mean_precip       = sprintf("%.2f", mean(precip_obs)),
             mean_precip_error = sprintf("%.2f", mean(abs(precip_error))),
@@ -31,11 +32,12 @@ data_summary <- voi_full |>
   arrange(year) |>
   mutate(hurricane = str_to_title(hurricane)) |>
   rename(Hurricane = hurricane, Year = year, `Wind Speed` = mean_wind_speed,
-         `Wind Speed Error` = mean_wind_error, `Precipitation` = mean_precip,
-         `Precipitation Error` = mean_precip_error, `Total Damage` = sum_damage,
-         `Recovery Expenditures` = ex_post_spending)
+         `Max Wind Speed` = max_wind_speed,
+         `Wind Speed Error` = mean_wind_error, `Precip.` = mean_precip,
+         `Precip. Error` = mean_precip_error, `Total Damage` = sum_damage,
+         `Recovery Exp.` = ex_post_spending)
 
-summary_units <- c("", "", "(m/s)", "abs(m/s)", "(mm)", "abs(mm)", "(Billion \\$)", "(Billion \\$)")
+summary_units <- c("", "", "(m/s)", "(m/s)", "abs(m/s)", "(mm)", "abs(mm)", "(Billion \\$)", "(Billion \\$)")
 kbl(data_summary, format = "latex", caption = "Summary Statistics by Hurricane.",
     label = "summary_dmg", booktabs = TRUE, escape = FALSE, linesep = "",
     col.names = summary_units, align = c("l", rep("c", ncol(data_summary) - 1))) |>
@@ -43,9 +45,11 @@ kbl(data_summary, format = "latex", caption = "Summary Statistics by Hurricane."
   footnote(general = paste(
     "The table includes all category 1 and greater hurricanes (maximum wind speeds $\\\\geq$ 33 m/s)",
     "that made landfall in the continental US. Wind speed, precipitation, and their errors are averaged",
-    "across counties to the hurricane level, and damages and expenditures are summed across counties. Wind",
+    "across counties to the hurricane level, and damages and expenditures are summed across counties. The",
+    "maximum wind speed is instead the largest county-level value recorded for that storm. Wind",
     "speed is maximum sustained wind in m/s and precipitation is total precipitation in mm. Errors are averages",
-    "of the absolute county-level errors. Damages and expenditures are in billions of (2019) US\\\\$."),
+    "of the absolute county-level errors. Damages and expenditures are in billions of (2019) US\\\\$.",
+    "Precip. denotes precipitation and Exp. denotes expenditures."),
     threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE) |>
   as.character() |> writeLines(here("output/summary_dmg.tex"))
 add_adjust_box(here("output/summary_dmg.tex"))
