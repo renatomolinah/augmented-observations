@@ -13,7 +13,7 @@ pacman::p_load(data.table, tidyverse, here, kableExtra,
 source(here("code/functions_table.r"))
 
 voi_full <- readRDS(here("data/clean/final_dataset.rds")) |>
-  as_tibble() |> drop_na(lat, lon, total_cost_pc, total_cost_per_gdp)
+  as_tibble() |> drop_na(lat, lon)
 
 data_summary <- voi_full |>
   group_by(hurricane, county) |>
@@ -44,7 +44,7 @@ kbl(data_summary, format = "latex", caption = "Summary Statistics by Hurricane."
   add_header_above(setNames(rep(1, length(names(data_summary))), names(data_summary)), escape = FALSE) |>
   footnote(general = paste(
     "The table includes all category 1 and greater hurricanes (maximum wind speeds $\\\\geq$ 33 m/s)",
-    "that made landfall in the continental US. Wind speed, precipitation, and their errors are averaged",
+    "that made landfall in the continental US and Puerto Rico. Wind speed, precipitation, and their errors are averaged",
     "across counties to the hurricane level, and damages and expenditures are summed across counties. The",
     "maximum wind speed is instead the largest county-level value recorded for that storm. Wind",
     "speed is maximum sustained wind in m/s and precipitation is total precipitation in mm. Errors are averages",
