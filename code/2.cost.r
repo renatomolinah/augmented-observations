@@ -43,7 +43,7 @@ pr_files <- function(dir) {
 load_voi <- function() {
   readRDS(here(clean_dir, "final_dataset.rds")) |>
     as_tibble() |>
-    # Puerto Rico has no BEA GDP; its rows stay in and drop only from the cost/GDP outcome
+    # keep Puerto Rico rows
     filter(!is.na(total_cost_per_gdp) | hurricane %in% pr_storms) |>
     drop_na(lat, lon, total_cost_pc) |>
     mutate(storm_time = as.integer(factor(paste(year, hurricane))))

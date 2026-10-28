@@ -254,7 +254,7 @@ final_dataset = bind_rows(
     filter(hurricane %notin% pr_storms) |>
     # Rows dropped here are primarily Virginia independent cities and some Alaska counties without GDP
     inner_join(income_gdp, by = c("county" = "county_fips", "year" = "year")),
-  # BEA has no Puerto Rico GDP; keep the municipios with GDP missing
+  # Puerto Rico
   final_dataset |>
     filter(hurricane %in% pr_storms) |>
     left_join(income_gdp, by = c("county" = "county_fips", "year" = "year")))

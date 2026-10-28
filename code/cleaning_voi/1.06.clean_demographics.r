@@ -2,6 +2,7 @@
 # Build county-level controls: BEA per-capita income and GDP, coastline flags,
 # and ACS population (re-downloaded only with a Census API key).
 # Inputs:  data/raw/bea/{CAINC1,CAGDP1}*.csv, census-bea-crosswalk.xlsx;
+#          data/raw/bea/pr/{PRGDP1-1,PRGDP1-2}_PR_2012_2022.csv, qcew_pr_municipio_wages.csv;
 #          data/raw/census/{coastline-counties-list.xlsx, county_demographics.csv}
 # Outputs: data/clean/{income_gdp.csv, coastline_counties.csv, county_demographics.csv}
 # Run:     sourced by code/cleaning_voi/run_all.r
@@ -62,6 +63,30 @@ income_gdp = inner_join(income, gdp, by = c("county_fips", "year")) |>
     left_join(crosswalk, by = "county_fips") |>
     mutate(county_fips = ifelse(!is.na(fips_census), fips_census, county_fips)) |>
     select(-fips_census)
+
+# Puerto Rico GDP: BEA territory GDP (PRGDP.zip) split by QCEW wage share, chained 2017 $
+if (include_pr) {
+    pr_line1 = function(f) fread(f, fill = TRUE)[LineCode == 1] |>
+        select(matches("^\\d{4}$")) |>
+        pivot_longer(everything(), names_to = "year", values_to = "v") |>
+        mutate(v = as.numeric(v))
+    pr_nominal = pr_line1("data/raw/bea/pr/PRGDP1-1_PR_2012_2022.csv")
+    pr_real12  = pr_line1("data/raw/bea/pr/PRGDP1-2_PR_2012_2022.csv")
+    pr_gdp = inner_join(pr_nominal, pr_real12, by = "year", suffix = c("_nom", "_real")) |>
+        mutate(price = v_nom / v_real,
+               gdp_pr = 1e3 * v_nom / (price / price[year == "2017"])) |>
+        select(year, gdp_pr)
+    pr_income_gdp = fread("data/raw/bea/pr/qcew_pr_municipio_wages.csv",
+                          colClasses = c(county_fips = "character", year = "character")) |>
+        group_by(year) |>
+        mutate(share = total_annual_wages / sum(total_annual_wages)) |>
+        ungroup() |>
+        inner_join(pr_gdp, by = "year") |>
+        transmute(county_fips, year, income_pc = NA_real_, county_name = NA_character_,
+                  gdp = share * gdp_pr)
+    income_gdp = bind_rows(mutate(income_gdp, across(c(county_fips, year, income_pc, gdp), as.character)),
+                           mutate(pr_income_gdp, across(c(income_pc, gdp), as.character)))
+}
 
 fwrite(income_gdp, file.path(clean_dir, "income_gdp.csv"))
 

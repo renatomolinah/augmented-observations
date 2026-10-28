@@ -53,10 +53,9 @@ val <- reg_data |>
   mutate(v_tot_M = beta_hurr * delta_sigma_sq,
          v_gdp_M = (beta_gdp / 100) * delta_sigma_sq * gdp / 1e3,
          v_pc_M  = beta_pc * delta_sigma_sq * population / 1e6)
-val_econ <- val |> filter(!is.na(gdp), !is.na(population))
-n_all <- nrow(val); n_econ <- nrow(val_econ)
+val_gdp <- val |> filter(!is.na(gdp))
+val_pc  <- val |> filter(!is.na(population))
 
-# Maria's PR counties lack GDP/population: the scaled columns span only the continental county-storms
 writeLines(sprintf(
 '\\begin{table}
 
@@ -75,16 +74,16 @@ Cost per capita (\\$) & %.3f & %.2f & %.2f\\\\
 \\end{tabular}
 \\begin{tablenotes}
 \\small
-\\item The total-cost aggregate sums over all %d hurricane-force county-storms including Maria. The cost/GDP and cost-per-capita columns sum over the %d continental county-storms with observed GDP and population.
+\\item Each aggregate sums over the hurricane-force county-storms with the corresponding measure: %d for total cost, %d for cost/GDP, and %d for cost per capita, Puerto Rico municipios included. Puerto Rico municipio GDP is territory GDP allocated by QCEW wage shares.
 \\end{tablenotes}
 \\end{threeparttable}
 \\end{adjustbox}
 \\end{table}
 ',
   beta_hurr, mean(val$v_tot_M),      sum(val$v_tot_M) / 1000,
-  beta_gdp,  mean(val_econ$v_gdp_M), sum(val_econ$v_gdp_M) / 1000,
-  beta_pc,   mean(val_econ$v_pc_M),  sum(val_econ$v_pc_M) / 1000,
-  n_all, n_econ),
+  beta_gdp,  mean(val_gdp$v_gdp_M), sum(val_gdp$v_gdp_M) / 1000,
+  beta_pc,   mean(val_pc$v_pc_M),   sum(val_pc$v_pc_M) / 1000,
+  nrow(val), nrow(val_gdp), nrow(val_pc)),
   here("output/implied_value.tex"))
 
 per_storm <- reg_data |>
