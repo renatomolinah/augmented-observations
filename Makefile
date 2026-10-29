@@ -139,10 +139,11 @@ data: output/summary_dmg.tex
 
 ## Step 4 - Stage 1: precision gain (delta), wild cluster bootstrap
 output/stage1_numbers.txt: data/clean_denial/forecast_denial_data_with_lead_times.csv \
-                           code/1.precision.r code/functions_table.r
+                           code/1.precision.r code/1.precision_twoway.r code/functions_table.r
 	@echo -e "$(YELLOW)[4/7] Stage 1: precision gain (delta)...$(NC)"
 	@mkdir -p output
 	@$(R) code/1.precision.r
+	@$(R) code/1.precision_twoway.r
 	@echo -e "$(GREEN)  -> Stage 1 tables + output/stage1_numbers.txt$(NC)"
 
 precision: output/stage1_numbers.txt

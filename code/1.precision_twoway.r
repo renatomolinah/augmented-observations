@@ -1,5 +1,5 @@
 # ==============================================================================
-# Stage 2 robustness - precision regression with TWO-WAY clustering (storm + county)
+# Stage 1 robustness - precision regression with TWO-WAY clustering (storm + county)
 # Reproduces the interaction grid (tab:interaction-grid) but reports two-way
 # cluster-robust (Cameron-Gelbach-Miller) p-values on storm and county, instead
 # of the storm-only wild cluster bootstrap. Point estimates are identical; only
@@ -10,11 +10,12 @@
 # Outputs: output/paper_interaction_grid_twoway.tex;
 #          output/interaction_twoway_pvalues.csv;
 #          output/stage2_twoway_cluster_compare.txt
-# Run:     Rscript --vanilla code/exploratory/precision_twoway_cluster.r
+# Run:     Rscript --vanilla code/1.precision_twoway.r
 # ==============================================================================
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(data.table, fixest, here, modelsummary)
 options(modelsummary_format_numeric_latex = "plain")
+options(modelsummary_factory_latex = "kableExtra")
 source(here("code/functions_table.r"))
 setFixest_nthreads(1)
 

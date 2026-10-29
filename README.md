@@ -107,13 +107,13 @@ before any wind, track, or rain outputs are generated into `data/raw/` or
 code/
   0.data.r           Data section: summary statistics, denial sample, storm-track map (Figure 1)
   1.precision.r      Stage 1: AO precision gain (delta), wild cluster bootstrap inference
+  1.precision_twoway.r  Stage 1 robustness: two-way (storm, county) clustered interaction grid
   2.cost.r           Stage 2: marginal cost of 3-day-ahead forecast error (beta) and its robustness tables
   3.valuation.r      Stage 3: retrospective social value (reads the Stage 1 and Stage 2 numbers)
   4.costbenefit.r    Stage 4: cost-benefit vs the fleet life-cycle cost and the 2016 AoA benchmark
   functions_table.r  shared LaTeX table helper
   cleaning_voi/      VOI panel cleaning (37-storm continental-US panel, 2005-2024)
   cleaning_denial/   denial sample cleaning
-  exploratory/       Quarto notebooks (Ditchek replication, wind-error inference)
   external_models/   upstream wind/rain/track generator code
 archive/             retired NOAA-report deliverable (NOAA_report.{r,tex}, workshop_responses.r)
 data/                data folder (gitignored)
