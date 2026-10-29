@@ -149,7 +149,7 @@ modelsummary(
   output = here("output/paper_precision_full.tex"))
 add_adjust_box(here("output/paper_precision_full.tex"))
 
-d_precip <- d[!is.na(precip_fc_sd)]
+d_precip <- d[!is.na(precip_fc_sd) & precip_fc_sd != -999]
 cat(sprintf("[Stage 1] precip interaction grid: bootstrap (B=%d, %d cores)\n", B, N_CORES))
 res_p  <- run_family(cols, d_precip, lhs = "precip_fc_sd")
 fwrite(res_p, here("output/interaction_wcb_pvalues_precip.csv"))

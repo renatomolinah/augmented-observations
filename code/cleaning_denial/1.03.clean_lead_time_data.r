@@ -98,13 +98,6 @@ if (needs_cleaning && !already_cleaned) {
 }
 
 forecast_lead_times_clean <- forecast_lead_times_clean |>
-  # Missing precipitation -> -999 to match final_dataset convention
-  replace_na(replace = list(
-    precip_obs = -999,
-    precip_fc = -999,
-    precip_error = -999,
-    precip_fc_sd = -999
-  )) |>
   # Ex-post error: previous-period forecast error for the SAME lead time.
   # Uses pred - obs (final_dataset convention); grouped by lead_days.
   arrange(augmented_obs, county, lead_days, date) |>
