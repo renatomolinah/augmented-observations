@@ -195,9 +195,7 @@ restore_refs(here(out_dir, "paper_cost_outcomes.tex"))   # modelsummary strips t
 add_adjust_box(here(out_dir, "paper_cost_outcomes.tex"))
 
 spec7 <- voi_specs("total_cost")[[7]]
-top_storms <- intersect(c("katrina", "sandy", "ian", "ida", "michael",
-                          "laura", "irma", "wilma", "rita", "helene"), storms_3day)
-jack <- bind_rows(lapply(c("none", top_storms), function(s) {
+jack <- bind_rows(lapply(c("none", storms_3day), function(s) {
   d  <- if (s == "none") load_3day() else load_3day() |> filter(hurricane != s)
   ce <- as.matrix(run_reg(spec7, d))
   hi <- grep("categoryHurricane", rownames(ce)); si <- grep("categoryTropical Storm", rownames(ce))
