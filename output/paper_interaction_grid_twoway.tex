@@ -20,18 +20,17 @@ $\delta \times$ 2-day $\times$ HF &  &  &  &  & 0.094 & 0.094\\
  &  &  &  &  & (0.177) & (0.177)\\
 $\delta \times$ 3-day $\times$ HF &  &  &  &  & -0.410*** & -0.410***\\
  &  &  &  &  & (0.075) & (0.075)\\
-Realized wind speed (m/s) &  &  & 0.256*** & 0.254*** &  & 0.272***\\
- &  &  & (0.016) & (0.016) &  & (0.016)\\
 \midrule
 Num.Obs. & 115,482 & 115,482 & 115,482 & 115,482 & 115,482 & 115,482\\
 County FE & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
 Storm FE &  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark\\
 Lead-time main effects &  &  &  & \checkmark & \checkmark & \checkmark\\
 Intensity main effect &  &  &  &  & \checkmark & \checkmark\\
+Forecast-wind bins &  &  & \checkmark & \checkmark &  & \checkmark\\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}
-\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 HF denotes hurricane-force realizations, wind $\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ``Lead-time main effects'' are the 2- and 3-day lead indicators and ``Intensity main effect'' the hurricane-force indicator. Round parentheses report two-way cluster-robust standard errors on storm and county, with the small-sample $t$ correction based on the smaller cluster count (ten storms).
+\item * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 HF denotes hurricane-force realizations, wind $\geq$ 33 m/s; the reference category is 1-day-lead, sub-hurricane-force forecasts. ``Lead-time main effects'' are the 2- and 3-day lead indicators and ``Intensity main effect'' the hurricane-force indicator. ``Forecast-wind bins'' are twenty equal-count bins of the storm-county average forecast wind speed. Round parentheses report two-way cluster-robust standard errors on storm and county, with the small-sample $t$ correction based on the smaller cluster count (ten storms).
 \end{tablenotes}
 \end{threeparttable}
 \end{adjustbox}

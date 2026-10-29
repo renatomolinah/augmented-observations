@@ -112,7 +112,7 @@ code/
   3.valuation.r      Stage 3: retrospective social value (reads the Stage 1 and Stage 2 numbers)
   4.costbenefit.r    Stage 4: cost-benefit vs the fleet life-cycle cost and the 2016 AoA benchmark
   functions_table.r  shared LaTeX table helper
-  cleaning_voi/      VOI panel cleaning (37-storm continental-US panel, 2005-2024)
+  cleaning_voi/      VOI panel cleaning (39-storm continental-US and Puerto Rico panel, 2005-2024)
   cleaning_denial/   denial sample cleaning
   external_models/   upstream wind/rain/track generator code
 archive/             retired NOAA-report deliverable (NOAA_report.{r,tex}, workshop_responses.r)
