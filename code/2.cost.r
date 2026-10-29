@@ -215,6 +215,7 @@ jack_disp <- jack |>
 kbl(jack_disp, format = "latex", booktabs = TRUE, escape = FALSE, linesep = "",
     caption = "One-storm-out jackknife of the marginal cost of forecast error. \\label{tab:cost_jackknife}",
     align = c("l", "r", "r", "r")) |>
+  column_spec(1, width = "3cm") |>
   footnote(general = "* p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01 Preferred specification on the 3-day-ahead forecast error, re-estimated after dropping each storm, with Conley spatial HAC standard errors (400 km cutoff) in parentheses.",
            general_title = "", threeparttable = TRUE, fixed_small_size = TRUE, escape = FALSE) |>
   as.character() |> writeLines(here(out_dir, "cost_jackknife.tex"))
